@@ -8,7 +8,7 @@ namespace Common {
     /// <summary>
     /// メインゲームのフロー
     /// </summary>
-    enum MAIN_GAME_PHASE {
+    public enum MAIN_GAME_PHASE {
         GAME_PHASE_NO_PLAY,
         GAME_PHASE_THROW_DICE,
         GAME_PHASE_ASSIGNMENT_BUFF,
@@ -17,4 +17,14 @@ namespace Common {
         GAME_PHASE_FIELD_GIMMICK,
         GAME_PHASE_FINISH,
     };
+
+	/// <summary>
+	/// シーン
+	/// </summary>
+	public enum SCENE {
+		SCENE_CONNECT,
+		SCENE_TITLE,
+		SCENE_GAME,
+		SCENE_FINISH,
+	};
 }
