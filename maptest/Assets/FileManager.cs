@@ -171,4 +171,13 @@ public class FileManager : Manager< FileManager > {
 		return getFileData( ).map;
 	}
 
+    public int getMassCount( ) {
+        int count = 0;
+
+        count = getFileData( ).map.ma.Length;
+
+        return count;
+
+    }
+
 }
