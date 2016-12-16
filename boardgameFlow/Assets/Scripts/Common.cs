@@ -34,5 +34,15 @@ namespace Common {
 		public int id;
 		public string name;
 		public CARD_TYPE type;
+	}
+
+	/// <summary>
+	/// シーン
+	/// </summary>
+	public enum SCENE {
+		SCENE_CONNECT,
+		SCENE_TITLE,
+		SCENE_GAME,
+		SCENE_FINISH,
 	};
 }
