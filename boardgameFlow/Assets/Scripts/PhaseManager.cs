@@ -1,15 +1,19 @@
 ﻿using UnityEngine;
+using UnityEngine.UI;
 using System.Collections;
 using Common;
 
 public class PhaseManager : MonoBehaviour {
 
     [ SerializeField ]
-    MAIN_GAME_PHASE _main_game_phase;   // メインゲームのフロー
+    private MAIN_GAME_PHASE _main_game_phase;   // メインゲームのフロー
+
+	public Text _phase_text;
 
 	// Use this for initialization
 	void Start( ) {
         _main_game_phase = MAIN_GAME_PHASE.GAME_PHASE_NO_PLAY;
+		_phase_text.text = "NoPlay";
 	}
 	
 	// Update is called once per frame
@@ -20,7 +24,7 @@ public class PhaseManager : MonoBehaviour {
     /// <summary>
     /// 受け取ったデータによってMainGamePhaseを切り替える
     /// </summary>
-    void changeMainGamePhase( ) {
+    private void changeMainGamePhase( ) {
         // ThrowDicePhaseへ移行
         if ( Input.GetKeyDown( KeyCode.F1 ) ) {
             changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_THROW_DICE, "ThrowDicePhase" );
@@ -52,9 +56,10 @@ public class PhaseManager : MonoBehaviour {
     /// </summary>
     /// <param name="phase"></param>
     /// <param name="log_text"></param>
-    void changeMainGamePhase( MAIN_GAME_PHASE phase, string log_text ) {
+    private void changeMainGamePhase( MAIN_GAME_PHASE phase, string log_text ) {
         try {
             _main_game_phase = phase;
+			_phase_text.text = log_text;
         }
         catch {
             Debug.Log( log_text + "へ移行できませんでした。" );
