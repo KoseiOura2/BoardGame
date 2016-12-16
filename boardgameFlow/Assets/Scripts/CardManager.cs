@@ -25,7 +25,7 @@ public class CardManager : MonoBehaviour {
 
 	// Use this for initialization
 	void Start( ) {
-	
+		loadCardDataFile( );
 	}
 	
 	// Update is called once per frame
@@ -65,10 +65,15 @@ public class CardManager : MonoBehaviour {
 	/// </summary>
 	public void createDeck( ) {
 		for ( int i = 0; i < _deck_data.max_card_num; i++ ) {
-			// ランダムで選び出す
-			int card_id = ( int )Random.Range( 0, ( float )_card_datas.Count );
-			CARD_DATA card = _card_datas[ card_id ];
-			_deck_data.cards_list.Add( card );
+			try {
+				// ランダムで選び出す
+				int card_id = ( int )Random.Range( 0, ( float )_card_datas.Count );
+				CARD_DATA card = _card_datas[ card_id ];
+				_deck_data.cards_list.Add( card );
+			}
+			catch {
+				Debug.Log( "デッキの生成に失敗しました" );
+			}
 		}
 		_deck_data.card_num = _deck_data.max_card_num;
 	}

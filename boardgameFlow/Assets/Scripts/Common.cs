@@ -5,6 +5,15 @@ using System.IO;
 using System;
 
 namespace Common {
+	/// <summary>
+	/// ホストかクライアントか
+	/// </summary>
+	public enum SERVER_STATE {
+		STATE_NONE,
+		STATE_HOST,
+		STATE_CLIANT,
+	};
+
     /// <summary>
     /// メインゲームのフロー
     /// </summary>

@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Net.Sockets;//必要です。
 using System.Net;//これもいるかもしれない
+using Common;
 
 public class NetWorkManager : MonoBehaviour {
 
@@ -14,12 +15,6 @@ public class NetWorkManager : MonoBehaviour {
 	private bool _connected     = false;
 	[ SerializeField ]
 	private static IPAddress _ip_address;
-
-	enum SERVER_STATE {
-		STATE_NONE,
-		STATE_HOST,
-		STATE_CLIANT,
-	};
 
 	[ SerializeField ]
 	private SERVER_STATE _server_state = SERVER_STATE.STATE_NONE;
@@ -67,20 +62,10 @@ public class NetWorkManager : MonoBehaviour {
 		}
 	}
 
-	public void OnGUI( ) {
-		if( !_connected ) {
-			noConnectDraw( );
-		}
-
-		if ( _server_state == SERVER_STATE.STATE_HOST ) {
-			hostStateDraw( );
-		}
-	}
-
 	/// <summary>
 	/// 未接続時の描画
 	/// </summary>
-	private void noConnectDraw( ) {
+	public void noConnectDraw( ) {
 		GUI.Label( new Rect( 40, 250, 100, 30 ), "HOST IP" );
 		Rect rect1 = new Rect( 100, 250, 250, 30 );
 		_ip = GUI.TextField( rect1, _ip, 32 );
@@ -101,7 +86,7 @@ public class NetWorkManager : MonoBehaviour {
 	/// <summary>
 	/// ホスト側の描画
 	/// </summary>
-	private void hostStateDraw( ) {
+	public void hostStateDraw( ) {
 		// 文字の設定
 		string text = _ip_address.ToString( );
 		int width   = 500;
@@ -122,6 +107,10 @@ public class NetWorkManager : MonoBehaviour {
 	/// <returns><c>true</c>, if connected was ised, <c>false</c> otherwise.</returns>
 	public bool isConnected( ) {
 		return _connected;
+	}
+
+	public SERVER_STATE getServerState( ) {
+		return _server_state;
 	}
 
 }

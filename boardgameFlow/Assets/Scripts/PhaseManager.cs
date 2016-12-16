@@ -18,13 +18,13 @@ public class PhaseManager : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update( ) {
-	    changeMainGamePhase( );
+		
 	}
 
     /// <summary>
     /// 受け取ったデータによってMainGamePhaseを切り替える
     /// </summary>
-    private void changeMainGamePhase( ) {
+    public void changeMainGamePhase( ) {
         // ThrowDicePhaseへ移行
         if ( Input.GetKeyDown( KeyCode.F1 ) ) {
             changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_THROW_DICE, "ThrowDicePhase" );
@@ -65,4 +65,12 @@ public class PhaseManager : MonoBehaviour {
             Debug.Log( log_text + "へ移行できませんでした。" );
         }
     }
+
+	/// <summary>
+	/// MainGamePhaseの取得
+	/// </summary>
+	/// <returns>The main game phase.</returns>
+	public MAIN_GAME_PHASE getMainGamePhase( ) {
+		return _main_game_phase;
+	}
 }
