@@ -7,12 +7,22 @@ public class StageManager : MonoBehaviour {
     public FileManager _file_manager;
     public GameObject _mass_prefab;
 
-    int _create_count_main       = 0;
+    int _create_mass_count = 0;
 
     void Awake( ) {
 		if ( !_mass_prefab ) {
 			_mass_prefab = ( GameObject )Resources.Load( "Prefab/Mass" );
 		}
+
+        if ( isError( ) ) {
+            return;
+        }
+        //マスの生成
+        for( int i = 0; i < _file_manager.getMassCount( ); i++ ) {
+            massUpdate( );
+            _create_mass_count++;
+        }
+        
 	}
 
 	// Use this for initialization
@@ -21,11 +31,6 @@ public class StageManager : MonoBehaviour {
 	}
 
     void FixedUpdate( ) {
-        if ( isError( ) ) {
-            return;
-        }
-
-        massUpdate( );
 
     }
     bool isError( ) {
@@ -44,24 +49,46 @@ public class StageManager : MonoBehaviour {
     }
 
     void massUpdate( ) {
-        //マスの生成
-        if( _create_count_main < _file_manager.getMassCount( ) ) {
-            massCreate( _create_count_main );
-			_create_count_main++;
-        }
-
+        massCreate( _create_mass_count );
     }
 
     public void massCreate( int count ) {
 
         GameObject obj = 
             ( GameObject )Instantiate( _mass_prefab, 
-            new Vector3( _file_manager.getMapData().ma[ count ].x, _file_manager.getMapData().ma[ count ].y, _file_manager.getMapData().ma[ count ].z ), 
+            _file_manager.getMassCoordinate( count ), 
             Quaternion.identity );
+
+        switch ( _file_manager.getMapData().mass[ count ].type )
+        {
+            case "start":
+                obj.GetComponent< Renderer >().material.color = Color.yellow;
+                break;
+            case "draw":
+            case "trap2":
+                obj.GetComponent< Renderer >().material.color = Color.blue;
+                break;
+            case "trap1":
+            case "advance":
+                obj.GetComponent< Renderer >().material.color = Color.green;
+                break;
+            case "goal":
+                obj.GetComponent< Renderer >().material.color = Color.yellow;
+                break;
+
+        }
 
         // マネージャーの配下に設定
         obj.transform.parent = transform;
 
+    }
+    public Vector3 getmassPosition( int i ) {
+        return _file_manager.getMassCoordinate( i );
+
+    }
+
+    public void massEvent( int i ) {
+        _file_manager.getMassValue( i );
     }
 	
 	// Update is called once per frame

@@ -38,7 +38,7 @@ public class FileManager : Manager< FileManager > {
         
 		public bool isData( ) {
 			bool frag = false;
-			frag = ( _data.map.ma != null )? true : false;		    // 座標配列の確認
+			frag = ( _data.mass != null )? true : false;		    // マス配列の確認
 			return frag;
 		}
 
@@ -57,11 +57,11 @@ public class FileManager : Manager< FileManager > {
 
     // Awake関数の代わり
 	protected override void initialize( ) {
-
+        cheackFilesData( );
 	}
 
     void FixedUpdate( ) {
-		cheackFilesData( );
+		
 	}
 
     /// <summary>
@@ -86,7 +86,7 @@ public class FileManager : Manager< FileManager > {
 			FILE_DATA data = new FILE_DATA( );
 
 			// マップデータの取得
-			data.map = getLoadFileMapData( ref sr );
+			data = getLoadFileMapData( ref sr );
 				
 			sr.Close( );
 
@@ -104,8 +104,8 @@ public class FileManager : Manager< FileManager > {
 	/// ロードしたファイルからマップデータを取得
 	/// </summary>
 	/// <returns></returns>
-	protected FILE_DATA.MAP getLoadFileMapData( ref StreamReader sr ) {
-		FILE_DATA.MAP data = new FILE_DATA.MAP( );
+	protected FILE_DATA getLoadFileMapData( ref StreamReader sr ) {
+		FILE_DATA data = new FILE_DATA( );
 
 		// 個数の取得
 		string str = sr.ReadLine( );
@@ -114,7 +114,7 @@ public class FileManager : Manager< FileManager > {
         int ma_size = int.Parse( values[ 0 ] );
 
         // 配列確保
-		data.ma = new POSS_DATA[ ma_size ];
+		data.mass = new POSS_DATA[ ma_size ];
 
         int[ ] array = new int[ ] { ma_size };
         int length = array[ 0 ];
@@ -136,13 +136,19 @@ public class FileManager : Manager< FileManager > {
             // 座標データを書き込み
             if ( i < ma_size ) {
 				// インデックスの取得
-				data.ma[ i ].index = int.Parse( values[ 0 ] );
+				data.mass[ i ].index = int.Parse( values[ 0 ] );
 				// X座標の取得
-				data.ma[ i ].x = uint.Parse( values[ 1 ] );
+				data.mass[ i ].x = uint.Parse( values[ 1 ] );
                 // Y座標の取得
-				data.ma[ i ].y = uint.Parse( values[ 2 ] );
+				data.mass[ i ].y = uint.Parse( values[ 2 ] );
                 // Z座標の取得
-				data.ma[ i ].z = uint.Parse( values[ 3 ] );
+				data.mass[ i ].z = uint.Parse( values[ 3 ] );
+                // マスタイプの取得
+				data.mass[ i ].type = values[ 4 ];
+                // マスタイプの取得
+				data.mass[ i ].nomalValue = uint.Parse( values[ 5 ] );
+                // マスタイプの取得
+				data.mass[ i ].trapValue = uint.Parse( values[ 6 ] );
             } 
         }
 
@@ -167,17 +173,38 @@ public class FileManager : Manager< FileManager > {
 	/// マップデータの取得
 	/// </summary>
 	/// <returns></returns>
-	public FILE_DATA.MAP getMapData( ) {
-		return getFileData( ).map;
+	public FILE_DATA getMapData( ) {
+		return getFileData( );
 	}
+
+    public Vector3 getMassCoordinate( int i )
+    {
+        Vector3 massCoordinate = new Vector3( getMapData( ).mass[ i ].x, getMapData( ).mass[ i ].y, getMapData( ).mass[ i ].z );
+        return massCoordinate;
+    }
 
     public int getMassCount( ) {
         int count = 0;
 
-        count = getFileData( ).map.ma.Length;
+        count = getFileData( ).mass.Length;
 
         return count;
 
     }
+    public uint[ ] getMassValue( int i ) {
+        uint[ ] massValue = new uint[ 2 ] {
+            getNomalValue( i ),
+            getTrapValue( i )
+        };
+        return massValue;
+    }
 
+    public uint getNomalValue( int i )
+    {
+        return getFileData( ).mass[ i ].nomalValue;
+    } 
+    public uint getTrapValue( int i )
+    {
+        return getFileData( ).mass[ i ].trapValue;
+    }
 }
