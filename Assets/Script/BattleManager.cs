@@ -70,7 +70,12 @@ public class BattleManager : MonoBehaviour {
 	}
 
 	public void phaseChange(){
-		//次のフェイズに移行
+		//渡す数値を保存しておいてその数値を通信に渡せるようにする
+
+
+		//カードを消し、画面をくらくしてテキストを表示
+
+		//フラグが立つと次のフェイズに移行
 		if (currentPhase != BATTLE_PHASE.RESULT_PHASE) {
 			currentPhase++;
 		} else {
