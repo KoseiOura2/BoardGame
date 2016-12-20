@@ -6,26 +6,20 @@ public class ApplicationManager : MonoBehaviour {
 
 	[ SerializeField ]
 	private SCENE _scene = SCENE.SCENE_CONNECT;
-	//[ SerializeField ]
-	//private NetWorkManager _network_manager;
+	[ SerializeField ]
+	private NetWorkManager _network_manager;
 	[ SerializeField ]
 	private PhaseManager _phase_manager;
 	[ SerializeField ]
 	private CardManager _card_manager;
-    [ SerializeField ]
-    private NetworkGUIControll _network_gui_controll;
-    [ SerializeField ]
-    private NetworkData _network_data;
 
 
     void Awake( ) {
         DontDestroyOnLoad( this.gameObject );
 		try {
-			//_network_manager = GameObject.Find( "NetworkManager" ).GetComponent< NetWorkManager >( );
-			_phase_manager        = GameObject.Find( "PhaseManager" ).GetComponent< PhaseManager >( );
-			_card_manager         = GameObject.Find( "CardManager" ).GetComponent< CardManager >( );
-            _network_gui_controll = GameObject.Find( "NetworkManager" ).GetComponent< NetworkGUIControll >( );
-			_network_data         = GameObject.Find( "NetworkPlayer" ).GetComponent< NetworkData >( );
+			_network_manager = GameObject.Find( "NetWorkManager" ).GetComponent< NetWorkManager >( );
+			_phase_manager = GameObject.Find( "PhaseManager" ).GetComponent< PhaseManager >( );
+			_card_manager = GameObject.Find( "CardManager" ).GetComponent< CardManager >( );
 		}
 		catch {
 			Debug.Log( "参照に失敗しました。" );
@@ -58,7 +52,7 @@ public class ApplicationManager : MonoBehaviour {
 	/// ConnectSceneの更新
 	/// </summary>
 	private void updateConnectScene( ) {
-		if ( /*_network_manager.isConnected( ) || */ Input.GetMouseButtonDown( 0 ) ) {
+		if ( _network_manager.isConnected( ) || Input.GetMouseButtonDown( 0 ) ) {
 			_scene = SCENE.SCENE_TITLE;
 		}
 	}
@@ -175,7 +169,6 @@ public class ApplicationManager : MonoBehaviour {
 	/// ConnectSceneの描画
 	/// </summary>
 	private void drawConnectScene( ) {
-        /*
 		if( !_network_manager.isConnected( ) ) {
 			_network_manager.noConnectDraw( );
 		}
@@ -183,7 +176,6 @@ public class ApplicationManager : MonoBehaviour {
 		if ( _network_manager.getServerState( ) == SERVER_STATE.STATE_HOST ) {
 			_network_manager.hostStateDraw( );
 		}
-        */
 	}
 
 	/// <summary>
