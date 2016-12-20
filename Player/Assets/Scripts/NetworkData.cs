@@ -5,31 +5,47 @@ using Common;
 
 public class NetworkData : NetworkBehaviour {
 
-    [ SyncVar ]
-    private NETWORK_FIELD_DATA _send_data;
+	[ SyncVar ]
+	private NETWORK_FIELD_DATA _field_data;
 
-    private NETWORK_PLAYER_DATA _recieve_data;
-
-    void Awake( ) {
-        _send_data.scene = SCENE.SCENE_CONNECT;
-        _send_data.main_game_phase = MAIN_GAME_PHASE.GAME_PHASE_NO_PLAY;
-    }
+	void Awake( ) {
+		_field_data.scene = SCENE.SCENE_CONNECT;
+		_field_data.main_game_phase = MAIN_GAME_PHASE.GAME_PHASE_NO_PLAY;
+	}
 
 	// Use this for initialization
 	void Start( ) {
-	
-	}
-	
-	// Update is called once per frame
-	void Update () {
-	
+
 	}
 
-    /// <summary>
-    /// scenedataのセット
-    /// </summary>
-    /// <param name="data"></param>
-    public void setSendScene( SCENE data ) {
-        _send_data.scene = data;
-    }
+	// Update is called once per frame
+	void Update( ) {
+
+	}
+
+	/// <summary>
+	/// scenedataのセット
+	/// </summary>
+	/// <param name="data"></param>
+	public void setSendScene( SCENE data ) {
+		if ( isLocalPlayer ) {
+			_field_data.scene = data;
+		}
+	}
+
+	/// <summary>
+	/// phasedataのセット
+	/// </summary>
+	/// <param name="data"></param>
+	public void setSendGamePhase( MAIN_GAME_PHASE data ) {
+		if ( isLocalPlayer ) {
+			_field_data.main_game_phase = data;
+		}
+	}
+
+	public NETWORK_FIELD_DATA getRecvData( ) {
+
+
+		return _field_data;
+	}
 }

@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.UI;
 using System.Collections;
 using Common;
 
@@ -17,27 +18,42 @@ public class ApplicationManager : MonoBehaviour {
     [ SerializeField ]
     private NetworkData _network_data;
 
+	public Text _scene_text;
 
     void Awake( ) {
         DontDestroyOnLoad( this.gameObject );
+	}
+
+	// Use this for initialization
+	void Start( ) {
 		try {
 			//_network_manager = GameObject.Find( "NetworkManager" ).GetComponent< NetWorkManager >( );
 			_phase_manager        = GameObject.Find( "PhaseManager" ).GetComponent< PhaseManager >( );
 			_card_manager         = GameObject.Find( "CardManager" ).GetComponent< CardManager >( );
-            _network_gui_controll = GameObject.Find( "NetworkManager" ).GetComponent< NetworkGUIControll >( );
-			_network_data         = GameObject.Find( "NetworkPlayer" ).GetComponent< NetworkData >( );
+			_network_gui_controll = GameObject.Find( "NetworkManager" ).GetComponent< NetworkGUIControll >( );
 		}
 		catch {
 			Debug.Log( "参照に失敗しました。" );
 		}
 	}
-
-	// Use this for initialization
-	void Start( ) {
-	}
 	
 	// Update is called once per frame
 	void Update( ) {
+		try {
+			if ( _network_data == null ) {
+				_network_data = GameObject.FindWithTag( "NetworkPlayer" ).GetComponent< NetworkData >( );
+			}
+		}
+		catch {
+			Debug.Log( "ごめんなさい" );
+		}
+
+		// デバッグ
+		if ( _network_data != null && !_network_data.isLocal( ) ) {
+			_scene = _network_data.getRecvData( ).scene;
+			_phase_manager.setPhase (_network_data.getRecvData ().main_game_phase);
+		}
+
 		switch( _scene ) {
 		case SCENE.SCENE_CONNECT:
 			updateConnectScene( );
@@ -58,8 +74,10 @@ public class ApplicationManager : MonoBehaviour {
 	/// ConnectSceneの更新
 	/// </summary>
 	private void updateConnectScene( ) {
-		if ( /*_network_manager.isConnected( ) || */ Input.GetMouseButtonDown( 0 ) ) {
+		if ( /*_network_manager.isConnected( ) || */ Input.GetKeyDown( KeyCode.A ) ) {
 			_scene = SCENE.SCENE_TITLE;
+			_scene_text.text = "SCENE_TITLE";
+			_network_gui_controll.setShowGUI( false );
 		}
 	}
 
@@ -67,8 +85,10 @@ public class ApplicationManager : MonoBehaviour {
 	/// TitleSceneの更新
 	/// </summary>
 	private void updateTitleScene( ) {
-		if ( Input.GetMouseButtonDown( 0 ) ) {
+		if ( Input.GetKeyDown( KeyCode.A ) ) {
 			_scene = SCENE.SCENE_GAME;
+			_scene_text.text = "SCENE_GAME";
+			_network_data.setSendScene( _scene );
 		}
 	}
 
@@ -76,8 +96,10 @@ public class ApplicationManager : MonoBehaviour {
 	/// FinishSceneの更新
 	/// </summary>
 	private void updateFinishScene( ) {
-		if ( Input.GetMouseButtonDown( 0 ) ) {
+		if ( Input.GetKeyDown( KeyCode.A ) ) {
 			_scene = SCENE.SCENE_TITLE;
+			_scene_text.text = "SCENE_TITLE";
+			_network_data.setSendScene( _scene );
 		}
 	}
 
@@ -87,6 +109,10 @@ public class ApplicationManager : MonoBehaviour {
 	private void updateGameScene( ) {
 		// フェイズチェンジ
 		_phase_manager.changeMainGamePhase( );
+		// 通信データのセット
+		if ( _phase_manager.isPhaseChanged( ) ) {
+			_network_data.setSendGamePhase( _phase_manager.getMainGamePhase( ) );
+		}
 
 		// フェイズごとの更新
 		switch( _phase_manager.getMainGamePhase( ) ) {
@@ -160,8 +186,10 @@ public class ApplicationManager : MonoBehaviour {
 	/// FinishPhaseの更新
 	/// </summary>
 	private void updateFinishPhase( ) {
-		if ( Input.GetMouseButtonDown( 0 ) ) {
+		if ( Input.GetKeyDown( KeyCode.A ) ) {
 			_scene = SCENE.SCENE_FINISH;
+			_scene_text.text = "SCENEFINISH";
+			_network_data.setSendScene( _scene );
 		}
 	}
 
