@@ -4,6 +4,7 @@ using System;
 
 public class BattleManager : MonoBehaviour {
 
+	//バトルフェイズ内容
 	enum BATTLE_PHASE{
 		DICE_PHASE,
 		DROW_PHASE,
@@ -11,10 +12,12 @@ public class BattleManager : MonoBehaviour {
 		RESULT_PHASE
 	}
 
+	//現在のフェイズ
 	private BATTLE_PHASE currentPhase;
 
 	// Use this for initialization
 	void Start () {
+		//最初のフェイズをロード
 		currentPhase = BATTLE_PHASE.DICE_PHASE;
 	}
 	
@@ -22,15 +25,6 @@ public class BattleManager : MonoBehaviour {
 	void Update () {
 		//フェイズ読み込み
 		phaseLoad ();
-
-		//Zキーを押したら次のEnumの値に
-		if (Input.GetKeyDown(KeyCode.Z) ) {
-			if (currentPhase != BATTLE_PHASE.RESULT_PHASE) {
-				currentPhase++;
-			} else {
-				currentPhase = BATTLE_PHASE.DICE_PHASE;
-			}
-		}
 
 	}
 
@@ -50,7 +44,7 @@ public class BattleManager : MonoBehaviour {
 			break;
 
 		case BATTLE_PHASE.RESULT_PHASE:
-			result_Phase ();
+			resultPhase ();
 			break;
 
 		default:
@@ -71,8 +65,17 @@ public class BattleManager : MonoBehaviour {
 		Debug.Log ("カードフェイズです");
 	}
 
-	void result_Phase (){
+	void resultPhase (){
 		Debug.Log ("リザルトフェイズです");
+	}
+
+	public void phaseChange(){
+		//次のフェイズに移行
+		if (currentPhase != BATTLE_PHASE.RESULT_PHASE) {
+			currentPhase++;
+		} else {
+			currentPhase = BATTLE_PHASE.DICE_PHASE;
+		}
 	}
 
 }
