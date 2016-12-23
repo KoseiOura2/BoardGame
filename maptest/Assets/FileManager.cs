@@ -146,9 +146,9 @@ public class FileManager : Manager< FileManager > {
                 // マスタイプの取得
 				data.mass[ i ].type = values[ 4 ];
                 // マスタイプの取得
-				data.mass[ i ].nomalValue = uint.Parse( values[ 5 ] );
+				data.mass[ i ].nomalValue = int.Parse( values[ 5 ] );
                 // マスタイプの取得
-				data.mass[ i ].trapValue = uint.Parse( values[ 6 ] );
+				data.mass[ i ].trapValue = int.Parse( values[ 6 ] );
             } 
         }
 
@@ -191,19 +191,19 @@ public class FileManager : Manager< FileManager > {
         return count;
 
     }
-    public uint[ ] getMassValue( int i ) {
-        uint[ ] massValue = new uint[ 2 ] {
+    public int[ ] getMassValue( int i ) {
+        int[ ] massValue = new int[ 2 ] {
             getNomalValue( i ),
             getTrapValue( i )
         };
         return massValue;
     }
 
-    public uint getNomalValue( int i )
+    public int getNomalValue( int i )
     {
         return getFileData( ).mass[ i ].nomalValue;
     } 
-    public uint getTrapValue( int i )
+    public int getTrapValue( int i )
     {
         return getFileData( ).mass[ i ].trapValue;
     }
