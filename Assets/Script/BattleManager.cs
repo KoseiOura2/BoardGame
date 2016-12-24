@@ -4,6 +4,9 @@ using System;
 
 public class BattleManager : MonoBehaviour {
 
+	//フェイズ毎の初期設定フラグ
+	bool initial_setting = false;
+
 	//バトルフェイズ内容
 	enum BATTLE_PHASE{
 		DICE_PHASE,
@@ -54,19 +57,39 @@ public class BattleManager : MonoBehaviour {
 	}
 
 	void dicePhase (){
-		Debug.Log ("ダイスフェイズです");
+		if (!initial_setting) {
+			Debug.Log ("ダイスフェイズです");
+			//初期設定完了フラグ
+			initial_setting = true;
+		} else {
+		}
 	}
 
 	void drowPhase (){
-		Debug.Log ("ドローフェイズです");
+		if (!initial_setting) {
+			Debug.Log ("ドローフェイズです");
+			//初期設定完了フラグ
+			initial_setting = true;
+		} else {
+		}
 	}
 
 	void cardPhase (){
-		Debug.Log ("カードフェイズです");
+		if (!initial_setting) {
+			Debug.Log ("カードフェイズです");
+			//初期設定完了フラグ
+			initial_setting = true;
+		} else {
+		}
 	}
 
 	void resultPhase (){
-		Debug.Log ("リザルトフェイズです");
+		if (!initial_setting) {
+			Debug.Log ("リザルトフェイズです");
+			//初期設定完了フラグ
+			initial_setting = true;
+		} else {
+		}
 	}
 
 	public void phaseChange(){
@@ -74,6 +97,9 @@ public class BattleManager : MonoBehaviour {
 
 
 		//カードを消し、画面をくらくしてテキストを表示
+
+		//初期設定フラグをoffに
+		initial_setting = false;
 
 		//フラグが立つと次のフェイズに移行
 		if (currentPhase != BATTLE_PHASE.RESULT_PHASE) {
