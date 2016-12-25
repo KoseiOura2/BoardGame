@@ -1,12 +1,14 @@
 ﻿<Properties StartupItem="Assembly-CSharp.csproj">
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" PreferredExecutionTarget="Unity.Instance.Unity Editor" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="Assets/Scripts/CardManager.cs">
+  <MonoDevelop.Ide.Workbench ActiveDocument="Assets/Scripts/ApplicationManager.cs">
     <Files>
-      <File FileName="Assets/Scripts/ApplicationManager.cs" Line="175" Column="46" />
-      <File FileName="Assets/Scripts/Common.cs" Line="9" Column="17" />
-      <File FileName="Assets/Scripts/PhaseManager.cs" Line="70" Column="22" />
-      <File FileName="Assets/Scripts/CardManager.cs" Line="64" Column="11" />
-      <File FileName="Assets/Scripts/NetWorkManager.cs" Line="5" Column="14" />
+      <File FileName="Assets/Scripts/NetworkMNG.cs" Line="53" Column="1" />
+      <File FileName="Assets/Scripts/NetworkData.cs" Line="1" Column="1" />
+      <File FileName="Assets/Scripts/ApplicationManager.cs" Line="67" Column="26" />
+      <File FileName="Assets/Scripts/Common.cs" Line="1" Column="1" />
+      <File FileName="Assets/Scripts/PhaseManager.cs" Line="1" Column="1" />
+      <File FileName="Assets/Scripts/NetworkGUIControll.cs" Line="1" Column="1" />
+      <File FileName="Assets/MoveTest.cs" Line="31" Column="40" />
     </Files>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>

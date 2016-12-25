@@ -16,7 +16,9 @@ public class ApplicationManager : MonoBehaviour {
     //[ SerializeField ]
     //private NetworkGUIControll _network_gui_controll;
     [ SerializeField ]
-    private NetworkData _network_data;
+    private HostData _host_data;
+    [ SerializeField ]
+    private ClientData _client_data;
 
 	public Text _scene_text;
 
@@ -45,20 +47,21 @@ public class ApplicationManager : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update( ) {
-		try {
-			if ( _network_data == null ) {
-				_network_data = _network_manager.getPlayerObj( ).GetComponent< NetworkData >( );
-			}
+		if ( _host_data == null && _network_manager.getHostObj( ) != null ) {
+			_host_data = _network_manager.getHostObj( ).GetComponent< HostData >( );
 		}
-		catch {
-			Debug.Log( "ごめんなさい" );
+        
+		if ( _client_data == null && _network_manager.getClientObj( ) != null ) {
+			_client_data = _network_manager.getClientObj( ).GetComponent< ClientData >( );
 		}
 
 		// デバッグ
+        /*
 		if ( _network_data != null && !_network_data.isLocal( ) ) {
 			_scene = _network_data.getRecvData( ).scene;
 			_phase_manager.setPhase(_network_data.getRecvData ().main_game_phase);
 		}
+        */
 
 		switch( _scene ) {
 		case SCENE.SCENE_CONNECT:
@@ -83,7 +86,6 @@ public class ApplicationManager : MonoBehaviour {
 		if ( _network_manager.isConnected( ) ||  Input.GetKeyDown( KeyCode.A ) ) {
 			_scene = SCENE.SCENE_TITLE;
 			_scene_text.text = "SCENE_TITLE";
-			//_network_gui_controll.setShowGUI( false );
 		}
 	}
 
@@ -94,7 +96,8 @@ public class ApplicationManager : MonoBehaviour {
 		if ( Input.GetKeyDown( KeyCode.A ) ) {
 			_scene = SCENE.SCENE_GAME;
 			_scene_text.text = "SCENE_GAME";
-			_network_data.setSendScene( _scene );
+			_host_data.setSendScene( _scene );
+            _host_data.setSendChangeFieldScene( true );
 		}
 	}
 
@@ -105,7 +108,8 @@ public class ApplicationManager : MonoBehaviour {
 		if ( Input.GetKeyDown( KeyCode.A ) ) {
 			_scene = SCENE.SCENE_TITLE;
 			_scene_text.text = "SCENE_TITLE";
-			_network_data.setSendScene( _scene );
+			_host_data.setSendScene( _scene );
+            _host_data.setSendChangeFieldScene( true );
 		}
 	}
 
@@ -117,7 +121,7 @@ public class ApplicationManager : MonoBehaviour {
 		_phase_manager.changeMainGamePhase( );
 		// 通信データのセット
 		if ( _phase_manager.isPhaseChanged( ) ) {
-			_network_data.setSendGamePhase( _phase_manager.getMainGamePhase( ) );
+			_host_data.setSendGamePhase( _phase_manager.getMainGamePhase( ) );
 		}
 
 		// フェイズごとの更新
@@ -195,7 +199,8 @@ public class ApplicationManager : MonoBehaviour {
 		if ( Input.GetKeyDown( KeyCode.A ) ) {
 			_scene = SCENE.SCENE_FINISH;
 			_scene_text.text = "SCENEFINISH";
-			_network_data.setSendScene( _scene );
+			_host_data.setSendScene( _scene );
+            _host_data.setSendChangeFieldScene( true );
 		}
 	}
 
@@ -210,7 +215,7 @@ public class ApplicationManager : MonoBehaviour {
 	/// </summary>
 	private void drawConnectScene( ) {
         
-		if( !_network_manager.isConnected( ) ) {
+		if( !_network_manager.isConnected( ) && _network_manager.getServerState( ) != SERVER_STATE.STATE_HOST ) {
 			_network_manager.noConnectDraw( );
 		}
 

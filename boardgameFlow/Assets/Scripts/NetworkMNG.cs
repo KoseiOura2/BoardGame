@@ -9,17 +9,18 @@ public class NetworkMNG : MonoBehaviour {
 
 	//ファイヤーウォールを無効化してテスト
 	//ファイヤーウォールの接続を許可すること.
-	private GameObject _object_prefab;
-	private GameObject _object_prefab_2;
-	private GameObject _player_obj = null;
-	private string _ip   = "localhost";
-	private string _port = "5037";
-	private bool _connected = false;
 	[ SerializeField ]
 	private static IPAddress _ip_address;
 	[ SerializeField ]
 	private SERVER_STATE _server_state = SERVER_STATE.STATE_NONE;
-
+	private GameObject _object_prefab;
+	private GameObject _object_prefab_2;
+	private GameObject _host_obj   = null;
+	private GameObject _client_obj = null;
+	private string _ip   = "localhost";
+	private string _port = "5037";
+	private bool _connected = false;
+    private int _player_num = 0;
 	void Awake( ) {
 		try {
 			_object_prefab   = ( GameObject )Resources.Load( "Prefabs/Player1" );
@@ -49,9 +50,8 @@ public class NetworkMNG : MonoBehaviour {
 	//サーバ立ち上げ時に呼ばれるメソッド
 	public void OnServerInitialized( ) {
 		try {
-			_connected = true;
 			//ネットワーク内のすべてのPCでインスタンス化が行われるメソッド
-			_player_obj = ( GameObject )Network.Instantiate( _object_prefab, _object_prefab.transform.position, _object_prefab.transform.rotation, 1 );
+			_host_obj = ( GameObject )Network.Instantiate( _object_prefab, _object_prefab.transform.position, _object_prefab.transform.rotation, 1 );
 		}
 		catch {
 			Debug.Log( "サーバーの初期化に失敗しました" );
@@ -62,12 +62,23 @@ public class NetworkMNG : MonoBehaviour {
 	public void OnConnectedToServer( ) {
 		try {
 			_connected = true;
-			_player_obj = ( GameObject )Network.Instantiate( _object_prefab_2, _object_prefab_2.transform.position, _object_prefab_2.transform.rotation, 2 );
+			_client_obj = ( GameObject )Network.Instantiate( _object_prefab_2, _object_prefab_2.transform.position, _object_prefab_2.transform.rotation, 2 );
 		}
 		catch {
 			Debug.Log( "サーバーの接続に失敗しました" );
 		}
 	}
+
+    /// <summary>
+    /// サーバー時新しいクライアント接続で呼ばれる
+    /// </summary>
+    void OnPlayerConnected( ) {
+        _player_num++;
+        _client_obj = GameObject.FindWithTag( "ClientObj" );
+        if ( _player_num >= 1 ) {
+            _connected = true;
+        }
+    }
 
 	/// <summary>
 	/// 未接続時の描画
@@ -120,8 +131,12 @@ public class NetworkMNG : MonoBehaviour {
 		return _server_state;
 	}
 
-	public GameObject getPlayerObj( ) {
-		return _player_obj;
+	public GameObject getHostObj( ) {
+		return _host_obj;
+	}
+    
+	public GameObject getClientObj( ) {
+		return _client_obj;
 	}
 
 }

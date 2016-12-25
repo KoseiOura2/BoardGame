@@ -61,6 +61,7 @@ namespace Common {
     public struct NETWORK_FIELD_DATA {
         public SCENE scene;
         public MAIN_GAME_PHASE main_game_phase;
+        public bool change_scene;
     };
 
     /// <summary>
