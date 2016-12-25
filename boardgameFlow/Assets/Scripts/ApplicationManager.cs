@@ -7,14 +7,14 @@ public class ApplicationManager : MonoBehaviour {
 
 	[ SerializeField ]
 	private SCENE _scene = SCENE.SCENE_CONNECT;
-	//[ SerializeField ]
-	//private NetWorkManager _network_manager;
+	[ SerializeField ]
+	private NetworkMNG _network_manager;
 	[ SerializeField ]
 	private PhaseManager _phase_manager;
 	[ SerializeField ]
 	private CardManager _card_manager;
-    [ SerializeField ]
-    private NetworkGUIControll _network_gui_controll;
+    //[ SerializeField ]
+    //private NetworkGUIControll _network_gui_controll;
     [ SerializeField ]
     private NetworkData _network_data;
 
@@ -27,10 +27,16 @@ public class ApplicationManager : MonoBehaviour {
 	// Use this for initialization
 	void Start( ) {
 		try {
-			//_network_manager = GameObject.Find( "NetworkManager" ).GetComponent< NetWorkManager >( );
-			_phase_manager        = GameObject.Find( "PhaseManager" ).GetComponent< PhaseManager >( );
-			_card_manager         = GameObject.Find( "CardManager" ).GetComponent< CardManager >( );
-			_network_gui_controll = GameObject.Find( "NetworkManager" ).GetComponent< NetworkGUIControll >( );
+			if ( _network_manager == null ) {
+				_network_manager = GameObject.Find( "NetworkManager" ).GetComponent< NetworkMNG >( );
+			}
+			if ( _phase_manager == null ) {
+				_phase_manager = GameObject.Find( "PhaseManager" ).GetComponent< PhaseManager >( );
+			}
+			if ( _card_manager == null ) {
+				_card_manager = GameObject.Find( "CardManager" ).GetComponent< CardManager >( );
+			}
+			//_network_gui_controll = GameObject.Find( "NetworkManager" ).GetComponent< NetworkGUIControll >( );
 		}
 		catch {
 			Debug.Log( "参照に失敗しました。" );
@@ -41,7 +47,7 @@ public class ApplicationManager : MonoBehaviour {
 	void Update( ) {
 		try {
 			if ( _network_data == null ) {
-				_network_data = GameObject.FindWithTag( "NetworkPlayer" ).GetComponent< NetworkData >( );
+				_network_data = _network_manager.getPlayerObj( ).GetComponent< NetworkData >( );
 			}
 		}
 		catch {
@@ -51,7 +57,7 @@ public class ApplicationManager : MonoBehaviour {
 		// デバッグ
 		if ( _network_data != null && !_network_data.isLocal( ) ) {
 			_scene = _network_data.getRecvData( ).scene;
-			_phase_manager.setPhase (_network_data.getRecvData ().main_game_phase);
+			_phase_manager.setPhase(_network_data.getRecvData ().main_game_phase);
 		}
 
 		switch( _scene ) {
@@ -74,10 +80,10 @@ public class ApplicationManager : MonoBehaviour {
 	/// ConnectSceneの更新
 	/// </summary>
 	private void updateConnectScene( ) {
-		if ( /*_network_manager.isConnected( ) || */ Input.GetKeyDown( KeyCode.A ) ) {
+		if ( _network_manager.isConnected( ) ||  Input.GetKeyDown( KeyCode.A ) ) {
 			_scene = SCENE.SCENE_TITLE;
 			_scene_text.text = "SCENE_TITLE";
-			_network_gui_controll.setShowGUI( false );
+			//_network_gui_controll.setShowGUI( false );
 		}
 	}
 
@@ -203,7 +209,7 @@ public class ApplicationManager : MonoBehaviour {
 	/// ConnectSceneの描画
 	/// </summary>
 	private void drawConnectScene( ) {
-        /*
+        
 		if( !_network_manager.isConnected( ) ) {
 			_network_manager.noConnectDraw( );
 		}
@@ -211,7 +217,7 @@ public class ApplicationManager : MonoBehaviour {
 		if ( _network_manager.getServerState( ) == SERVER_STATE.STATE_HOST ) {
 			_network_manager.hostStateDraw( );
 		}
-        */
+        
 	}
 
 	/// <summary>

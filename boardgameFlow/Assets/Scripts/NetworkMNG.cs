@@ -5,18 +5,18 @@ using System.Net.Sockets;//必要です。
 using System.Net;//これもいるかもしれない
 using Common;
 
-public class NetWorkManager : NetworkBehaviour {
+public class NetworkMNG : MonoBehaviour {
 
 	//ファイヤーウォールを無効化してテスト
 	//ファイヤーウォールの接続を許可すること.
 	private GameObject _object_prefab;
 	private GameObject _object_prefab_2;
+	private GameObject _player_obj = null;
 	private string _ip   = "localhost";
 	private string _port = "5037";
 	private bool _connected = false;
 	[ SerializeField ]
 	private static IPAddress _ip_address;
-
 	[ SerializeField ]
 	private SERVER_STATE _server_state = SERVER_STATE.STATE_NONE;
 
@@ -32,8 +32,13 @@ public class NetWorkManager : NetworkBehaviour {
 
 	// Use this for initialization
 	void Start( ) {
-		// IPアドレスの取得
-		_ip_address = IPAddress.Parse( Network.player.ipAddress );
+		try {
+			// IPアドレスの取得
+			_ip_address = IPAddress.Parse( Network.player.ipAddress );
+		}
+		catch {
+			Debug.Log( "IPの取得に失敗しまいました" );
+		}
 	}
 
 	// Update is called once per frame
@@ -44,8 +49,9 @@ public class NetWorkManager : NetworkBehaviour {
 	//サーバ立ち上げ時に呼ばれるメソッド
 	public void OnServerInitialized( ) {
 		try {
+			_connected = true;
 			//ネットワーク内のすべてのPCでインスタンス化が行われるメソッド
-			Network.Instantiate( _object_prefab, _object_prefab.transform.position, _object_prefab.transform.rotation, 1 );
+			_player_obj = ( GameObject )Network.Instantiate( _object_prefab, _object_prefab.transform.position, _object_prefab.transform.rotation, 1 );
 		}
 		catch {
 			Debug.Log( "サーバーの初期化に失敗しました" );
@@ -56,7 +62,7 @@ public class NetWorkManager : NetworkBehaviour {
 	public void OnConnectedToServer( ) {
 		try {
 			_connected = true;
-			Network.Instantiate( _object_prefab_2, _object_prefab_2.transform.position, _object_prefab_2.transform.rotation, 2 );
+			_player_obj = ( GameObject )Network.Instantiate( _object_prefab_2, _object_prefab_2.transform.position, _object_prefab_2.transform.rotation, 2 );
 		}
 		catch {
 			Debug.Log( "サーバーの接続に失敗しました" );
@@ -114,4 +120,9 @@ public class NetWorkManager : NetworkBehaviour {
 		return _server_state;
 	}
 
+	public GameObject getPlayerObj( ) {
+		return _player_obj;
+	}
+
 }
+

@@ -49,9 +49,9 @@
      <Compile Include="Assets\Scripts\ApplicationManager.cs" />
      <Compile Include="Assets\Scripts\CardManager.cs" />
      <Compile Include="Assets\Scripts\Common.cs" />
-     <Compile Include="Assets\Scripts\NetWorkManager.cs" />
      <Compile Include="Assets\Scripts\NetworkData.cs" />
      <Compile Include="Assets\Scripts\NetworkGUIControll.cs" />
+     <Compile Include="Assets\Scripts\NetworkMNG.cs" />
      <Compile Include="Assets\Scripts\PhaseManager.cs" />
  <Reference Include="UnityEngine.UI">
  <HintPath>/Applications/Unity/Unity.app/Contents/UnityExtensions/Unity/GUISystem/UnityEngine.UI.dll</HintPath>
