@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.Networking;
 using System.Collections;
+using System.Collections.Generic;
 using System.Net.Sockets;//必要です。
 using System.Net;//これもいるかもしれない
 using Common;
@@ -16,7 +17,7 @@ public class NetworkMNG : MonoBehaviour {
 	private GameObject _object_prefab;
 	private GameObject _object_prefab_2;
 	private GameObject _host_obj   = null;
-	private GameObject _client_obj = null;
+	private List< GameObject > _client_obj = new List< GameObject >( );
 	private string _ip   = "localhost";
 	private string _port = "5037";
 	private bool _connected = false;
@@ -36,6 +37,7 @@ public class NetworkMNG : MonoBehaviour {
 		try {
 			// IPアドレスの取得
 			_ip_address = IPAddress.Parse( Network.player.ipAddress );
+            GetComponent< NetworkManager >( ).networkAddress = _ip_address.ToString( );
 		}
 		catch {
 			Debug.Log( "IPの取得に失敗しまいました" );
@@ -44,9 +46,15 @@ public class NetworkMNG : MonoBehaviour {
 
 	// Update is called once per frame
 	void Update( ) {
+        if ( _host_obj == null ) {
+            _host_obj = GameObject.FindWithTag( "HostObj" );
+        }
 
+        
+	    // IPアドレスの取得
+        GetComponent< NetworkManager >( ).networkAddress = _ip_address.ToString( );
 	}
-
+    /*
 	//サーバ立ち上げ時に呼ばれるメソッド
 	public void OnServerInitialized( ) {
 		try {
@@ -57,24 +65,19 @@ public class NetworkMNG : MonoBehaviour {
 			Debug.Log( "サーバーの初期化に失敗しました" );
 		}
 	}
+    */
 
-	//サーバに接続したときに呼ばれるメソッド
-	public void OnConnectedToServer( ) {
-		try {
-			_connected = true;
-			_client_obj = ( GameObject )Network.Instantiate( _object_prefab_2, _object_prefab_2.transform.position, _object_prefab_2.transform.rotation, 2 );
-		}
-		catch {
-			Debug.Log( "サーバーの接続に失敗しました" );
-		}
-	}
 
     /// <summary>
     /// サーバー時新しいクライアント接続で呼ばれる
     /// </summary>
     void OnPlayerConnected( ) {
         _player_num++;
-        _client_obj = GameObject.FindWithTag( "ClientObj" );
+        foreach( GameObject obj in GameObject.FindGameObjectsWithTag( "ClientObj" ) ) {
+            if ( !_client_obj.Contains( obj ) ) {
+                _client_obj.Add( obj );
+            }
+        }
         if ( _player_num >= 1 ) {
             _connected = true;
         }
@@ -135,8 +138,12 @@ public class NetworkMNG : MonoBehaviour {
 		return _host_obj;
 	}
     
-	public GameObject getClientObj( ) {
-		return _client_obj;
+	public GameObject getClientObj( int num ) {
+        if ( num >= _client_obj.Count ) {
+            return null;
+        }
+
+		return _client_obj[ num ];
 	}
 
 }

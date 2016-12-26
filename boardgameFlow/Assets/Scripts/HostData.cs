@@ -5,13 +5,24 @@ using Common;
 
 public class HostData : NetworkBehaviour {
 
+    // networkdata
 	[ SyncVar ]
+    public int _network_scene_data;
+	[ SyncVar ]
+    public int _network_phase_data;
+	[ SyncVar ]
+    public bool _network_change_scene;
+
     private NETWORK_FIELD_DATA _field_data;
 
     void Awake( ) {
-        _field_data.scene = SCENE.SCENE_CONNECT;
-        _field_data.main_game_phase = MAIN_GAME_PHASE.GAME_PHASE_NO_PLAY;
-        _field_data.change_scene = false;
+        _network_scene_data = 0;
+        _network_phase_data = 0;
+        _network_change_scene = false;
+
+        _field_data.scene = ( SCENE )_network_scene_data;
+        _field_data.main_game_phase = ( MAIN_GAME_PHASE )_network_phase_data;
+        _field_data.change_scene = _network_change_scene;
     }
 
 	// Use this for initialization
@@ -31,6 +42,7 @@ public class HostData : NetworkBehaviour {
     public void setSendScene( SCENE data ) {
         if ( isLocalPlayer ) {
             _field_data.scene = data;
+            _network_scene_data = ( int )data;
         }
     }
 
@@ -41,6 +53,7 @@ public class HostData : NetworkBehaviour {
 	public void setSendGamePhase( MAIN_GAME_PHASE data ) {
 		if ( isLocalPlayer ) {
 			_field_data.main_game_phase = data;
+            _network_phase_data = ( int )data;
 		}
 	}
 
@@ -50,6 +63,7 @@ public class HostData : NetworkBehaviour {
     /// <param name="flag"></param>
     public void setSendChangeFieldScene( bool flag ) { 
         _field_data.change_scene = flag;
+        _network_change_scene = flag;
     }
 
 	public NETWORK_FIELD_DATA getRecvData( ) {
@@ -57,13 +71,21 @@ public class HostData : NetworkBehaviour {
 		return _field_data;
 	}
 
+    [ Client ]
     public bool isChangeFieldScene( ) {
-        if ( _field_data.change_scene == true ) {
+        if ( _network_change_scene == true ) {
             _field_data.change_scene = false;
+            _field_data.scene = ( SCENE )_network_scene_data;
+            CmdChangeScene( );
             return true;
         }
 
         return false;
+    }
+
+    [ Command ]
+    private void CmdChangeScene( ) {
+        _network_change_scene = false;
     }
 
 	public bool isLocal( ) {

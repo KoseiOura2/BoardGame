@@ -15,8 +15,8 @@ public class ApplicationManager : MonoBehaviour {
 	private CardManager _card_manager;
     //[ SerializeField ]
     //private NetworkGUIControll _network_gui_controll;
-    //[ SerializeField ]
-    //private HostData _host_data;
+    [ SerializeField ]
+    private HostData _host_data;
     [SerializeField]
     private ClientData _client_data;
 
@@ -47,9 +47,9 @@ public class ApplicationManager : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update( ) {
-		//if ( _host_data == null && _network_manager.getHostObj( ) != null ) {
-        //    _host_data = _network_manager.getHostObj( ).GetComponent< HostData >( );
-		//}
+		if ( _host_data == null && _network_manager.getHostObj( ) != null ) {
+            _host_data = _network_manager.getHostObj( ).GetComponent< HostData >( );
+		}
 
         if ( _client_data == null && _network_manager.getClientObj( ) != null ) {
             _client_data = _network_manager.getClientObj( ).GetComponent< ClientData >( );
@@ -63,8 +63,8 @@ public class ApplicationManager : MonoBehaviour {
 		}
         */
         // シーンの切り替え
-        if ( _network_manager.isConnected( ) ) {
-            //sceneChange( );
+        if ( _host_data != null ) {
+            sceneChange( );
         }
 
 		switch( _scene ) {
@@ -82,12 +82,13 @@ public class ApplicationManager : MonoBehaviour {
 			break;
 		}
 	}
-    /*
+    
     void sceneChange( ) { 
         if ( _host_data.isChangeFieldScene( ) ) {
+            Debug.Log( _host_data.getRecvData( ).scene.ToString( ) );
             _scene = _host_data.getRecvData( ).scene;
         }
-    }*/
+    }
 
 	/// <summary>
 	/// ConnectSceneの更新
@@ -171,7 +172,7 @@ public class ApplicationManager : MonoBehaviour {
 	private void drawConnectScene( ) {
         
 		if( !_network_manager.isConnected( ) && _network_manager.getServerState( ) != SERVER_STATE.STATE_HOST ) {
-			_network_manager.noConnectDraw( );
+			//_network_manager.noConnectDraw( );
 		}
 
 		if ( _network_manager.getServerState( ) == SERVER_STATE.STATE_HOST ) {

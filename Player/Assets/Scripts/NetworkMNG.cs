@@ -44,18 +44,10 @@ public class NetworkMNG : MonoBehaviour {
 
 	// Update is called once per frame
 	void Update( ) {
+        if ( _host_obj == null ) {
+            _host_obj = GameObject.FindWithTag( "HostObj" );
+        }
 
-	}
-
-	//サーバ立ち上げ時に呼ばれるメソッド
-	public void OnServerInitialized( ) {
-		try {
-			//ネットワーク内のすべてのPCでインスタンス化が行われるメソッド
-			//_host_obj = ( GameObject )Network.Instantiate( _object_prefab, _object_prefab.transform.position, _object_prefab.transform.rotation, 1 );
-		}
-		catch {
-			Debug.Log( "サーバーの初期化に失敗しました" );
-		}
 	}
 
 	//サーバに接続したときに呼ばれるメソッド
