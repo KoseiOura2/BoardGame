@@ -12,8 +12,6 @@ public class Card : MonoBehaviour {
     //マウス位置座標をキャンバスの座標に変換した位置座標
     private Vector3 ViewportPosition;
 
-    private SelectArea selectArea;
-
     //this is the ui element
     public RectTransform UI_Element;
 
@@ -22,9 +20,6 @@ public class Card : MonoBehaviour {
 
     // Use this for initialization
     void Awake () {
-        //セレクトエリアの取得
-        GameObject selectAreaObject = GameObject.FindGameObjectWithTag("SelectArea");
-        selectArea = selectAreaObject.GetComponent<SelectArea>();
         //キャンバスのRectTransformの取得
         GameObject canvasObj = GameObject.Find("Canvas");
         CanvasRect = canvasObj.GetComponent<RectTransform>();
@@ -53,12 +48,24 @@ public class Card : MonoBehaviour {
     }
     public void onPointUp()
     {
-        bool Areain = selectArea.getSelectAreaFlag();
-        if (Areain)
+        //Rayを飛ばす距離
+        float maxDistance = 10;
+        //現在のマウスカーソルの場所を取得
+        Vector3 mousePos = Input.mousePosition;
+        //マウスカーソルの場所へ飛ばすRayの生成
+        Ray ray = Camera.main.ScreenPointToRay(mousePos);
+        RaycastHit hit = new RaycastHit();
+        //ヒットしたなら
+        if (Physics.Raycast(ray, out hit)) { 
+            //セレクトエリアに当たったなら特定の位置へ移動
+            if (hit.collider.tag == "SelectArea"){
+                Debug.Log("エリア内にいます");
+            } else {
+                //特定の場所以外で離した場合は初期位置へ
+                UI_Element.anchoredPosition = initCardPosition;
+            }
+        }else
         {
-            Debug.Log("エリア内にいます");
-        }
-        else {
             //特定の場所以外で離した場合は初期位置へ
             UI_Element.anchoredPosition = initCardPosition;
         }
