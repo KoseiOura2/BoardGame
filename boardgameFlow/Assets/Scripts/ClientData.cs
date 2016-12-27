@@ -5,18 +5,22 @@ using Common;
 
 public class ClientData : NetworkBehaviour {
 
-	[ SyncVar ]
-    private NETWORK_FIELD_DATA _field_data;
+	[ SerializeField ]
+	private SERVER_STATE _server_state = SERVER_STATE.STATE_NONE;
+
+	private NETWORK_PLAYER_DATA _player_data;
 
     void Awake( ) {
-        _field_data.scene = SCENE.SCENE_CONNECT;
-        _field_data.main_game_phase = MAIN_GAME_PHASE.GAME_PHASE_NO_PLAY;
-        _field_data.change_scene = false;
+		_player_data.changed_scene = false;
     }
 
 	// Use this for initialization
 	void Start( ) {
-	
+		if ( isLocalPlayer == true ) {
+			_server_state = SERVER_STATE.STATE_HOST;
+		} else {
+			_server_state = SERVER_STATE.STATE_CLIANT;
+		}
 	}
 	
 	// Update is called once per frame
@@ -25,41 +29,22 @@ public class ClientData : NetworkBehaviour {
 	}
 
     /// <summary>
-    /// scenedataのセット
-    /// </summary>
-    /// <param name="data"></param>
-    public void setSendScene( SCENE data ) {
-        if ( isLocalPlayer ) {
-            _field_data.scene = data;
-        }
-    }
-
-	/// <summary>
-	/// phasedataのセット
-	/// </summary>
-	/// <param name="data"></param>
-	public void setSendGamePhase( MAIN_GAME_PHASE data ) {
-		if ( isLocalPlayer ) {
-			_field_data.main_game_phase = data;
-		}
-	}
-
-    /// <summary>
     /// シーンが変化したかどうかを設定
     /// </summary>
     /// <param name="flag"></param>
-    public void setSendChangeFieldScene( bool flag ) { 
-        _field_data.change_scene = flag;
+	[ Command ]
+    public void CmdSetSendChangedScene( bool flag ) { 
+		_player_data.changed_scene = flag;
+
     }
 
-	public NETWORK_FIELD_DATA getRecvData( ) {
-		
-		return _field_data;
+	public NETWORK_PLAYER_DATA getRecvData( ) {
+		return _player_data;
 	}
 
     public bool isChangeFieldScene( ) {
-        if ( _field_data.change_scene == true ) {
-            _field_data.change_scene = false;
+		if ( _player_data.changed_scene == true ) {
+			_player_data.changed_scene = false;
             return true;
         }
 
@@ -69,5 +54,9 @@ public class ClientData : NetworkBehaviour {
 	public bool isLocal( ) {
 
 		return isLocalPlayer;
+	}
+
+	public SERVER_STATE getServerState( ) {
+		return _server_state;
 	}
 }

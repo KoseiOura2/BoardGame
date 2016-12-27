@@ -63,8 +63,11 @@ public class ApplicationManager : MonoBehaviour {
 		}
         */
         // シーンの切り替え
-        if ( _host_data != null ) {
+        if ( _host_data != null && _client_data != null ) {
             sceneChange( );
+            if ( _client_data.getRecvData( ).changed_scene == true && _host_data.getRecvData( ).change_scene == false ) {
+                _client_data.CmdSetSendChangedScene( false );
+            }
         }
 
 		switch( _scene ) {
@@ -87,6 +90,7 @@ public class ApplicationManager : MonoBehaviour {
         if ( _host_data.isChangeFieldScene( ) ) {
             Debug.Log( _host_data.getRecvData( ).scene.ToString( ) );
             _scene = _host_data.getRecvData( ).scene;
+            _client_data.CmdSetSendChangedScene( true );
         }
     }
 
@@ -161,7 +165,7 @@ public class ApplicationManager : MonoBehaviour {
 	}
 
 	public void OnGUI( ) {
-		if ( _scene == SCENE.SCENE_CONNECT ) {
+		if ( _scene == SCENE.SCENE_CONNECT && _host_data != null ) {
 			drawConnectScene( );
 		}
 	}
@@ -171,11 +175,11 @@ public class ApplicationManager : MonoBehaviour {
 	/// </summary>
 	private void drawConnectScene( ) {
         
-		if( !_network_manager.isConnected( ) && _network_manager.getServerState( ) != SERVER_STATE.STATE_HOST ) {
+		if( !_network_manager.isConnected( ) && _host_data.getServerState( ) != SERVER_STATE.STATE_HOST ) {
 			//_network_manager.noConnectDraw( );
 		}
 
-		if ( _network_manager.getServerState( ) == SERVER_STATE.STATE_HOST ) {
+		if ( _host_data.getServerState( ) == SERVER_STATE.STATE_HOST ) {
 			_network_manager.hostStateDraw( );
 		}
         

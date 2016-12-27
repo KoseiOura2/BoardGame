@@ -68,7 +68,6 @@ namespace Common {
     /// 通信で送受信するプレイヤー側のデータ
     /// </summary>
     public struct NETWORK_PLAYER_DATA {
-        public SCENE scene;
-        public MAIN_GAME_PHASE main_game_phase;
+		public bool changed_scene;
     };
 }

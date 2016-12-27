@@ -12,8 +12,6 @@ public class NetworkMNG : MonoBehaviour {
 	//ファイヤーウォールの接続を許可すること.
 	[ SerializeField ]
 	private static IPAddress _ip_address;
-	[ SerializeField ]
-	private SERVER_STATE _server_state = SERVER_STATE.STATE_NONE;
 	private GameObject _object_prefab;
 	private GameObject _object_prefab_2;
 	private GameObject _host_obj   = null;
@@ -50,6 +48,13 @@ public class NetworkMNG : MonoBehaviour {
             _host_obj = GameObject.FindWithTag( "HostObj" );
         }
 
+		if ( _client_obj.Count < 1 ) { // 後でなおすToDo
+			foreach( GameObject obj in GameObject.FindGameObjectsWithTag( "ClientObj" ) ) {
+				if ( !_client_obj.Contains( obj ) ) {
+					_client_obj.Add( obj );
+				}
+			}
+		}
         
 	    // IPアドレスの取得
         GetComponent< NetworkManager >( ).networkAddress = _ip_address.ToString( );
@@ -94,13 +99,11 @@ public class NetworkMNG : MonoBehaviour {
 		if( GUI.Button( new Rect( 10, 10, 90, 90 ), "Client" ) ) {    
 			//( hostのIPアドレス,hostが接続を受け入れているポート番号 )
 			Network.Connect( _ip, int.Parse( _port ) ); 
-			_server_state = SERVER_STATE.STATE_CLIANT;
 		}
 		if( GUI.Button( new Rect( 10, 110, 90, 90 ), "Server" ) ) {    
 			//(接続可能人数,接続を受け入れるポート番号,NATのパンチスルー機能の設定 )
 			Network.InitializeServer( 10, int.Parse( _port ), false ) ;
 			_ip = _ip_address.ToString( );
-			_server_state = SERVER_STATE.STATE_HOST;
 		}
 	}
 
@@ -128,10 +131,6 @@ public class NetworkMNG : MonoBehaviour {
 	/// <returns><c>true</c>, if connected was ised, <c>false</c> otherwise.</returns>
 	public bool isConnected( ) {
 		return _connected;
-	}
-
-	public SERVER_STATE getServerState( ) {
-		return _server_state;
 	}
 
 	public GameObject getHostObj( ) {

@@ -5,52 +5,58 @@ using Common;
 
 public class ClientData : NetworkBehaviour {
 
-    [SyncVar]
-    private NETWORK_FIELD_DATA _field_data;
+	[ SerializeField ]
+	private SERVER_STATE _server_state = SERVER_STATE.STATE_NONE;
+
+	private NETWORK_PLAYER_DATA _player_data;
 
     void Awake( ) {
-        _field_data.scene = SCENE.SCENE_CONNECT;
-        _field_data.main_game_phase = MAIN_GAME_PHASE.GAME_PHASE_NO_PLAY;
-        _field_data.change_scene = false;
+		_player_data.changed_scene = false;
     }
 
-    // Use this for initialization
-    void Start( ) {
-
-    }
-
-    // Update is called once per frame
-    void Update( ) {
-
-    }
+	// Use this for initialization
+	void Start( ) {
+		if ( isLocalPlayer == true ) {
+			_server_state = SERVER_STATE.STATE_CLIANT;
+		} else {
+			_server_state = SERVER_STATE.STATE_HOST;
+		}
+	}
+	
+	// Update is called once per frame
+	void Update( ) {
+	
+	}
 
     /// <summary>
-    /// scenedataのセット
+    /// シーンが変化したかどうかを設定
     /// </summary>
-    /// <param name="data"></param>
-    public void setSendScene( SCENE data ) {
-        if ( isLocalPlayer ) {
-            _field_data.scene = data;
+    /// <param name="flag"></param>
+	[ Command ]
+    public void CmdSetSendChangedScene( bool flag ) { 
+		_player_data.changed_scene = flag;
+
+    }
+
+	public NETWORK_PLAYER_DATA getRecvData( ) {
+		return _player_data;
+	}
+
+    public bool isChangeFieldScene( ) {
+		if ( _player_data.changed_scene == true ) {
+			_player_data.changed_scene = false;
+            return true;
         }
+
+        return false;
     }
 
-    /// <summary>
-    /// phasedataのセット
-    /// </summary>
-    /// <param name="data"></param>
-    public void setSendGamePhase( MAIN_GAME_PHASE data ) {
-        if ( isLocalPlayer ) {
-            _field_data.main_game_phase = data;
-        }
-    }
+	public bool isLocal( ) {
 
-    public NETWORK_FIELD_DATA getRecvData( ) {
+		return isLocalPlayer;
+	}
 
-        return _field_data;
-    }
-
-    public bool isLocal( ) {
-
-        return isLocalPlayer;
-    }
+	public SERVER_STATE getServerState( ) {
+		return _server_state;
+	}
 }
