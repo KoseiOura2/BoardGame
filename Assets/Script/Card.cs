@@ -48,8 +48,6 @@ public class Card : MonoBehaviour {
     }
     public void onPointUp()
     {
-        //Rayを飛ばす距離
-        float maxDistance = 10;
         //現在のマウスカーソルの場所を取得
         Vector3 mousePos = Input.mousePosition;
         //マウスカーソルの場所へ飛ばすRayの生成
