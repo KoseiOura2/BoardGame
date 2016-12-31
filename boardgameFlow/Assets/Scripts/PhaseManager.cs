@@ -26,29 +26,33 @@ public class PhaseManager : MonoBehaviour {
     /// 受け取ったデータによってMainGamePhaseを切り替える
     /// </summary>
     public void changeMainGamePhase( ) {
-        // ThrowDicePhaseへ移行
+        // DicePhaseへ移行
         if ( Input.GetKeyDown( KeyCode.F1 ) ) {
-            changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_THROW_DICE, "ThrowDicePhase" );
+            changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_DICE, "DicePhase" );
         }
-        // Assignmentへ移行
+        // Moveへ移行
         if ( Input.GetKeyDown( KeyCode.F2 ) ) {
-            changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_ASSIGNMENT_BUFF, "Assignment" );
+            changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_MOVE_CHARACTER, "MovePhase" );
         }
-        // ResultBattleへ移行
+        // DrawCardへ移行
         if ( Input.GetKeyDown( KeyCode.F3 ) ) {
-            changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_RESULT_BATTLE, "ResultBattle" );
+            changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_DRAW_CARD, "DrawCardPhase" );
         }
-        // MoveCharacterへ移行
+        // Battleへ移行
         if ( Input.GetKeyDown( KeyCode.F4 ) ) {
-            changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_MOVE_CHARACTER, "MoveCharacter" );
+            changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_BATTLE, "BattlePhase" );
         }
-        // FieldGimmickへ移行
+        // Resultへ移行
         if ( Input.GetKeyDown( KeyCode.F5 ) ) {
-            changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_FIELD_GIMMICK, "FieldGimmick" );
+            changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_RESULT, "ResultPhase" );
+        }
+        // Eventへ移行
+        if ( Input.GetKeyDown( KeyCode.F6 ) ) {
+            changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_EVENT, "EventPhase" );
         }
         // Finishへ移行
-        if ( Input.GetKeyDown( KeyCode.F6 ) ) {
-            changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_FINISH, "Finish" );
+        if ( Input.GetKeyDown( KeyCode.F7 ) ) {
+            changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_FINISH, "FinishPhase" );
         }
     }
 

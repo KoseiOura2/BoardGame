@@ -29,11 +29,12 @@ namespace Common {
     /// </summary>
     public enum MAIN_GAME_PHASE {
         GAME_PHASE_NO_PLAY,
-        GAME_PHASE_THROW_DICE,
-        GAME_PHASE_ASSIGNMENT_BUFF,
-        GAME_PHASE_RESULT_BATTLE,
+        GAME_PHASE_DICE,
         GAME_PHASE_MOVE_CHARACTER,
-        GAME_PHASE_FIELD_GIMMICK,
+        GAME_PHASE_DRAW_CARD,
+        GAME_PHASE_BATTLE,
+        GAME_PHASE_RESULT,
+        GAME_PHASE_EVENT,
         GAME_PHASE_FINISH,
     };
 
@@ -70,4 +71,35 @@ namespace Common {
     public struct NETWORK_PLAYER_DATA {
 		public bool changed_scene;
     };
+
+    /// <summary>
+    /// 座標データ
+    /// </summary>
+	public struct POSS_DATA {
+		public int index;	// インデックス
+		public uint x;	// X座標
+        public uint y;	// Y座標
+        public uint z;	// Z座標
+        public string type; //マスタイプ
+        public int nomalValue; //値１
+        public int trapValue; //値２
+        public string environment; //環境情報
+	}
+
+    /// <summary>
+    /// ファイルデータ
+    /// </summary>
+	public struct FILE_DATA {
+		public POSS_DATA[ ] mass; // マス配列
+	}
+
+    /// <summary>
+    /// 現在のプレイヤーの行動順
+    /// </summary>
+    public enum PLAYER_ORDER {
+        PLAYER_ONE,
+        PLAYER_TWO,
+        MAX_PLAYER_NUM,
+        NO_PLAYER
+    }
 }

@@ -5,26 +5,56 @@ using Common;
 
 public class ApplicationManager : MonoBehaviour {
 
-	[ SerializeField ]
-	private SCENE _scene = SCENE.SCENE_CONNECT;
+
 	[ SerializeField ]
 	private NetworkMNG _network_manager;
 	[ SerializeField ]
 	private PhaseManager _phase_manager;
+    [ SerializeField ]
+    private FileManager _file_manager;
 	[ SerializeField ]
 	private CardManager _card_manager;
+    [ SerializeField ]
+    private PlayerManager _player_manager;
+    [ SerializeField ]
+    private StageManager _stage_manager;
+
     [ SerializeField ]
     private NetworkGUIControll _network_gui_controll;
     [ SerializeField ]
     private HostData _host_data;
     [ SerializeField ]
     private ClientData _client_data;
-
+    
+	[ SerializeField ]
+	private SCENE _scene = SCENE.SCENE_CONNECT;
 	public Text _scene_text;
+    private int _event_count = 0;        //イベントを起こす回数   
 
     void Awake( ) {
+        if ( isError( ) ) {
+            return;
+        }
         DontDestroyOnLoad( this.gameObject );
+
+        _player_manager.init( _file_manager.getMassCoordinate( 0 ) );
 	}
+
+    
+    bool isError( ) {
+        bool error = false;
+
+        if ( !_file_manager ) {
+            try {
+                error = true;
+                _file_manager = FileManager.getInstance( );
+            } catch {
+                Debug.LogError( "ファイルマネージャーのインスタンスが取得できませんでした。" );
+            }
+        }
+
+        return error;
+    }
 
 	// Use this for initialization
 	void Start( ) {
@@ -46,7 +76,7 @@ public class ApplicationManager : MonoBehaviour {
 	}
 	
 	// Update is called once per frame
-	void Update( ) {
+	void FixedUpdate( ) {
 		if ( _host_data == null && _network_manager.getHostObj( ) != null ) {
 			_host_data = _network_manager.getHostObj( ).GetComponent< HostData >( );
 		}
@@ -136,24 +166,35 @@ public class ApplicationManager : MonoBehaviour {
 
 		// フェイズごとの更新
 		switch( _phase_manager.getMainGamePhase( ) ) {
-		case MAIN_GAME_PHASE.GAME_PHASE_THROW_DICE:
+		case MAIN_GAME_PHASE.GAME_PHASE_DICE:
 			updateDicePhase( );
-			break;
-		case MAIN_GAME_PHASE.GAME_PHASE_ASSIGNMENT_BUFF:
-			updateBuffPhase( );
-			break;
-		case MAIN_GAME_PHASE.GAME_PHASE_RESULT_BATTLE:
-			updateResultPhase( );
 			break;
 		case MAIN_GAME_PHASE.GAME_PHASE_MOVE_CHARACTER:
 			updateMovePhase( );
 			break;
-		case MAIN_GAME_PHASE.GAME_PHASE_FIELD_GIMMICK:
-			updateGimmickPhase( );
+		case MAIN_GAME_PHASE.GAME_PHASE_DRAW_CARD:
+			updateDrawPhase( );
+			break;
+		case MAIN_GAME_PHASE.GAME_PHASE_BATTLE:
+			updateButtlePhase( );
+			break;
+		case MAIN_GAME_PHASE.GAME_PHASE_RESULT:
+			updateResultPhase( );
+			break;
+		case MAIN_GAME_PHASE.GAME_PHASE_EVENT:
+			updateEventPhase( );
 			break;
 		case MAIN_GAME_PHASE.GAME_PHASE_FINISH:
 			updateFinishPhase( );
 			break;
+		}
+
+        // playerの環境情報を更新
+		for ( int i = 0; i < _player_manager.getPlayerNum( ); i++ ) {
+			if ( _file_manager.getEnvironment( _player_manager.getPlayerCount( i ) ) != "" ) {
+				string environment = _file_manager.getEnvironment ( _player_manager.getPlayerCount( i ) );
+				_player_manager.playerEnvironment( environment, i );
+			}
 		}
 	}
 
@@ -175,9 +216,23 @@ public class ApplicationManager : MonoBehaviour {
 	}
 
 	/// <summary>
+	/// MovePhaseの更新
+	/// </summary>
+	private void updateMovePhase( ) {
+		_player_manager.movePhaseUpdate( getResideCount( _player_manager.getPlayerID( ) ) );
+	}
+
+	/// <summary>
 	/// BuffPhaseの更新
 	/// </summary>
-	private void updateBuffPhase( ) {
+	private void updateDrawPhase( ) {
+		
+	}
+
+	/// <summary>
+	/// GimmickPhaseの更新
+	/// </summary>
+	private void updateButtlePhase( ) {
 		
 	}
 
@@ -189,18 +244,19 @@ public class ApplicationManager : MonoBehaviour {
 	}
 
 	/// <summary>
-	/// MovePhaseの更新
+	/// EventPhaseの更新
 	/// </summary>
-	private void updateMovePhase( ) {
-		
+	private void updateEventPhase( ) {
+		eventPhaseUpdate( );
 	}
-
-	/// <summary>
-	/// GimmickPhaseの更新
-	/// </summary>
-	private void updateGimmickPhase( ) {
-		
-	}
+    
+    public void eventPhaseUpdate( ) {
+		Debug.Log( "マスイベント！" );
+		if (_event_count < 2) {
+			_stage_manager.massEvent( _player_manager.getPlayerCount( _player_manager.getPlayerID( ) ) );
+			_event_count++;
+		}
+    }
 
 	/// <summary>
 	/// FinishPhaseの更新
@@ -242,5 +298,14 @@ public class ApplicationManager : MonoBehaviour {
 	public SCENE getScene( ) {
 		return _scene;
 	}
+
+    /// <summary>
+    /// ゴールまでどれくらい残っているか取得
+    /// </summary>
+    /// <param name="i"></param>
+    /// <returns></returns>
+    public int getResideCount( int i ) {
+        return _file_manager.getMassCount( ) - 1 - _player_manager.getPlayerCount( i );
+    }
 
 }
