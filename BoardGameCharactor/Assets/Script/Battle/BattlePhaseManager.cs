@@ -3,7 +3,7 @@ using System.Collections;
 using System;
 using Common;
 
-public class BattleManager : MonoBehaviour {
+public class BattlePhaseManager : MonoBehaviour {
 
 	//フェイズ毎の初期設定フラグ
 	bool initial_setting = false;
@@ -107,5 +107,10 @@ public class BattleManager : MonoBehaviour {
 
 		//次のフェイズに移行
 		_current_Phase++;
+	}
+
+	public MAIN_GAME_PHASE GetMainGamePhase(){
+		//現在のフェイズを返します
+		return _current_Phase;
 	}
 }

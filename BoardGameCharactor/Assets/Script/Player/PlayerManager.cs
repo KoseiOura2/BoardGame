@@ -1,54 +1,14 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
+using System.Collections.Generic;
 using Common;
 
-public class PlayerManager : MonoBehaviour {
+public class PlayerManager : Manager<PlayerManager> {
 
-	//フェイズ毎の初期設定フラグ
-	private bool initial_setting = false;
+	private GameObject _card_Template_Prefab;
 
-	//通信データ送信フラグ
-	private bool netData_Send = false;
-
-	//通信データ受信フラグ
-	private bool netData_Reception = false;
-
-	//現在のフェイズ
-	private MAIN_GAME_PHASE _current_Phase;
-
-	//ボタンの座標を設定
-	private Vector3 _setDiceButton_Position = new Vector3 (0, -120, 0);
-
-	//ダイスフェイズのメッセージ
-	private string DicePhaseMessage = "ダイスを振ります\n(今回はダイスのアニメーションはありません)";
-
-	//フィールド画面に誘導するメッセージ
-	private string FieldNaviMessage = "上画面に注目してください";
-
-	//対戦相手を待つ際のメッセージ
-	private string PlayerWaitMessage = "対戦相手を待っています";
-
-	//画面を暗くするためのプレハブ
-	public GameObject _blackOut_Prefab;
-
-	//テキストウィンドウプレハブ
-	public GameObject _textWindow_Prefab;
-
-	//ダイスボタンのプレハブ
-	public GameObject _diceButton_Prefab;
-
-	//ダイスの数値の情報
-	private int _diceData;
-
-	//テキストウィンドウを取得
-	private GameObject _textWindow;
-
-	//ダイスボタンの取得
-	private GameObject _diceButton;
-
-	//画面を暗くするオブジェクトを取得
-	private GameObject _blackOut;
+	public GameObject _player_Baloon_Prefab;
 
 	//キャンバスを取得
 	public GameObject _canvas_Root;
@@ -56,234 +16,167 @@ public class PlayerManager : MonoBehaviour {
 	//経過時間を取得
 	private float nowTime;
 
+	//プレイヤーの現在地
+	private int _playerHere;
+
 	//待ち時間を設定
 	public float intervalTime = 3.0f;
 
-	private bool nowSceneLoad;
-
-	public FadeManager _fade_Manager;
+	public FileManager _file_manager;
 
 	public PlayerNetWorkManager _player_NetWork_Manager;
 
-	void Awake () {
+	//1Pか2Pか
+	private PLAYER isPlayer; 
 
-		//最初のフェイズをロード
-		_current_Phase = MAIN_GAME_PHASE.GAME_PHASE_NO_PLAY;
-
-		//初期数値を0に
-		_diceData = 0;
-
-		//画面推移中かどうか
-		nowSceneLoad = false;
-
-		//画面を暗くするオブジェクトを用意
-		_blackOut = canvasSet(_blackOut_Prefab, Vector3.zero); 
-		_blackOut.GetComponent<RectTransform> ().sizeDelta = Vector2.zero;
-		_blackOut.SetActive (false);
-		//テキストウィンドウをセット
-		_textWindow = canvasSet(_textWindow_Prefab, Vector3.zero); 
-		textSet (_textWindow, DicePhaseMessage );
-		_textWindow.SetActive (false);
-		//サイコロボタンをセット
-		_diceButton = canvasSet(_diceButton_Prefab, _setDiceButton_Position );
-		_diceButton.SetActive (false);
-
-
-	}
-	
-	// Update is called once per frame
-	void Update () {
-		if (!nowSceneLoad) {
-			//フェイズ読み込み
-			phaseLoad ();
-		}
+	//手札情報
+	private struct HAND_DATA
+	{
+		public List< CARD_DATA > select_list; 
+		public List< CARD_DATA > hand_list;
+		public List < GameObject > hand_Obj;
 	}
 
-	void phaseLoad (){
-		//現在のシーンによって読み込みを変える
-		switch (_current_Phase) {
-
-		case MAIN_GAME_PHASE.GAME_PHASE_NO_PLAY:
-			WaitPhase ();
-			break;
-
-		case MAIN_GAME_PHASE.GAME_PHASE_THROW_DICE:
-			dicePhase ();
-			break;
-
-		case MAIN_GAME_PHASE.GAME_PHASE_MOVE_CHARACTER:
-			movePhase ();
-			break;
-
-		default:
-			Debug.LogError ("errorCase:" + _current_Phase);
-			break;
-		}
+	//プレイヤーオブジェクト情報
+	private enum PlayerObjects {
+		EnemyLabel,
+		EnemyHand,
+		EnemyStates,
+		GoalNavi,
+		PlayerLabel
 	}
 
-	void WaitPhase(){
-		//プレイヤーの判別を行う
-		if (!initial_setting) {
-			Debug.Log ("プレイヤー画面です");
+	private FILE_DATA _file_data = new FILE_DATA ();
+	private HAND_DATA _hand_data = new HAND_DATA( );
 
-			//ここでプレイヤーの判別を行い、プレイヤーラベルの色とテキスト表示をエネミーの表示とテキストの表示を変更します
-
-			//初期設定完了フラグ
-			initial_setting = true;
-
-		} else {
-			//通信データを送信していないのなら通信データを送信する
-			if (!netData_Send) {
-				netData_Send = _player_NetWork_Manager.netDataAcross (MAIN_GAME_PHASE.GAME_PHASE_NO_PLAY );
-			}
-			//受信フラグが立っていないのなら実行受信フラグが立ったならフェイズをチェンジ
-			if (!netData_Reception) {
-				netData_Reception = _player_NetWork_Manager.netDataReceipt ();
-				DebugReceipt ();
-			} else {
-				phaseChange (false);
-			}
-		}
+	// Awake関数の代わり
+	protected override void initialize( ) {
+		PlayerInitialize( );
 	}
 
-	void dicePhase (){
-		//初期設定が済んでなければ行う
-		if (!initial_setting) {
-			Debug.Log ("ダイスフェイズです");
-			//画面を暗くする
-			_blackOut.SetActive(true);
-			//テキストウィンドウを表示
-			_textWindow.SetActive(true); 
-			textSet (_textWindow, DicePhaseMessage );
-			//サイコロボタンを表示
-			_diceButton.SetActive(true);
-			//初期設定完了フラグ
-			initial_setting = true;
-		} else {
-			//ダイスデータに1以上の数値が入り通信データを送信していないのなら通信データを送信する
-			if (_diceData > 0 && !netData_Send) {
-				//3秒ほど経過後通信データを投げる
-				nowTime += Time.deltaTime;
-				if (nowTime >= intervalTime) {
-					//経過時間をリセット
-					nowTime = 0;
-					netData_Send = _player_NetWork_Manager.netDataAcross (MAIN_GAME_PHASE.GAME_PHASE_THROW_DICE);
-				} 
-			} else if( netData_Send ){
-				textSet (_textWindow, PlayerWaitMessage );
-			}
-			//受信フラグが立っていないのなら実行受信フラグが立ったならフェイズをチェンジ
-			if (!netData_Reception) {
-				netData_Reception = _player_NetWork_Manager.netDataReceipt ();
-				DebugReceipt ();
-			} else {
-				phaseChange ( true );
-			}
-		}
-	}
-
-	void movePhase(){
-		//初期設定が済んでなければ行う
-		if (!initial_setting) {
-			Debug.Log ("移動フェイズです");
-			//黒背景
-			_blackOut.SetActive(true);
-			//フィールド画面に誘導するテキストを表示
-			_textWindow.SetActive(true); 
-			textSet ( _textWindow, FieldNaviMessage );
-			//初期設定完了フラグ
-			initial_setting = true;
-		} else {
-			//受信フラグが立っていないのなら実行、受信フラグが立ったならフェイズをチェンジ
-			if (!netData_Reception) {
-				netData_Reception = _player_NetWork_Manager.netDataReceipt ();
-				DebugReceipt ();
-			} else {
-				phaseChange (true);
-			}
-		}
-	}
-
-	public void SetDiceData( int GetDiceData ){
-		_diceButton.SetActive (false);
-		textSet (_textWindow, GetDiceData + "が出ました！" );
-		switch (GetDiceData){
-		case 1:
-		case 2:
-			_diceData = 1;
-			break;
-		case 3:
-		case 4:
-			_diceData = 2;
-			break;
-		case 5:
-		case 6:
-			_diceData = 3;
-			break;
-		default:
-			break;
-		}
-	}
-
-	void phaseChange( bool isBlackOut ){
-		//初期設定フラグをoffに
-		initial_setting = false;
-
-		//受信、送信フラグをoffに
-		netData_Send = false;
-		netData_Reception = false;
-
-		//生成したオブジェクトを非表示に
-		if ( _diceButton.activeSelf ) {
-			_diceButton.SetActive (false);
+	void PlayerInitialize(){
+		//リストを初期化
+		_hand_data.hand_list = new List< CARD_DATA >( );
+		_hand_data.hand_Obj = new List< GameObject >( );
+		if (_card_Template_Prefab == null) {
+			_card_Template_Prefab = (GameObject)Resources.Load ("Resources/Prefab/Card");
 		}
 
-		if (_textWindow.activeSelf) {
-			_textWindow.SetActive (false);
-		}
+		//自身がプレイヤー1か2か取得
+		isPlayer = _player_NetWork_Manager.getPlayer();
 
-		if (!isBlackOut) {
-			if (_blackOut.activeSelf) {
-				_blackOut.SetActive (false);
+		//自身がmapのどの場所にいるかを設定（初期はスタート地点にいるのでStartを探します）
+		for (int i = 0; i < _file_manager.getMassCount (); i++) {
+			_file_data = _file_manager.getMapData ();
+			if (_file_data.mass [i].type == "start") {
+				_playerHere = i;
 			}
 		}
 
-		//次のフェイズに移行する。プレイヤーの移動フェイズで次のフェイズに移行した場合バトルシーンへ
-		if (_current_Phase == MAIN_GAME_PHASE.GAME_PHASE_MOVE_CHARACTER ) {
-			nowSceneLoad = true;
-			_fade_Manager.FadeStart ("Battle");
-		} else {
-			switch (_current_Phase) {
-			case MAIN_GAME_PHASE.GAME_PHASE_NO_PLAY:
-				_current_Phase = MAIN_GAME_PHASE.GAME_PHASE_THROW_DICE;
+	}
+
+	//プレイヤーの現在地を取得する関数の生成
+	public int getPlayerHere(){
+		return _playerHere;
+	}
+
+	//自身の手札リストの中のカードを生成して表示を行う
+	public void setHandCardCreate(){
+		//生成出来ていなければ生成をする
+		if (_hand_data.hand_list == null) {
+			_hand_data.hand_list = new List< CARD_DATA > ();
+		}
+		if (_hand_data.hand_Obj == null) {
+			_hand_data.hand_Obj = new List< GameObject > ();
+		}
+
+		//自身の初期手札数文を生成
+		for (int i = 0; i < _hand_data.hand_list.Count; i++) {
+			//プレハブを生成してリストのオブジェクトに入れる
+			_hand_data.hand_Obj.Add ((GameObject)Instantiate (_card_Template_Prefab));
+			//カード画像設定
+			_hand_data.hand_Obj [i].GetComponent<Card> ().SetCardImage ( _hand_data.hand_list[i].type );
+			//手札の枚数によって表示位置をずらしていく
+		}
+	}
+
+	public void setPlayerObject( ){
+		//タグでプレイヤーによって変わる部分を取得しfor文で処理を行う
+		//もう一つ忘れない内に相手の手札やステータスに変動がおきた場合変更を加えるシステムを作ります（ここでUpdate）で関数でうまくやりましょう？
+		GameObject[] PlayerChanges = GameObject.FindGameObjectsWithTag("PlayerChange");
+		for(int i = 0; i < PlayerChanges.Length; i++){
+			switch (PlayerChanges [i].name) {
+			case "EnemyLabel":
+				//テキストを取得
+				Text _enemyText = PlayerChanges [i].GetComponentInChildren<Text> ();
+				Debug.Log (isPlayer);
+				//対応したプレイヤーによって色とテキストを変える
+				if (isPlayer == PLAYER.PLAYER_1) {
+					_enemyText.text = "2P";
+					PlayerChanges [i].GetComponent<Image> ().color = new Color (0, 1, 0);
+				} else {
+					_enemyText.text = "1P";
+					PlayerChanges [i].GetComponent<Image> ().color = new Color (1, 0, 0);
+				}
 				break;
-			case MAIN_GAME_PHASE.GAME_PHASE_THROW_DICE:
-				_current_Phase = MAIN_GAME_PHASE.GAME_PHASE_MOVE_CHARACTER;
+			case "PlayerLabel":
+				//テキストを取得
+				Text _playerText = PlayerChanges [i].GetComponentInChildren<Text> ();
+				//対応したプレイヤーによって色とテキストを変える
+				if (isPlayer == PLAYER.PLAYER_1) {
+					_playerText.text = "1P";
+					PlayerChanges [i].GetComponent<Image> ().color = new Color (1, 0, 0);
+				} else {
+					_playerText.text = "2P";
+					PlayerChanges [i].GetComponent<Image> ().color = new Color (0, 1, 0);
+				}
 				break;
 			}
 		}
 	}
 
-	void DebugReceipt(){
-		//仮でPキーを押したら通信完了をさせる
-		if (Input.GetKeyDown (KeyCode.P)) {
-			netData_Reception = true;
+	public void SetEnemyObject(){
+		//テキストと手札を取得
+		GameObject[] EnemyChanges = GameObject.FindGameObjectsWithTag("EnemyChange");
+		for(int i = 0; i < EnemyChanges.Length; i++){
+			switch (EnemyChanges [i].name) {
+			case "EnemyHand":
+				//テキストを取得
+				Text _enemyHandText = EnemyChanges [i].GetComponentInChildren<Text> ();
+				//相手の手札を取得
+				Debug.Log(_player_NetWork_Manager.getEnemyHand());
+				int _enemyHand = _player_NetWork_Manager.getEnemyHand();
+				_enemyHandText.text = "相手の手札　" + _enemyHand + "枚";
+				break;
+			case "EnemyStates":
+				//テキストを取得
+				Text _enemyStatusText = EnemyChanges [i].GetComponentInChildren<Text> ();
+				//相手のステータスを取得
+				int _enemyStatus = _player_NetWork_Manager.getEnemyStatus();
+				_enemyStatusText.text = "ステータス " + _enemyStatus;
+				break;
+			}
 		}
 	}
 
-	GameObject canvasSet( GameObject _setPrefab, Vector3 _setPosition ){
-		//セットされたプレハブの生成、座標の修正、キャンパスの中に生成します
-		GameObject _Setobj = ( GameObject )Instantiate( _setPrefab );
-		_Setobj.transform.SetParent (_canvas_Root.transform);
-		_Setobj.GetComponent<RectTransform> ().anchoredPosition3D = _setPosition;
-		_Setobj.GetComponent<RectTransform> ().localScale = Vector3.one;
+	public void SetPlayerMove( int SetMoveNumber ){
 
-		return _Setobj;
+		//プレイヤーの吹き出しを設定
+
+		//移動数分をプレイヤーの現在地に
+		_playerHere += SetMoveNumber;
+
+		//プレイヤーオブジェクトを対応したマスのところに移動(数値分Xをずらす)
+		//_start_Mass_X + (count * _mass_While_X), _start_Mass_Y, 0 );
+
+		//フィールドの最大値から現在の値を
+		int FiledPos =_playerHere - _file_manager.getMassCount();
+		GameObject GoalNavi = GameObject.FindWithTag ("GoalNavi");
+		Text GoalText = GoalNavi.GetComponentInChildren<Text> ();
+		GoalText.text = "宝まで " + FiledPos + "マス";
 	}
 
-	void textSet( GameObject _textWindow, string _Message ){
-		//テキストを指定したメッセージに変更します
-		Text _windowText = _textWindow.GetComponentInChildren<Text>();
-		_windowText.text = _Message;
-	}
+	//指定されたカードをリストに入れ生成を行う
+
+	//持続効果をセットする関数
 }

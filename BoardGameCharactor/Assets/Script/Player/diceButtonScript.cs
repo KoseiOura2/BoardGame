@@ -3,18 +3,18 @@ using System.Collections;
 
 public class diceButtonScript : MonoBehaviour {
 
-	private GameObject _playerManager;
+	private GameObject _playerPhaseManager;
 
 	// Use this for initialization
 	void Awake () {
-		if (_playerManager == null) {
-			_playerManager = GameObject.Find ("PlayerManager");
+		if (_playerPhaseManager == null) {
+			_playerPhaseManager = GameObject.Find ("PlayerPhaseManager");
 		}
 	}
 
 	public void onDiceButtonPush(){
 		//1から3までをランダムで取得
 		int DiceNumber = Random.Range (1, 6);
-		_playerManager.GetComponent<PlayerManager> ().SetDiceData (DiceNumber);
+		_playerPhaseManager.GetComponent<PlayerPhaseManager> ().SetDiceData (DiceNumber);
 	}
 }

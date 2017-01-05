@@ -26,6 +26,7 @@ namespace Common {
         GAME_PHASE_FIELD_GIMMICK,
         GAME_PHASE_FINISH,
 		GAME_PHASE_DROW,
+		GAME_PHASE_FIELD_INDUCTION,
     };
 
 	public enum CARD_TYPE {
@@ -74,4 +75,9 @@ namespace Common {
 		public int trapValue; //値２
 		public string environment; //環境情報
 	}
+
+	public enum PLAYER {
+		PLAYER_1,
+		PLAYER_2,
+	};
 }
