@@ -3,8 +3,7 @@ using UnityEngine.UI;
 using System.Collections;
 using Common;
 
-public class ApplicationManager : MonoBehaviour {
-
+public class ApplicationManager : Manager< ApplicationManager > {
 
 	[ SerializeField ]
 	private NetworkMNG _network_manager;
@@ -28,16 +27,23 @@ public class ApplicationManager : MonoBehaviour {
     
 	[ SerializeField ]
 	private SCENE _scene = SCENE.SCENE_CONNECT;
+
 	public Text _scene_text;
+	public Text[ ] _reside_text = new Text[ ( int )PLAYER_ORDER.MAX_PLAYER_NUM ];    //残りマス用テキスト
+	public Text[ ] _environment = new Text[ ( int )PLAYER_ORDER.MAX_PLAYER_NUM ];    //環境情報用テキスト
     private int _event_count = 0;        //イベントを起こす回数   
 
-    void Awake( ) {
+	// Awake関数の代わり
+	protected override void initialize( ) {
+		init( );
+	}
+
+    void init( ) {
         if ( isError( ) ) {
             return;
         }
-        DontDestroyOnLoad( this.gameObject );
 
-        _player_manager.init( _file_manager.getMassCoordinate( 0 ) );
+		referManager( );
 	}
 
     
@@ -58,6 +64,16 @@ public class ApplicationManager : MonoBehaviour {
 
 	// Use this for initialization
 	void Start( ) {
+		/*
+		if ( isError( ) ) {
+			return;
+		}
+		*/
+
+		referManager( );
+	}
+
+	void referManager( ) {
 		try {
 			if ( _network_manager == null ) {
 				_network_manager = GameObject.Find( "NetworkManager" ).GetComponent< NetworkMNG >( );
@@ -67,6 +83,12 @@ public class ApplicationManager : MonoBehaviour {
 			}
 			if ( _card_manager == null ) {
 				_card_manager = GameObject.Find( "CardManager" ).GetComponent< CardManager >( );
+			}
+			if ( _player_manager == null ) {
+				_player_manager = GameObject.Find( "PlayerManager" ).GetComponent< PlayerManager >( );
+			}
+			if ( _stage_manager == null ) {
+				_stage_manager = GameObject.Find( "StageManager" ).GetComponent< StageManager >( );
 			}
 			_network_gui_controll = GameObject.Find( "NetworkManager" ).GetComponent< NetworkGUIControll >( );
 		}
@@ -123,6 +145,7 @@ public class ApplicationManager : MonoBehaviour {
 		if ( _network_manager.isConnected( ) ||  Input.GetKeyDown( KeyCode.A ) ) {
 			_scene = SCENE.SCENE_TITLE;
 			_scene_text.text = "SCENE_TITLE";
+			_network_gui_controll.setShowGUI( false );
 			_host_data.setSendScene( _scene );
             _host_data.setSendChangeFieldScene( true );
 		}
@@ -135,6 +158,17 @@ public class ApplicationManager : MonoBehaviour {
 		if ( Input.GetKeyDown( KeyCode.A ) ) {
 			_scene = SCENE.SCENE_GAME;
 			_scene_text.text = "SCENE_GAME";
+
+			_player_manager.init( _file_manager.getMassCoordinate( 0 ) );
+
+			//マスの生成
+			for( int i = 0; i < _file_manager.getMassCount( ); i++ ) {
+				int num = _stage_manager.getMassCount( );
+				_stage_manager.massCreate( num, _file_manager.getFileData( ).mass[ num ].type, _file_manager.getMassCoordinate( num ) );
+				_stage_manager.increaseMassCount( );
+			}
+			_stage_manager.init( );
+
 			_host_data.setSendScene( _scene );
             _host_data.setSendChangeFieldScene( true );
 			_network_gui_controll.setShowGUI( false );
@@ -190,10 +224,10 @@ public class ApplicationManager : MonoBehaviour {
 		}
 
         // playerの環境情報を更新
-		for ( int i = 0; i < _player_manager.getPlayerNum( ); i++ ) {
+		for ( int i = 0; i < ( int )PLAYER_ORDER.MAX_PLAYER_NUM; i++ ) {
 			if ( _file_manager.getEnvironment( _player_manager.getPlayerCount( i ) ) != "" ) {
 				string environment = _file_manager.getEnvironment ( _player_manager.getPlayerCount( i ) );
-				_player_manager.playerEnvironment( environment, i );
+				playerEnvironment( environment, i );
 			}
 		}
 	}
@@ -219,7 +253,11 @@ public class ApplicationManager : MonoBehaviour {
 	/// MovePhaseの更新
 	/// </summary>
 	private void updateMovePhase( ) {
-		_player_manager.movePhaseUpdate( getResideCount( _player_manager.getPlayerID( ) ) );
+		_player_manager.movePhaseUpdate( getResideCount( _player_manager.getPlayerID( ) ),
+			_stage_manager.getTargetMass( _player_manager.getPlayerCount( _player_manager.getPlayerID( ) ) + 1 ),
+			_stage_manager.getTargetMass( _player_manager.getPlayerCount( _player_manager.getPlayerID( ) ) - 1 )  );
+		// ゴールまでの残りマスを表示
+		resideCount( );
 	}
 
 	/// <summary>
@@ -252,11 +290,56 @@ public class ApplicationManager : MonoBehaviour {
     
     public void eventPhaseUpdate( ) {
 		Debug.Log( "マスイベント！" );
-		if (_event_count < 2) {
-			_stage_manager.massEvent( _player_manager.getPlayerCount( _player_manager.getPlayerID( ) ) );
+		if ( _event_count < 2 ) {
+			massEvent( _player_manager.getPlayerCount( _player_manager.getPlayerID( ) ) );
 			_event_count++;
 		}
     }
+
+	/// <summary>
+	/// マスイベントの処理
+	/// </summary>
+	/// <param name="i">The index.</param>
+	public void massEvent( int i ) {
+		switch ( _file_manager.getFileData( ).mass[ i ].type ) {
+		case "draw":
+			int value = _file_manager.getMassValue( i )[ 0 ];
+			Debug.Log( "カード" + value + "ドロー" );
+			for ( int j = 0; j < value; j++ ) {
+				_card_manager.distributeCard( );
+			}
+			//_file_manager.getMassValue( i );
+			break;
+		case "trap1":
+			Debug.Log( "トラップ発動" );
+			Debug.Log( "カード" + _file_manager.getMassValue( i )[ 1 ] + "捨てる" );
+			Debug.Log( _file_manager.getMassValue( i )[ 0 ] + "マス進む" );
+			_player_manager.setAdvanceFlag( true );
+			_player_manager.setLimitValue( _file_manager.getMassValue( i )[ 0 ] );
+			_file_manager.getMassValue( i );
+			break;
+		case "trap2":
+			Debug.Log( "トラップ発動");
+			Debug.Log( "カード"+_file_manager.getMassValue( i )[ 0 ] + "ドロー");
+			Debug.Log( _file_manager.getMassValue( i )[ 1 ] + "マス戻る" );
+			_player_manager.setAdvanceFlag( false );
+			_player_manager.setLimitValue( _file_manager.getMassValue( i )[ 1 ] );
+			_file_manager.getMassValue( i );
+			break;
+		case "advance":
+			Debug.Log(_file_manager.getMassValue( i )[ 0 ] + "マス進む" );
+			_player_manager.setAdvanceFlag( true );
+			_player_manager.setLimitValue( _file_manager.getMassValue( i )[ 0 ] );
+			_file_manager.getMassValue( i );
+			break;
+		case "event":
+			Debug.Log( "イベント発生!!" );
+			break;
+		case "goal":
+			Debug.Log( "Goal!!" );
+			break;
+		}       
+	}
 
 	/// <summary>
 	/// FinishPhaseの更新
@@ -299,6 +382,25 @@ public class ApplicationManager : MonoBehaviour {
 		return _scene;
 	}
 
+
+	/// <summary>
+	/// プレイヤーの現在位置（環境）
+	/// </summary>
+	/// <param name="environment"></param>
+	/// <param name="num"></param>
+	public void playerEnvironment( string environment, int num ) {
+		_environment[ num ].text = "プレイヤー" + ( num + 1 ) + ":" + environment;
+	}
+
+	/// <summary>
+	/// ゴールまでの残りマスを表示
+	/// </summary>
+	public void resideCount( ) {
+		for ( int i = 0; i < ( int )PLAYER_ORDER.MAX_PLAYER_NUM; i++ ) {
+			_reside_text[ i ].text = "プレイヤー" + i.ToString( ) + "：残り" + getResideCount( i ).ToString( ) + "マス";
+		}
+	}
+
     /// <summary>
     /// ゴールまでどれくらい残っているか取得
     /// </summary>
@@ -307,5 +409,9 @@ public class ApplicationManager : MonoBehaviour {
     public int getResideCount( int i ) {
         return _file_manager.getMassCount( ) - 1 - _player_manager.getPlayerCount( i );
     }
+
+	public void setEventCount( int count ) {
+		_event_count = count;
+	}
 
 }

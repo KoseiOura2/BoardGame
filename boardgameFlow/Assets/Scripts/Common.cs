@@ -92,7 +92,7 @@ namespace Common {
 	public struct FILE_DATA {
 		public POSS_DATA[ ] mass; // マス配列
 	}
-
+		
     /// <summary>
     /// 現在のプレイヤーの行動順
     /// </summary>

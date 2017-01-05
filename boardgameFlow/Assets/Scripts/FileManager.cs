@@ -35,10 +35,9 @@ public class FileManager : Manager< FileManager > {
 		/// データの存在確認
 		/// </summary>
 		/// <returns></returns>
-        
 		public bool isData( ) {
 			bool frag = false;
-			frag = ( _data.mass != null )? true : false;		    // マス配列の確認
+			frag = ( _data.mass != null ) ? true : false;		    // マス配列の確認
 			return frag;
 		}
 
@@ -162,7 +161,7 @@ public class FileManager : Manager< FileManager > {
 	/// ファイルデータの取得
 	/// </summary>
 	/// <returns></returns>
-	private FILE_DATA getFileData( ) {
+	public FILE_DATA getFileData( ) {
 		FILE_DATA data = new FILE_DATA( );
 		if ( _file.isData( ) ) {
 			data = _file.getData( );
@@ -171,17 +170,9 @@ public class FileManager : Manager< FileManager > {
 		return data;
 	}
 
-    /// <summary>
-	/// マップデータの取得
-	/// </summary>
-	/// <returns></returns>
-	public FILE_DATA getMapData( ) {
-		return getFileData( );
-	}
-
     public Vector3 getMassCoordinate( int i )
     {
-        Vector3 massCoordinate = new Vector3( getMapData( ).mass[ i ].x, getMapData( ).mass[ i ].y, getMapData( ).mass[ i ].z );
+		Vector3 massCoordinate = new Vector3( getFileData( ).mass[ i ].x, getFileData( ).mass[ i ].y, getFileData( ).mass[ i ].z );
         return massCoordinate;
     }
 
@@ -193,6 +184,7 @@ public class FileManager : Manager< FileManager > {
         return count;
 
     }
+
     public int[ ] getMassValue( int i ) {
         int[ ] massValue = new int[ 2 ] {
             getNomalValue( i ),
@@ -202,18 +194,17 @@ public class FileManager : Manager< FileManager > {
     }
 
 	public string getEnvironment( int i ) {
-		if (getMapData ().mass [i].environment != null) {
-			return getMapData ().mass [i].environment;
+		if ( getFileData( ).mass[ i ].environment != null ) {
+			return getFileData( ).mass[ i ].environment;
 		}
-		throw new System.InvalidOperationException ("");
+		throw new System.InvalidOperationException( "" );
     }
 
-    public int getNomalValue( int i )
-    {
+    public int getNomalValue( int i ) {
         return getFileData( ).mass[ i ].nomalValue;
     } 
-    public int getTrapValue( int i )
-    {
+
+    public int getTrapValue( int i ) {
         return getFileData( ).mass[ i ].trapValue;
     }
 }

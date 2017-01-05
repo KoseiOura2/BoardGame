@@ -9,6 +9,10 @@ using UnityEngine.UI;
 public class DebugManager : MonoBehaviour {
 
 	private InputField _input_field;
+	[ SerializeField ]
+	ApplicationManager _application_manager;
+	[ SerializeField ]
+	PlayerManager _player_manager;
  
     /// <summary>
     /// Startメソッド
@@ -27,22 +31,18 @@ public class DebugManager : MonoBehaviour {
     /// </summary>
     public void SetPlayerID( ) {
         if( _input_field.text != "" ) {
-            /*
-            _player_manager._set_player_id = int.Parse( _input_field.text );
+			_player_manager.setPlayerID( int.Parse( _input_field.text ) );
             InitInputField( );
-            */
         }
     }
 
     public void SetLimitValue( ) {
-        /*
         if( _input_field.text != "" ) {
-            _player_manager._limit_value = int.Parse( _input_field.text );
-            _player_manager._advance_flag = true;
-            _player_manager._event_count = 0;
+			_player_manager.setLimitValue( int.Parse( _input_field.text ) );
+			_player_manager.setAdvanceFlag( true );
+			_application_manager.setEventCount( 0 );
             InitInputField( );
         }
-        */ 
     }
  
     /// <summary>
