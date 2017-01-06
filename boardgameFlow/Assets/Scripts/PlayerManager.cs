@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine.UI;
 using Common;
 
@@ -9,21 +10,23 @@ public class PlayerManager : MonoBehaviour {
     public float ADJUST_FIRST_PLAYER_Z_POS = 0.1f;          // プレイヤー初期生成時の修正Z座標
 
     [ SerializeField ]
-    private PLAYER_ORDER _player_order;           // どのプレイヤーが行動中か
+    private PLAYER_ORDER _player_order;     // どのプレイヤーが行動中か
+	private PLAYER_DATA[ ] _players = new PLAYER_DATA[ ( int )PLAYER_ORDER.MAX_PLAYER_NUM ];
 
     private Vector3 _start_position;        //現在位置を設定
-    private Vector3 _end_position;          //到達位置を設定
+	private Vector3 _end_position;          //到達位置を設定
+	private GameObject[ ] _player_pref = new GameObject[ ( int )PLAYER_ORDER.MAX_PLAYER_NUM ];    //プレイヤーのモデルをロード
     private GameObject _target;             //進む先のターゲットを設定
-	private GameObject[ ] _players = new GameObject[ ( int )PLAYER_ORDER.MAX_PLAYER_NUM ];    //プレイヤーを設定
-	private int[ ] _player_advance_count = new int[ ( int )PLAYER_ORDER.MAX_PLAYER_NUM ];    //プレイヤーの進んでいる回数
-    private int _set_player_id = -1;    //動かすプレイヤーID設定
-    private int _limit_value = -1;      //進むマス数設定
+	private GameObject _firstest_player;
+	private GameObject _latest_player;
+
+    private int _player_id     = -1;    //動かすプレイヤーID設定
+    private int _limit_value   = -1;    //進むマス数設定
     private float _time = 1;
     private float _startTime;
-    private bool _move_flag = false;        //動かす時のフラグが立っているか
-    private bool _advance_flag = true;   //前に進むか後ろに戻るか
+    private bool _move_flag    = false;     //動かす時のフラグが立っているか
+    private bool _advance_flag = true;   	//前に進むか後ろに戻るか
 
-	private GameObject[ ] _player_pref = new GameObject[ ( int )PLAYER_ORDER.MAX_PLAYER_NUM ];    //プレイヤーのモデルをロード
     /// <summary>
     /// 初期化
     /// </summary>
@@ -36,8 +39,8 @@ public class PlayerManager : MonoBehaviour {
         createObj( first_pos );
         // playerオブジェクトの色替え
         
-        _players[ 0 ].GetComponent< Renderer>( ).material.color = Color.magenta;
-        _players[ 1 ].GetComponent< Renderer>( ).material.color = Color.green;
+        _players[ 0 ].obj.GetComponent< Renderer>( ).material.color = Color.magenta;
+        _players[ 1 ].obj.GetComponent< Renderer>( ).material.color = Color.green;
 
     }
     
@@ -61,9 +64,9 @@ public class PlayerManager : MonoBehaviour {
                     break;
             }
 
-            _players[ i ] = ( GameObject )Instantiate( _player_pref[ i ], first_pos, Quaternion.identity );
-            _players[ i ].transform.parent = transform;
-            _players[ i ].name = "Player" + i;
+			_players[ i ].obj = ( GameObject )Instantiate( _player_pref[ i ], first_pos, Quaternion.identity );
+            _players[ i ].obj.transform.parent = transform;
+            _players[ i ].obj.name = "Player" + i;
         }
     }
 
@@ -79,7 +82,7 @@ public class PlayerManager : MonoBehaviour {
 
     // MovePhaseの更新
 	public void movePhaseUpdate( int count, GameObject advance_pos, GameObject back_pos ) {
-		if ( _limit_value > 0 && _set_player_id > -1 ) {
+		if ( _limit_value > 0 && _player_id > -1 ) {
 			if ( !_move_flag ) {
 				setTargetPos( count, ref advance_pos, ref back_pos );
 			} else {
@@ -88,9 +91,10 @@ public class PlayerManager : MonoBehaviour {
 		} else if ( _limit_value == 0 ) {
 			_limit_value--;
 		} else {
-			_set_player_id = -1;
+			_player_id = -1;
 			_target = null;
 		}
+		dicisionTopAndLowestPlayer (  );
     }
 
 	/// <summary>
@@ -101,14 +105,14 @@ public class PlayerManager : MonoBehaviour {
 	/// <param name="back_pos">Back position.</param>
 	private void setTargetPos( int count, ref GameObject advance_pos, ref GameObject back_pos ) {
         if ( _time <= 0 ) {
-            _players[ _set_player_id ].transform.position = _end_position;
-            _set_player_id = -1;
+			_players[ _player_id ].obj.transform.position = _end_position;
+			_player_id = -1;
             _target = null;
             return;
         }
 
         _startTime = Time.timeSinceLevelLoad;
-        _start_position = _players[ _set_player_id ].transform.position;
+		_start_position = _players[ _player_id ].obj.transform.position;
         if( _advance_flag ) {
 			_target = advance_pos;
         } else { 
@@ -119,27 +123,44 @@ public class PlayerManager : MonoBehaviour {
         _move_flag = true;
     }
 
-    //プレイヤーを動かす処理
+	/// <summary>
+	/// プレイヤーを動かす処理
+	/// </summary>
+	/// <param name="count">Count.</param>
     private void playerMove( int count ) {
         var diff = Time.timeSinceLevelLoad - _startTime;
 		if ( diff > _time ) {
-			_players[ _set_player_id ].transform.position = _end_position;
+			_players[ _player_id ].obj.transform.position = _end_position;
             _limit_value--;
-            if( _advance_flag ) _player_advance_count[ _set_player_id ]++;
-            else _player_advance_count[ _set_player_id ]--;
+			if ( _advance_flag ) {
+				_players[ _player_id ].advance_count++;
+			} else {
+				_players[ _player_id ].advance_count--;
+			}
             _move_flag = false;
-            _target = null;
+            _target    = null;
         }
 
 		var rate = diff / _time;
-		
-		_players[ _set_player_id ].transform.position = Vector3.Lerp ( _start_position, _end_position, rate );
+
+		_players[ _player_id ].obj.transform.position = Vector3.Lerp ( _start_position, _end_position, rate );
     }
 
+	public void dicisionTopAndLowestPlayer(  ) {
+
+		if ( getPlayerCount( 0 ) < getPlayerCount( 1 ) ) {
+			_players [ 0 ].rank = PLAYER_RANK.RANK_FIRST;
+			_players [ 1 ].rank = PLAYER_RANK.RANK_SECOND;
+		} else if ( getPlayerCount( 0 ) > getPlayerCount( 1 ) ) {
+			_players [ 0 ].rank = PLAYER_RANK.RANK_SECOND;
+			_players [ 1 ].rank = PLAYER_RANK.RANK_FIRST;
+		}
+
+	}
 
     //プレイヤーがどれくらい進んでいるかを取得
     public int getPlayerCount( int i ) {
-        return _player_advance_count[ i ];
+		return _players[ i ].advance_count;
     }
 
     /// <summary>
@@ -147,7 +168,7 @@ public class PlayerManager : MonoBehaviour {
     /// </summary>
     /// <returns></returns>
     public int getPlayerID( ) {
-        return _set_player_id;
+		return _player_id;
     }
 
 	public void setAdvanceFlag( bool flag ) {
@@ -159,7 +180,7 @@ public class PlayerManager : MonoBehaviour {
 	}
 
 	public void setPlayerID( int id ) {
-		_set_player_id = id;
+		_player_id = id;
 	}
 
 }

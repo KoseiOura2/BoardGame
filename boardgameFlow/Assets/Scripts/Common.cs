@@ -102,4 +102,22 @@ namespace Common {
         MAX_PLAYER_NUM,
         NO_PLAYER
     }
+
+	/// <summary>
+	/// プレイヤーの順位
+	/// </summary>
+	public enum PLAYER_RANK {
+		NO_RANK,
+		RANK_FIRST,
+		RANK_SECOND,
+	}
+
+	/// <summary>
+	/// プレイヤーのデータ
+	/// </summary>
+	public struct PLAYER_DATA {
+		public GameObject obj;
+		public PLAYER_RANK rank;
+		public int advance_count;	//プレイヤーの進んでいる回数
+	}
 }
