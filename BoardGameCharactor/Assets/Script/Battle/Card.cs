@@ -30,6 +30,9 @@ public class Card : MonoBehaviour {
 	//カードの画像を取得
 	private Sprite _cardSprite;
 
+	//自身がセレクトエリアに入っているか
+	private bool InSelectArea = false;
+
     // Use this for initialization
     void Awake () {
         //キャンバスのRectTransformの取得
@@ -108,7 +111,9 @@ public class Card : MonoBehaviour {
         //ヒットしたなら
         if (Physics.Raycast(ray, out hit)) { 
             //セレクトエリアに当たったなら特定の位置へ移動
-            if (hit.collider.tag == "SelectArea"){
+			if (hit.collider.tag == "SelectArea"){
+				//セレクトエリアに入ったかのフラグを取得
+				InSelectArea = true;
                 Debug.Log("エリア内にいます");
             } else {
                 //特定の場所以外で離した場合は初期位置へ
@@ -119,4 +124,9 @@ public class Card : MonoBehaviour {
             uI_Element.anchoredPosition = initCardPosition;
         }
     }
+
+	//セレクトエリアに入ってるかどうかを取得
+	public bool getInSelectArea(){
+		return InSelectArea;
+	}
 }
