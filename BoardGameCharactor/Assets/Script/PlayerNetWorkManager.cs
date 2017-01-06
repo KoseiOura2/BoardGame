@@ -32,7 +32,7 @@ public class PlayerNetWorkManager : Manager<PlayerNetWorkManager> {
 		_enemyStatus = 10;
 
 		//今回は仮でプレイヤー1にする
-		_currentPlayer = PLAYER.PLAYER_2;
+		_currentPlayer = PLAYER.PLAYER_1;
 	}
 
 	//通信から次のフェイズに進む要求が出た場合に受信フラグをONにする
@@ -84,7 +84,6 @@ public class PlayerNetWorkManager : Manager<PlayerNetWorkManager> {
 
 		case MAIN_GAME_PHASE.GAME_PHASE_FIELD_INDUCTION:
 			//フィールドに誘導をさせる
-			//プレイヤーのデータを渡す
 			break;
 		default:
 			Debug.LogError ("フェイズが読み込めませんでした");

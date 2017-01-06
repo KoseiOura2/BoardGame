@@ -179,7 +179,20 @@ public class PlayerManager : Manager<PlayerManager> {
 
 	public void SetSelectAreaCard( ){
 		//セレクトエリアに入っているなら手札リストからセレクトカードリストに移動して手札リストとオブジェクトリストから削除をする
-
+		//自身の現在の手札数を行う
+		for (int i = 0; i < _hand_data.hand_List.Count; i++) {
+			bool SelectAreaCheck = _hand_data.hand_Obj_List [i].GetComponent<Card> ().getInSelectArea();
+			//セレクトエリアに入っているか
+			if (SelectAreaCheck) {
+				//セレクトカードリストに追加
+				_hand_data.select_List.Add (_hand_data.hand_List [i]);
+				//オブジェクトをセレクトオブジェクトリストに追加
+				_hand_data.select_Obj_List.Add (_hand_data.hand_Obj_List [i]);
+				//手札リストとオブジェクトリストから削除
+				_hand_data.hand_List.RemoveAt (i);
+				_hand_data.hand_Obj_List.RemoveAt (i);
+			}
+		}
 	}
 
 	//指定されたカードをリストに入れ生成を行う
