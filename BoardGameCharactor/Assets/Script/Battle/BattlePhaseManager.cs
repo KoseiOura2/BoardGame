@@ -14,10 +14,36 @@ public class BattlePhaseManager : MonoBehaviour {
 	//画面を暗くするためのプレハブ
 	public GameObject _black_Out;
 
+	//シーン読み込み中かどうか
 	private bool nowSceneLoad;
+
+	//フェードマネージャーを取得
+	private FadeManager _fade_Manager;
+
+	//プレイヤーのネットワークマネージャーを取得
+	private PlayerNetWorkManager _player_NetWork_Manager;
+
+	//プレイヤーマネージャーを取得
+	private PlayerManager _player_Manager;
 
 	// Use this for initialization
 	void Awake () {
+
+		//各種マネージャーのロード
+		if (_fade_Manager == null) {
+			GameObject _fade_Manager_Obj = GameObject.Find ("FadeManager");
+			_fade_Manager = _fade_Manager_Obj.GetComponent<FadeManager> ();
+		}
+		if ( _player_NetWork_Manager == null){
+			GameObject _player_NetWork_Manager_Obj = GameObject.Find ("PlayerNetWorkManager");
+			_player_NetWork_Manager = _player_NetWork_Manager_Obj.GetComponent<PlayerNetWorkManager> ();
+		}
+		if ( _player_Manager == null){
+			GameObject _Player_Manager_Obj = GameObject.Find ("PlayerManager");
+			_player_Manager = _Player_Manager_Obj.GetComponent<PlayerManager> ();
+		}
+
+
 		//最初のフェイズをロード
 		_current_Phase = MAIN_GAME_PHASE.GAME_PHASE_DROW;
 
@@ -62,6 +88,13 @@ public class BattlePhaseManager : MonoBehaviour {
 		//初期設定が済んでなければ行う
 		if (!initial_setting) {
 			Debug.Log ("ドローフェイズです");
+			//ここでプレイヤーの判別を行い、プレイヤーラベルの色とテキスト表示をエネミーの表示とテキストの表示を変更します
+			//初期手札を生成
+			_player_Manager.setHandCardCreate();
+			//エネミーのテキストを設定
+			_player_Manager.SetEnemyObject();
+			//プレイヤーによって変わる部分を変更
+			_player_Manager.setPlayerObject();
 			//初期設定完了フラグ
 			initial_setting = true;
 		} else {

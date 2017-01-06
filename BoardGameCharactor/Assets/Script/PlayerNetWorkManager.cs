@@ -118,7 +118,8 @@ public class PlayerNetWorkManager : Manager<PlayerNetWorkManager> {
 	//通信からカードデータを貰い生成
 	public CARD_DATA cardDataReceipt(){
 		//今回は仮で直接カードマネージャーから生成してもらいます
-		CARD_DATA _DROW_CARD =  _card_manager.distributeCard ();
+		CARD_DATA _DROW_CARD = new CARD_DATA( );
+		_DROW_CARD =  _card_manager.distributeCard ();
 		return _DROW_CARD;
 	}
 

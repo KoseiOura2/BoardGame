@@ -39,8 +39,12 @@ public class Card : MonoBehaviour {
 		uI_Element = GetComponent<RectTransform>();
 
 		//バトルマネージャーの取得
-		GameObject _battle_Manager_Obj = GameObject.Find("BattlePhaseManager");
-		_battle_Phase_Manager = _battle_Manager_Obj.GetComponent<BattlePhaseManager>();
+		if (_battle_Phase_Manager == null) {
+			GameObject _battle_Manager_Obj = GameObject.Find ("BattlePhaseManager");
+			if (_battle_Manager_Obj != null) {
+				_battle_Phase_Manager = _battle_Manager_Obj.GetComponent<BattlePhaseManager> ();
+			}
+		}
 
         //初期位置を取得
 		initCardPosition = uI_Element.anchoredPosition;

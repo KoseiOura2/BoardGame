@@ -21,13 +21,13 @@ public class PlayerPhaseManager : MonoBehaviour {
 	public float intervalTime = 3.0f;
 
 	//フェードマネージャーを取得
-	public FadeManager _fade_Manager;
+	private FadeManager _fade_Manager;
 
 	//プレイヤーのネットワークマネージャーを取得
-	public PlayerNetWorkManager _player_NetWork_Manager;
+	private PlayerNetWorkManager _player_NetWork_Manager;
 
 	//プレイヤーマネージャーを取得
-	public PlayerManager _Player_Manager;
+	private PlayerManager _player_Manager;
 
 	//フェイズ毎の初期設定フラグ
 	private bool initial_setting = false;
@@ -38,9 +38,9 @@ public class PlayerPhaseManager : MonoBehaviour {
 	//通信データ受信フラグ
 	private bool netData_Reception = false;
 
+	[SerializeField]
 	//現在のフェイズ
 	private MAIN_GAME_PHASE _current_Phase;
-	[SerializeField]
 
 	//ボタンの座標を設定
 	private Vector3 _setDiceButton_Position = new Vector3 (0, -120, 0);
@@ -73,6 +73,20 @@ public class PlayerPhaseManager : MonoBehaviour {
 	private bool nowSceneLoad;
 
 	void Awake () {
+
+		//各種マネージャーのロード
+		if (_fade_Manager == null) {
+			GameObject _fade_Manager_Obj = GameObject.Find ("FadeManager");
+			_fade_Manager = _fade_Manager_Obj.GetComponent<FadeManager> ();
+		}
+		if ( _player_NetWork_Manager == null){
+			GameObject _player_NetWork_Manager_Obj = GameObject.Find ("PlayerNetWorkManager");
+			_player_NetWork_Manager = _player_NetWork_Manager_Obj.GetComponent<PlayerNetWorkManager> ();
+		}
+		if ( _player_Manager == null){
+			GameObject _Player_Manager_Obj = GameObject.Find ("PlayerManager");
+			_player_Manager = _Player_Manager_Obj.GetComponent<PlayerManager> ();
+		}
 
 		//最初のフェイズをロード
 		_current_Phase = MAIN_GAME_PHASE.GAME_PHASE_NO_PLAY;
@@ -132,19 +146,21 @@ public class PlayerPhaseManager : MonoBehaviour {
 		if (!initial_setting) {
 			Debug.Log ("プレイヤー画面です");
 			//ここでプレイヤーの判別を行い、プレイヤーラベルの色とテキスト表示をエネミーの表示とテキストの表示を変更します
-			//初期手札を生成
-			_Player_Manager.setHandCardCreate();
+			//testで1枚作成
+			_player_Manager.DeckCardList ();
+			//現在の手札を生成
+			_player_Manager.setHandCardCreate();
 			//エネミーのテキストを設定
-			_Player_Manager.SetEnemyObject();
+			_player_Manager.SetEnemyObject();
 			//プレイヤーによって変わる部分を変更
-			_Player_Manager.setPlayerObject();
+			_player_Manager.setPlayerObject();
 			//初期設定完了フラグ
 			initial_setting = true;
 
 		} else {
 			//通信データを送信していないのなら通信データを送信する
 			if (!netData_Send) {
-				netData_Send = _player_NetWork_Manager.netDataAcross (MAIN_GAME_PHASE.GAME_PHASE_NO_PLAY );
+				netData_Send = _player_NetWork_Manager.netDataAcross ( MAIN_GAME_PHASE.GAME_PHASE_NO_PLAY );
 			}
 			//受信フラグが立っていないのなら実行受信フラグが立ったならフェイズをチェンジ
 			if (!netData_Reception) {
@@ -244,7 +260,7 @@ public class PlayerPhaseManager : MonoBehaviour {
 			_current_Phase = MAIN_GAME_PHASE.GAME_PHASE_THROW_DICE;
 			break;
 		case MAIN_GAME_PHASE.GAME_PHASE_THROW_DICE:
-			_current_Phase = MAIN_GAME_PHASE.GAME_PHASE_MOVE_CHARACTER;
+			_current_Phase = MAIN_GAME_PHASE.GAME_PHASE_FIELD_INDUCTION;
 			break;
 		case MAIN_GAME_PHASE.GAME_PHASE_FIELD_INDUCTION: 
 			nowSceneLoad = true;

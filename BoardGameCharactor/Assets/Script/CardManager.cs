@@ -26,6 +26,7 @@ public class CardManager : MonoBehaviour {
 	// Use this for initialization
 	void Start( ) {
 		loadCardDataFile( );
+		createDeck ();
 	}
 	
 	// Update is called once per frame
@@ -85,6 +86,7 @@ public class CardManager : MonoBehaviour {
 	public CARD_DATA distributeCard( ) {
 		CARD_DATA card = new CARD_DATA( );
 		int num = ( int )Random.Range( 0, ( float )_deck_data.card_num );
+		Debug.Log(_deck_data.card_num);
 		card = _deck_data.cards_list[ num ];
 		_deck_data.cards_list.RemoveAt( num );
 		_deck_data.card_num--;

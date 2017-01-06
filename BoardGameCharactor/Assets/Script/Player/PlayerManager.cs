@@ -6,7 +6,7 @@ using Common;
 
 public class PlayerManager : Manager<PlayerManager> {
 
-	private GameObject _card_Template_Prefab;
+	public GameObject _card_Template_Prefab;
 
 	public GameObject _player_Baloon_Prefab;
 
@@ -59,7 +59,8 @@ public class PlayerManager : Manager<PlayerManager> {
 		_hand_data.hand_list = new List< CARD_DATA >( );
 		_hand_data.hand_Obj = new List< GameObject >( );
 		if (_card_Template_Prefab == null) {
-			_card_Template_Prefab = (GameObject)Resources.Load ("Resources/Prefab/Card");
+			_card_Template_Prefab = (GameObject)Resources.Load ("Prefab/CardTemplate");
+			Debug.Log (_card_Template_Prefab);
 		}
 
 		//自身がプレイヤー1か2か取得
@@ -89,13 +90,13 @@ public class PlayerManager : Manager<PlayerManager> {
 		if (_hand_data.hand_Obj == null) {
 			_hand_data.hand_Obj = new List< GameObject > ();
 		}
-
 		//自身の初期手札数文を生成
 		for (int i = 0; i < _hand_data.hand_list.Count; i++) {
 			//プレハブを生成してリストのオブジェクトに入れる
 			_hand_data.hand_Obj.Add ((GameObject)Instantiate (_card_Template_Prefab));
 			//カード画像設定
 			_hand_data.hand_Obj [i].GetComponent<Card> ().SetCardImage ( _hand_data.hand_list[i].type );
+			//初期位置を設定する
 			//手札の枚数によって表示位置をずらしていく
 		}
 	}
@@ -177,6 +178,9 @@ public class PlayerManager : Manager<PlayerManager> {
 	}
 
 	//指定されたカードをリストに入れ生成を行う
-
+	public void DeckCardList(){
+		//カードを特定の回数回して生成するように？
+		_hand_data.hand_list.Add(_player_NetWork_Manager.cardDataReceipt ());
+	}
 	//持続効果をセットする関数
 }
