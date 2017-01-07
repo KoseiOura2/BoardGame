@@ -138,6 +138,9 @@ public class PlayerPhaseManager : MonoBehaviour {
 			//testで1枚作成
 			//_player_Manager.DeckCardList ();
 
+			//プレイヤー移動（今回は初期設定なので現在地に入れる）
+			_player_Manager.SetPlayerMove ();
+
 			//現在の手札を生成
 			_player_Manager.setHandCardCreate();
 			//エネミーのテキストを設定

@@ -18,6 +18,9 @@ public class PlayerNetWorkManager : Manager<PlayerNetWorkManager> {
     //敵のステータス
 	private int _enemyStatus;
 
+	//敵の現在地
+	private int _EnemyHere;
+
 	// Awake関数の代わり
 	protected override void initialize( ) {
 		cheackNetWork( );
@@ -31,6 +34,9 @@ public class PlayerNetWorkManager : Manager<PlayerNetWorkManager> {
 
 		//相手のステータスを取得 仮で10枚固定
 		_enemyStatus = 10;
+
+		//相手の現在地を取得　仮で0固定
+		_EnemyHere = 0;
 
 		//今回は仮でプレイヤー1にする
 		_currentPlayer = PLAYER.PLAYER_1;
@@ -71,16 +77,17 @@ public class PlayerNetWorkManager : Manager<PlayerNetWorkManager> {
         }
     }
 
-    public bool networkEnemyDataReceipt( int EnemyHand, int EnemyStatus ) {
+	public bool networkEnemyDataReceipt( int EnemyHand, int EnemyStatus, int EnemyHere ) {
         //通信に成功したかどうか
         bool isNetworkReceipt = false;
-        //敵の手札数とステータスを保存
+        //敵の手札数とステータスと現在地を保存
         _enemyHandNumber = EnemyHand;
         _enemyStatus = EnemyStatus;
+		_EnemyHere = EnemyHere;
         //ステータスがちゃんとあるなら通信成功フラグをtrue
-        if ( _enemyHandNumber != null && _enemyStatus != null ) {
-            isNetworkReceipt = true;
-        }
+		if (_enemyHandNumber != 0 && _enemyStatus != 0) {
+			isNetworkReceipt = true;
+		}
         //通信に成功したらtrue失敗したらfalse
         if ( isNetworkReceipt ) {
             return true;
@@ -92,7 +99,7 @@ public class PlayerNetWorkManager : Manager<PlayerNetWorkManager> {
     public bool networkDataAcross( MAIN_GAME_PHASE SetPhase, int RandomData = 0, bool UseDrow = false, int Playertrout = 0 ) {
 		//ここでネットワークデータの送信を行います
         //送信が成功すればtrueに
-		bool isNetworkAcross = false;
+			bool isNetworkAcross = false;
 		//対応したシーンによって渡すデータを決める
 		switch (SetPhase) {
 
@@ -154,6 +161,11 @@ public class PlayerNetWorkManager : Manager<PlayerNetWorkManager> {
 	public int getEnemyStatus(){
 		//敵の現在のステータス
 		return _enemyStatus;
+	}
+
+	public int getEnemyHere(){
+		//敵の現在地
+		return _EnemyHere;
 	}
 
 	//通信からカードデータを貰い生成

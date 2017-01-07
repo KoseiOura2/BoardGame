@@ -12,8 +12,13 @@ public class PlayerManager : Manager<PlayerManager> {
 	//プレイヤー位置枠
 	public GameObject _player_Baloon_Prefab;
 
+	//エネミー位置枠
+	public GameObject _enemy_Baloon_Prefab;
+
 	//キャンバスを取得
 	public GameObject _canvas_Root;
+
+	public GameObject _content_Root;
 
 	//待ち時間を設定
 	public float intervalTime = 3.0f;
@@ -31,7 +36,16 @@ public class PlayerManager : Manager<PlayerManager> {
 	private int _playerHere;
 
 	//1Pか2Pか
-	private PLAYER isPlayer; 
+	private PLAYER isPlayer;
+
+	private float _mass_While_X = 186;
+
+	//吹き出しの横幅
+	private float BaloonWidth = -276;
+
+	//プレイヤーとエネミーの吹き出しの高さ
+	private float playerBaloonHeight = 50;
+	private float EnemyBaloonHeight = -49;
 
 	//手札データ　選んだカードのリスト、手札のリスト、オブジェクト情報といった形で整理をしています
 	private struct HAND_DATA
@@ -164,23 +178,40 @@ public class PlayerManager : Manager<PlayerManager> {
 		}
 	}
 
-	public void SetPlayerMove( int SetMoveNumber ){
+	public void SetPlayerMove( int SetMoveNumber = 0 ){
 		//プレイヤーの位置を参照してマスに向けて吹き出しを作ります
-
-		//プレイヤーの吹き出しを設定
 
 		//移動数分をプレイヤーの現在地に
 		_playerHere += SetMoveNumber;
 
+		//エネミーの現在地をネットワークの持っているデータで取得
+		int _enemyHere = _player_NetWork_Manager.getEnemyHere();
+
+		//プレイヤー1とプレイヤー2の吹き出しを設定
+		GameObject Player_Baloon_Obj = (GameObject)Instantiate (_player_Baloon_Prefab);
+		GameObject Enemy_Baloon_Obj =  (GameObject)Instantiate (_enemy_Baloon_Prefab);
+
+		//キャンバスのContentに入れる
+		Player_Baloon_Obj.transform.SetParent(_content_Root.transform);
+		Enemy_Baloon_Obj.transform.SetParent(_content_Root.transform);
+
+		//サイズの修正
+		Player_Baloon_Obj.GetComponent<RectTransform> ().localScale = Vector3.one;
+		Enemy_Baloon_Obj.GetComponent<RectTransform> ().localScale = Vector3.one;
+
 		//プレイヤーオブジェクトを対応したマスのところに移動(数値分Xをずらす)
-		//_start_Mass_X + (count * _mass_While_X), _start_Mass_Y, 0 );
+		Player_Baloon_Obj.GetComponent<RectTransform>().anchoredPosition3D = new Vector3( BaloonWidth + ( _playerHere * _mass_While_X ), playerBaloonHeight, 0 );
+		Enemy_Baloon_Obj.GetComponent<RectTransform> ().anchoredPosition3D = new Vector3 (BaloonWidth +  ( _enemyHere * _mass_While_X ), EnemyBaloonHeight, 0);
 
 		//フィールドの最大値から現在の値を
 		int FiledPos =_playerHere - _file_manager.getMassCount();
+
 		//ゴールナビオブジェクトの取得
 		GameObject GoalNavi = GameObject.FindWithTag ("GoalNavi");
+
 		//子のゴールテキストの取得
 		Text GoalText = GoalNavi.GetComponentInChildren<Text> ();
+
 		//テキストの設定
 		GoalText.text = "宝まで " + FiledPos + "マス";
 	}
@@ -192,10 +223,13 @@ public class PlayerManager : Manager<PlayerManager> {
 			bool SelectAreaCheck = _hand_data.hand_Obj_List [i].GetComponent<Card> ().getInSelectArea();
 			//セレクトエリアに入っているか
 			if (SelectAreaCheck) {
+				
 				//セレクトカードリストに追加
 				_hand_data.select_List.Add (_hand_data.hand_List [i]);
+
 				//オブジェクトをセレクトオブジェクトリストに追加
 				_hand_data.select_Obj_List.Add (_hand_data.hand_Obj_List [i]);
+
 				//手札リストとオブジェクトリストから削除
 				_hand_data.hand_List.RemoveAt (i);
 				_hand_data.hand_Obj_List.RemoveAt (i);
