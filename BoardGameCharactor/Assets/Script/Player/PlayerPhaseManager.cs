@@ -164,7 +164,9 @@ public class PlayerPhaseManager : MonoBehaviour {
 			}
 			//受信フラグが立っていないのなら実行受信フラグが立ったならフェイズをチェンジ
 			if (!netData_Reception) {
+				//次のフェイズの受信命令がないか確認
 				netData_Reception = _player_NetWork_Manager.netDataReceipt ();
+				//デバッグ用でPキーを押したら通信完了フラグ
 				DebugReceipt ();
 			} else {
 				phaseChange (false);
@@ -231,6 +233,7 @@ public class PlayerPhaseManager : MonoBehaviour {
 	}
 
 	void phaseChange( bool isBlackOut ){
+		//フェイズチェンジを行いますブラックアウトがチカチカして気になるのでTrueで表示続行　falseで非表示に
 		//初期設定フラグをoffに
 		initial_setting = false;
 

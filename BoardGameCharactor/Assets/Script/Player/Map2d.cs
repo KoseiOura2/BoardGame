@@ -15,7 +15,7 @@ public class Map2d : MonoBehaviour {
 	[SerializeField]
 	private float _mass_While_X = 186;
 	//壁の橋とマスの間
-	private float _mass_While = -19;
+	private float _mass_While = -16;
 
 	public FileManager _file_manager;
 	public GameObject _mass_Prefab;
@@ -49,9 +49,8 @@ public class Map2d : MonoBehaviour {
 			miniMassCreate (i);
 		}
 
-		int max_Mass = _file_manager.getMassCount () - 1;
-		end_Position = new Vector2( ( _mass_While_X - _mass_While ) * (float)max_Mass , _start_Mass_Y ) ;
-
+		int max_Mass = _file_manager.getMassCount ();
+		end_Position = new Vector2( ( -_mass_While_X - _mass_While ) * (float)max_Mass , _start_Mass_Y ) ;
 	}
 	
 	// Update is called once per frame
@@ -75,11 +74,13 @@ public class Map2d : MonoBehaviour {
 	}
 
 	void massCreate( int count ){
+		//マスのプレハブを生成
 		GameObject obj = ( GameObject )Instantiate( _mass_Prefab );
 		obj.transform.SetParent (_Contect);
 		obj.GetComponent<RectTransform> ().anchoredPosition3D
 		= new Vector3 ( _start_Mass_X + (count * _mass_While_X), _start_Mass_Y, 0 );
 		obj.GetComponent<massData>().SetMassData( _file_manager.getMapData().mass[ count ].type );
+		obj.GetComponent<massData> ().SetBaloonPosition (count);
 		obj.GetComponent<RectTransform> ().localScale = new Vector3 (1, 1, 1);
 		obj.name = "Mass:ID" + count;
 	}

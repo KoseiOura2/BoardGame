@@ -47,7 +47,7 @@ public class PlayerManager : Manager<PlayerManager> {
 	//マップデータを設定
 	private FILE_DATA _file_data = new FILE_DATA ();
 
-	//プレイヤーの手札お設定
+	//プレイヤーの手札を設定
 	private HAND_DATA _hand_data = new HAND_DATA( );
 
 	// Awake関数の代わり
@@ -100,11 +100,11 @@ public class PlayerManager : Manager<PlayerManager> {
 	}
 
 	public void setPlayerObject( ){
-		//タグでプレイヤーによって変わる部分を取得しfor文で処理を行う
-		//もう一つ忘れない内に相手の手札やステータスに変動がおきた場合変更を加えるシステムを作ります（ここでUpdate）で関数でうまくやりましょう？
+		//タグでプレイヤーによって変わる部分を取得し色とテキストを変えます
 		GameObject[] PlayerChanges = GameObject.FindGameObjectsWithTag("PlayerChange");
 		for(int i = 0; i < PlayerChanges.Length; i++){
 			switch (PlayerChanges [i].name) {
+
 			case "EnemyLabel":
 				//テキストを取得
 				Text _enemyText = PlayerChanges [i].GetComponentInChildren<Text> ();
@@ -118,6 +118,7 @@ public class PlayerManager : Manager<PlayerManager> {
 					PlayerChanges [i].GetComponent<Image> ().color = new Color (1, 0, 0);
 				}
 				break;
+
 			case "PlayerLabel":
 				//テキストを取得
 				Text _playerText = PlayerChanges [i].GetComponentInChildren<Text> ();
@@ -135,18 +136,21 @@ public class PlayerManager : Manager<PlayerManager> {
 	}
 
 	public void SetEnemyObject(){
+		//敵のオブジェクトをセット
 		//テキストと手札を取得
 		GameObject[] EnemyChanges = GameObject.FindGameObjectsWithTag("EnemyChange");
+
 		for(int i = 0; i < EnemyChanges.Length; i++){
 			switch (EnemyChanges [i].name) {
+
 			case "EnemyHand":
 				//テキストを取得
 				Text _enemyHandText = EnemyChanges [i].GetComponentInChildren<Text> ();
 				//相手の手札を取得
-				Debug.Log(_player_NetWork_Manager.getEnemyHand());
 				int _enemyHand = _player_NetWork_Manager.getEnemyHand();
 				_enemyHandText.text = "相手の手札　" + _enemyHand + "枚";
 				break;
+
 			case "EnemyStates":
 				//テキストを取得
 				Text _enemyStatusText = EnemyChanges [i].GetComponentInChildren<Text> ();
@@ -159,6 +163,8 @@ public class PlayerManager : Manager<PlayerManager> {
 	}
 
 	public void SetPlayerMove( int SetMoveNumber ){
+		//プレイヤーの位置を参照してマスに向けて吹き出しを作ります
+
 		//プレイヤーの吹き出しを設定
 
 		//移動数分をプレイヤーの現在地に
@@ -195,7 +201,7 @@ public class PlayerManager : Manager<PlayerManager> {
 		}
 	}
 
-	//指定されたカードをリストに入れ生成を行う
+	//カード生成を行う
 	public void DeckCardList(){
 		//カードを特定の回数回して生成するように？
 		_hand_data.hand_List.Add(_player_NetWork_Manager.cardDataReceipt () );

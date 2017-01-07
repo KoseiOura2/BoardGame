@@ -16,7 +16,9 @@ public class LongPressScroll : ScrollRect{
 	private Vector2 _init_Position;
 
 	//ドラッグ限界
-	private Vector2 _End_Position;
+	private Vector2 _end_Position;
+
+	private float _init_Content_Position = -280;
 
 	[SerializeField]
 	private LongPressButton _pressed_Button;
@@ -24,6 +26,7 @@ public class LongPressScroll : ScrollRect{
 	private Map2d _map_2D;
 
 	new void Awake () {
+		
 		// 子のLongPressButtonに自身の参照を持たせる
 		LongPressButton[] buttons = GetComponentsInChildren<LongPressButton> ();
 		foreach (LongPressButton item in buttons) {
@@ -32,23 +35,29 @@ public class LongPressScroll : ScrollRect{
 
 		_map_2D = GetComponent<Map2d> ();
 
-		//自身の初期位置を持つ
+		//コンテンツが-280になっていなければ
+		if (content.anchoredPosition.x != _init_Content_Position) {
+			
+			content.anchoredPosition = new Vector2 (_init_Content_Position, content.anchoredPosition.y);
+		}
+		//コンテンツの初期位置を持つ
 		_init_Position = content.anchoredPosition;
+	}
 
-		_End_Position = _map_2D.getEndPosition();
-
+	new void Start(){
+		//マップから最終マスまでを取得（隙間分まで）
+		_end_Position = _map_2D.getEndPosition();
 	}
 
 	void Update(){
 		//最初の位置より左に行かないように
-		if (content.anchoredPosition.x > 0) {
+		if (content.anchoredPosition.x > _init_Position.x) {
 			content.anchoredPosition = _init_Position;
 		}
-		/*
-		if (content.anchoredPosition.x < _End_Position.x) {
-			content.anchoredPosition = _End_Position;
+		//最後のマスより右に行かないように
+		if (content.anchoredPosition.x < _end_Position.x) {
+			content.anchoredPosition = _end_Position;
 		}
-		*/
 	}
 		
 	// 現在も押下状態であるかの判定を返す

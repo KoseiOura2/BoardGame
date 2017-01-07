@@ -10,8 +10,6 @@ public class PlayerNetWorkManager : Manager<PlayerNetWorkManager> {
 
 	private PLAYER _currentPlayer;
 
-	private struct EnemyStetas{
-	}
 
 	private int _enemyHandNumber;
 
@@ -37,8 +35,8 @@ public class PlayerNetWorkManager : Manager<PlayerNetWorkManager> {
 
 	//通信から次のフェイズに進む要求が出た場合に受信フラグをONにする
 	public bool netDataReceipt( ) {
-		//通信を飛ばして受信命令がないかを確認をする。受信フラグが来ていたらtrue
-		//受信データをもらう際に敵の手札数とステータスを取得
+		//通信を飛ばしてフェイズ受信命令がないかを確認をする。受信フラグが来ていたらtrue
+		//受信データをもらう際に敵の手札数とステータスを取得してプレイヤーマネージャーでセットさせる
 		_enemyHandNumber = 6;
 		_enemyStatus = 10;
 		//return true;
@@ -46,7 +44,7 @@ public class PlayerNetWorkManager : Manager<PlayerNetWorkManager> {
 	}
 
 	public bool netDataAcross( MAIN_GAME_PHASE SetPhase ){
-
+		//ここでネットワークデータの送信を行います
 		bool isNetworkAcross = false;
 		//対応したシーンによって渡すデータを決める
 		switch (SetPhase) {
@@ -73,23 +71,21 @@ public class PlayerNetWorkManager : Manager<PlayerNetWorkManager> {
 			break;
 		
 		case MAIN_GAME_PHASE.GAME_PHASE_ASSIGNMENT_BUFF:
-			//ドローカードを使用したかどうか
+			//プレイヤーマネージャーから選択されたカードIDを渡す
 			isNetworkAcross = true;
 			break;
 
 		case MAIN_GAME_PHASE.GAME_PHASE_FIELD_GIMMICK:
 			//ドローカードを使用したかどうか
+			//プレイヤーデータ
 			isNetworkAcross = true;
 			break;
 
-		case MAIN_GAME_PHASE.GAME_PHASE_FIELD_INDUCTION:
-			//フィールドに誘導をさせる
-			break;
 		default:
 			Debug.LogError ("フェイズが読み込めませんでした");
 			break;
 		}
-		//ネットのデータに送信が成功すればtrue失敗の場合はfalse
+		//ネットのデータに送信が成功フラグがあればtrue失敗の場合はfalse
 		if (isNetworkAcross) {
 			return true; 
 		} else {
