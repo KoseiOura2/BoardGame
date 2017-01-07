@@ -30,6 +30,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
 	[ SerializeField ]
 	private SCENE _scene = SCENE.SCENE_CONNECT;
 
+	public GameObject[ ] debug_objs = new GameObject[ 2 ];
 	public Text _scene_text;
 	public Text[ ] _reside_text = new Text[ ( int )PLAYER_ORDER.MAX_PLAYER_NUM ];    //残りマス用テキスト
 	public Text[ ] _environment = new Text[ ( int )PLAYER_ORDER.MAX_PLAYER_NUM ];    //環境情報用テキスト
@@ -66,13 +67,10 @@ public class ApplicationManager : Manager< ApplicationManager > {
 
 	// Use this for initialization
 	void Start( ) {
-		/*
-		if ( isError( ) ) {
-			return;
-		}
-		*/
 
 		referManager( );
+
+		_card_manager.init( );
 	}
 
 	void referManager( ) {
@@ -92,9 +90,9 @@ public class ApplicationManager : Manager< ApplicationManager > {
 			if ( _stage_manager == null ) {
 				_stage_manager = GameObject.Find( "StageManager" ).GetComponent< StageManager >( );
 			}
-			/*if ( _camera_manager == null ) {
-				_camera_manager = GameObject.Find( "CameraManager" ).GetComponent< CameraManager >( );
-			}*/
+			if ( _camera_manager == null ) {
+				_camera_manager = Camera.main.GetComponent< CameraManager >( );
+			}
 			_network_gui_controll = GameObject.Find( "NetworkManager" ).GetComponent< NetworkGUIControll >( );
 		}
 		catch {
@@ -151,8 +149,13 @@ public class ApplicationManager : Manager< ApplicationManager > {
 			_scene = SCENE.SCENE_TITLE;
 			_scene_text.text = "SCENE_TITLE";
 			_network_gui_controll.setShowGUI( false );
-			_host_data.setSendScene( _scene );
-            _host_data.setSendChangeFieldScene( true );
+			try {
+				_host_data.setSendScene( _scene );
+            	_host_data.setSendChangeFieldScene( true );
+			}
+			catch {
+				Debug.Log( "通信に失敗しまいました" );
+			}
 		}
 	}
 
@@ -174,8 +177,13 @@ public class ApplicationManager : Manager< ApplicationManager > {
 			}
 			_stage_manager.init( );
 
-			_host_data.setSendScene( _scene );
-            _host_data.setSendChangeFieldScene( true );
+			try {
+				_host_data.setSendScene( _scene );
+				_host_data.setSendChangeFieldScene( true );
+			}
+			catch {
+				Debug.Log( "通信に失敗しまいました" );
+			}
 			_network_gui_controll.setShowGUI( false );
 		}
 	}
@@ -187,8 +195,13 @@ public class ApplicationManager : Manager< ApplicationManager > {
 		if ( Input.GetKeyDown( KeyCode.A ) ) {
 			_scene = SCENE.SCENE_TITLE;
 			_scene_text.text = "SCENE_TITLE";
-			_host_data.setSendScene( _scene );
-            _host_data.setSendChangeFieldScene( true );
+			try {
+				_host_data.setSendScene( _scene );
+				_host_data.setSendChangeFieldScene( true );
+			}
+			catch {
+				Debug.Log( "通信に失敗しまいました" );
+			}
 		}
 	}
 
@@ -235,6 +248,8 @@ public class ApplicationManager : Manager< ApplicationManager > {
 				playerEnvironment( environment, i );
 			}
 		}
+
+		_camera_manager.moveCameraPos( debug_objs[ 0 ], debug_objs[ 1 ] );
 	}
 
 	/// <summary>
@@ -353,8 +368,13 @@ public class ApplicationManager : Manager< ApplicationManager > {
 		if ( Input.GetKeyDown( KeyCode.A ) ) {
 			_scene = SCENE.SCENE_FINISH;
 			_scene_text.text = "SCENEFINISH";
-			_host_data.setSendScene( _scene );
-            _host_data.setSendChangeFieldScene( true );
+			try {
+				_host_data.setSendScene( _scene );
+				_host_data.setSendChangeFieldScene( true );
+			}
+			catch {
+				Debug.Log( "通信に失敗しまいました" );
+			}
 		}
 	}
 

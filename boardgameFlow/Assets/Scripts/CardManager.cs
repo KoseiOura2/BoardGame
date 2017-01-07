@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Common;
 
-public class CardManager : MonoBehaviour {
+public class CardManager : Manager< CardManager > {
 
 	/// <summary>
 	/// デッキデータ
@@ -17,15 +17,22 @@ public class CardManager : MonoBehaviour {
 	private List< CARD_DATA > _card_datas = new List< CARD_DATA >( );
 	private DECK_DATA _deck_data = new DECK_DATA( );
 
-	void Awake( ) {
+
+	// Awake関数の代わり
+	protected override void initialize( ) {
+		
+	}
+
+	public void init( ) {
 		_deck_data.max_card_num = 30;
 		_deck_data.card_num     = 0;
 		_deck_data.cards_list   = new List< CARD_DATA >( );
+		loadCardDataFile( );
 	}
 
 	// Use this for initialization
 	void Start( ) {
-		loadCardDataFile( );
+		
 	}
 	
 	// Update is called once per frame
