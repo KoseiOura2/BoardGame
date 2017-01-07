@@ -97,18 +97,6 @@ public class PlayerPhaseManager : MonoBehaviour {
 		//画面推移中かどうか
 		nowSceneLoad = false;
 
-		//画面を暗くするオブジェクトをセット
-		_blackOut = canvasSet(_blackOut_Prefab, Vector3.zero); 
-		_blackOut.GetComponent<RectTransform> ().sizeDelta = Vector2.zero;
-		_blackOut.SetActive (false);
-		//テキストウィンドウをセット
-		_textWindow = canvasSet(_textWindow_Prefab, Vector3.zero); 
-		textSet (_textWindow, DicePhaseMessage );
-		_textWindow.SetActive (false);
-		//サイコロボタンをセット
-		_diceButton = canvasSet(_diceButton_Prefab, _setDiceButton_Position );
-		_diceButton.SetActive (false);
-
 	}
 
 	// Update is called once per frame
@@ -132,7 +120,7 @@ public class PlayerPhaseManager : MonoBehaviour {
 			break;
 
 		case MAIN_GAME_PHASE.GAME_PHASE_FIELD_INDUCTION:
-			movePhase ();
+            inductionPhase( );
 			break;
 
 		default:
@@ -146,26 +134,28 @@ public class PlayerPhaseManager : MonoBehaviour {
 		if (!initial_setting) {
 			Debug.Log ("プレイヤー画面です");
 			//ここでプレイヤーの判別を行い、プレイヤーラベルの色とテキスト表示をエネミーの表示とテキストの表示を変更します
+
 			//testで1枚作成
-			_player_Manager.DeckCardList ();
+			//_player_Manager.DeckCardList ();
+
 			//現在の手札を生成
 			_player_Manager.setHandCardCreate();
 			//エネミーのテキストを設定
 			_player_Manager.SetEnemyObject();
+
 			//プレイヤーによって変わる部分を変更
 			_player_Manager.setPlayerObject();
+
 			//初期設定完了フラグ
 			initial_setting = true;
 
 		} else {
-			//通信データを送信していないのなら通信データを送信する
-			if (!netData_Send) {
-				netData_Send = _player_NetWork_Manager.netDataAcross ( MAIN_GAME_PHASE.GAME_PHASE_NO_PLAY );
-			}
 			//受信フラグが立っていないのなら実行受信フラグが立ったならフェイズをチェンジ
 			if (!netData_Reception) {
+
 				//次のフェイズの受信命令がないか確認
-				netData_Reception = _player_NetWork_Manager.netDataReceipt ();
+				netData_Reception = _player_NetWork_Manager.networkPhaseChangeReceipt ();
+
 				//デバッグ用でPキーを押したら通信完了フラグ
 				DebugReceipt ();
 			} else {
@@ -177,14 +167,19 @@ public class PlayerPhaseManager : MonoBehaviour {
 	void dicePhase (){
 		//初期設定が済んでなければ行う
 		if (!initial_setting) {
+
 			Debug.Log ("ダイスフェイズです");
 			//画面を暗くする
-			_blackOut.SetActive(true);
+            _blackOut = canvasSet( _blackOut_Prefab, Vector3.zero );
+            _blackOut.GetComponent<RectTransform>( ).sizeDelta = Vector2.zero;
+
 			//テキストウィンドウを表示
-			_textWindow.SetActive(true); 
-			textSet (_textWindow, DicePhaseMessage );
+            _textWindow = canvasSet( _textWindow_Prefab, Vector3.zero );
+            textSet( _textWindow, DicePhaseMessage );
+
 			//サイコロボタンを表示
-			_diceButton.SetActive(true);
+            _diceButton = canvasSet( _diceButton_Prefab, _setDiceButton_Position );
+
 			//初期設定完了フラグ
 			initial_setting = true;
 		} else {
@@ -195,44 +190,42 @@ public class PlayerPhaseManager : MonoBehaviour {
 				if (nowTime >= intervalTime) {
 					//経過時間をリセット
 					nowTime = 0;
-					netData_Send = _player_NetWork_Manager.netDataAcross (MAIN_GAME_PHASE.GAME_PHASE_THROW_DICE);
+					netData_Send = _player_NetWork_Manager.networkDataAcross ( MAIN_GAME_PHASE.GAME_PHASE_THROW_DICE,_diceData);
 				} 
 			} else if( netData_Send ){
 				textSet (_textWindow, PlayerWaitMessage );
 			}
 			//受信フラグが立っていないのなら実行受信フラグが立ったならフェイズをチェンジ
 			if (!netData_Reception) {
-				netData_Reception = _player_NetWork_Manager.netDataReceipt ();
+                netData_Reception = _player_NetWork_Manager.networkPhaseChangeReceipt( );
 				DebugReceipt ();
 			} else {
-				phaseChange ( true );
+				phaseChange ( );
 			}
 		}
 	}
 
-	void movePhase(){
+    void inductionPhase( ) {
 		//初期設定が済んでなければ行う
 		if (!initial_setting) {
 			Debug.Log ("上画面に誘導をするフェイズです");
-			//黒背景
-			_blackOut.SetActive(true);
 			//フィールド画面に誘導するテキストを表示
-			_textWindow.SetActive(true); 
+            _textWindow = canvasSet( _textWindow_Prefab, Vector3.zero );
 			textSet ( _textWindow, FieldNaviMessage );
 			//初期設定完了フラグ
 			initial_setting = true;
 		} else {
 			//受信フラグが立っていないのなら実行、受信フラグが立ったならフェイズをチェンジ
 			if (!netData_Reception) {
-				netData_Reception = _player_NetWork_Manager.netDataReceipt ();
+                netData_Reception = _player_NetWork_Manager.networkPhaseChangeReceipt( );
 				DebugReceipt ();
 			} else {
-				phaseChange (true);
+				phaseChange ();
 			}
 		}
 	}
 
-	void phaseChange( bool isBlackOut ){
+	void phaseChange( bool isBlackOut = false){
 		//フェイズチェンジを行いますブラックアウトがチカチカして気になるのでTrueで表示続行　falseで非表示に
 		//初期設定フラグをoffに
 		initial_setting = false;
@@ -242,19 +235,13 @@ public class PlayerPhaseManager : MonoBehaviour {
 		netData_Reception = false;
 
 		//生成したオブジェクトを非表示に
-		if ( _diceButton.activeSelf ) {
-			_diceButton.SetActive (false);
-		}
+        Destroy( _diceButton );
 
-		if (_textWindow.activeSelf) {
-			_textWindow.SetActive (false);
-		}
+        Destroy( _textWindow );
 
-		if (!isBlackOut) {
-			if (_blackOut.activeSelf) {
-				_blackOut.SetActive (false);
-			}
-		}
+        if ( isBlackOut ) {
+            Destroy( _blackOut );
+        }
 
 		//次のフェイズに移行する。プレイヤーの移動フェイズで次のフェイズに移行した場合バトルシーンへ
 		switch (_current_Phase) {

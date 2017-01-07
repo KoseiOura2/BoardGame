@@ -60,18 +60,20 @@ public class PlayerManager : Manager<PlayerManager> {
 		_hand_data.hand_List = new List< CARD_DATA >( );
 		_hand_data.hand_Obj_List = new List< GameObject >( );
 
-		//自身がプレイヤー1か2か取得
-		isPlayer = _player_NetWork_Manager.getPlayer();
-
-		//自身がmapのどの場所にいるかを設定（初期はスタート地点にいるのでStartを探します）
-		for (int i = 0; i < _file_manager.getMassCount (); i++) {
-			_file_data = _file_manager.getMapData ();
-			if (_file_data.mass [i].type == "start") {
-				_playerHere = i;
-			}
-		}
-
 	}
+
+    void Start( ) {
+        //自身がプレイヤー1か2か取得
+        isPlayer = _player_NetWork_Manager.getPlayer( );
+
+        //自身がmapのどの場所にいるかを設定（初期はスタート地点にいるのでStartを探します）
+        for ( int i = 0; i < _file_manager.getMassCount( ); i++ ) {
+            _file_data = _file_manager.getMapData( );
+            if ( _file_data.mass[ i ].type == "start" ) {
+                _playerHere = i;
+            }
+        }
+    }
 
 	//プレイヤーの現在地を取得する関数の生成
 	public int getPlayerHere(){
@@ -202,9 +204,9 @@ public class PlayerManager : Manager<PlayerManager> {
 	}
 
 	//カード生成を行う
-	public void DeckCardList(){
+	public void DeckCardList( CARD_DATA GetCard ){
 		//カードを特定の回数回して生成するように？
-		_hand_data.hand_List.Add(_player_NetWork_Manager.cardDataReceipt () );
+        _hand_data.hand_List.Add( GetCard );
 	}
 	//持続効果をセットする関数
 }
