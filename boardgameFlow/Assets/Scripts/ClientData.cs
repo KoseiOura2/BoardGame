@@ -7,7 +7,8 @@ public class ClientData : NetworkBehaviour {
 
 	[ SerializeField ]
 	private SERVER_STATE _server_state = SERVER_STATE.STATE_NONE;
-
+    
+	[ SerializeField ]
 	private NETWORK_PLAYER_DATA _player_data;
 
     void Awake( ) {
@@ -34,6 +35,12 @@ public class ClientData : NetworkBehaviour {
     /// <param name="flag"></param>
 	[ Command ]
     public void CmdSetSendChangedScene( bool flag ) { 
+		_player_data.changed_scene = flag;
+
+    }
+    
+	[ Client ]
+    public void setSendChangedScene( bool flag ) { 
 		_player_data.changed_scene = flag;
 
     }

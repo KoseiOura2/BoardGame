@@ -29,12 +29,13 @@ public class ApplicationManager : Manager< ApplicationManager > {
     
 	[ SerializeField ]
 	private SCENE _scene = SCENE.SCENE_CONNECT;
+    private int _event_count = 0;        //イベントを起こす回数 
+    private bool _game_playing = false;
 
 	public GameObject[ ] debug_objs = new GameObject[ 2 ];
 	public Text _scene_text;
 	public Text[ ] _reside_text = new Text[ ( int )PLAYER_ORDER.MAX_PLAYER_NUM ];    //残りマス用テキスト
 	public Text[ ] _environment = new Text[ ( int )PLAYER_ORDER.MAX_PLAYER_NUM ];    //環境情報用テキスト
-    private int _event_count = 0;        //イベントを起こす回数   
 
 	// Awake関数の代わり
 	protected override void initialize( ) {
@@ -133,6 +134,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
 			break;
 		}
 
+        // player側の変更が完了したかどうか
 		if ( _host_data != null && _client_data != null ) {
 			if ( _client_data.getRecvData( ).changed_scene == true ) {
 				_host_data.setSendChangeFieldScene( false );
@@ -209,36 +211,38 @@ public class ApplicationManager : Manager< ApplicationManager > {
 	/// GameSceneの更新
 	/// </summary>
 	private void updateGameScene( ) {
-		// フェイズチェンジ
-		_phase_manager.changeMainGamePhase( );
+		// フェイズごとの更新
+		switch( _phase_manager.getMainGamePhase( ) ) {
+            case MAIN_GAME_PHASE.GAME_PHASE_NO_PLAY:
+                updateNoPlayPhase( );
+                break;
+		    case MAIN_GAME_PHASE.GAME_PHASE_DICE:
+			    updateDicePhase( );
+			    break;
+		    case MAIN_GAME_PHASE.GAME_PHASE_MOVE_CHARACTER:
+			    updateMovePhase( );
+			    break;
+		    case MAIN_GAME_PHASE.GAME_PHASE_DRAW_CARD:
+			    updateDrawPhase( );
+			    break;
+		    case MAIN_GAME_PHASE.GAME_PHASE_BATTLE:
+			    updateButtlePhase( );
+			    break;
+		    case MAIN_GAME_PHASE.GAME_PHASE_RESULT:
+			    updateResultPhase( );
+			    break;
+		    case MAIN_GAME_PHASE.GAME_PHASE_EVENT:
+			    updateEventPhase( );
+			    break;
+		    case MAIN_GAME_PHASE.GAME_PHASE_FINISH:
+			    updateFinishPhase( );
+			    break;
+		}
+
 		// 通信データのセット
 		if ( _phase_manager.isPhaseChanged( ) ) {
 			_host_data.setSendGamePhase( _phase_manager.getMainGamePhase( ) );
-		}
-
-		// フェイズごとの更新
-		switch( _phase_manager.getMainGamePhase( ) ) {
-		case MAIN_GAME_PHASE.GAME_PHASE_DICE:
-			updateDicePhase( );
-			break;
-		case MAIN_GAME_PHASE.GAME_PHASE_MOVE_CHARACTER:
-			updateMovePhase( );
-			break;
-		case MAIN_GAME_PHASE.GAME_PHASE_DRAW_CARD:
-			updateDrawPhase( );
-			break;
-		case MAIN_GAME_PHASE.GAME_PHASE_BATTLE:
-			updateButtlePhase( );
-			break;
-		case MAIN_GAME_PHASE.GAME_PHASE_RESULT:
-			updateResultPhase( );
-			break;
-		case MAIN_GAME_PHASE.GAME_PHASE_EVENT:
-			updateEventPhase( );
-			break;
-		case MAIN_GAME_PHASE.GAME_PHASE_FINISH:
-			updateFinishPhase( );
-			break;
+		    _host_data.setSendChangeFieldPhase( true );
 		}
 
         // playerの環境情報を更新
@@ -251,6 +255,19 @@ public class ApplicationManager : Manager< ApplicationManager > {
 
 		_camera_manager.moveCameraPos( debug_objs[ 0 ], debug_objs[ 1 ] );
 	}
+
+	/// <summary>
+	/// NoPlayPhaseの更新
+	/// </summary>
+	private void updateNoPlayPhase( ) {
+        // サイコロフェイズへの移行
+		StartCoroutine( "gameStart" );
+        _phase_manager.changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_DICE, "DicePhase" );
+	}
+    
+    private IEnumerator gameStart( ) {
+        yield return new WaitForSeconds( 3.0f );
+    }
 
 	/// <summary>
 	/// DicePhaseの更新

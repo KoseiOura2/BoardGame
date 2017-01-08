@@ -72,6 +72,12 @@ public class NetworkMNG : MonoBehaviour {
 	}
     */
 
+    
+	//サーバ立ち上げ時に呼ばれるメソッド
+	public void OnServerInitialized( ) {
+        _connected = true;
+	}
+
 
     /// <summary>
     /// サーバー時新しいクライアント接続で呼ばれる

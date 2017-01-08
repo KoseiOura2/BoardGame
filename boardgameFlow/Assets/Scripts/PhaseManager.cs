@@ -23,45 +23,11 @@ public class PhaseManager : MonoBehaviour {
 	}
 
     /// <summary>
-    /// 受け取ったデータによってMainGamePhaseを切り替える
-    /// </summary>
-    public void changeMainGamePhase( ) {
-        // DicePhaseへ移行
-        if ( Input.GetKeyDown( KeyCode.F1 ) ) {
-            changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_DICE, "DicePhase" );
-        }
-        // Moveへ移行
-        if ( Input.GetKeyDown( KeyCode.F2 ) ) {
-            changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_MOVE_CHARACTER, "MovePhase" );
-        }
-        // DrawCardへ移行
-        if ( Input.GetKeyDown( KeyCode.F3 ) ) {
-            changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_DRAW_CARD, "DrawCardPhase" );
-        }
-        // Battleへ移行
-        if ( Input.GetKeyDown( KeyCode.F4 ) ) {
-            changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_BATTLE, "BattlePhase" );
-        }
-        // Resultへ移行
-        if ( Input.GetKeyDown( KeyCode.F5 ) ) {
-            changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_RESULT, "ResultPhase" );
-        }
-        // Eventへ移行
-        if ( Input.GetKeyDown( KeyCode.F6 ) ) {
-            changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_EVENT, "EventPhase" );
-        }
-        // Finishへ移行
-        if ( Input.GetKeyDown( KeyCode.F7 ) ) {
-            changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_FINISH, "FinishPhase" );
-        }
-    }
-
-    /// <summary>
     /// MainGamePhaseが移行可能かどうか確認する
     /// </summary>
     /// <param name="phase"></param>
     /// <param name="log_text"></param>
-    private void changeMainGamePhase( MAIN_GAME_PHASE phase, string log_text ) {
+    public void changeMainGamePhase( MAIN_GAME_PHASE phase, string log_text ) {
         try {
             _main_game_phase = phase;
 			_phase_text.text = log_text;

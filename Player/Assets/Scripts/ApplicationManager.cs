@@ -46,7 +46,7 @@ public class ApplicationManager : MonoBehaviour {
 	}
 	
 	// Update is called once per frame
-	void Update( ) {
+	void FixedUpdate( ) {
 		if ( _host_data == null && _network_manager.getHostObj( ) != null ) {
             _host_data = _network_manager.getHostObj( ).GetComponent< HostData >( );
 		}
@@ -67,6 +67,7 @@ public class ApplicationManager : MonoBehaviour {
             sceneChange( );
             if ( _client_data.getRecvData( ).changed_scene == true && _host_data.getRecvData( ).change_scene == false ) {
                 _client_data.CmdSetSendChangedScene( false );
+                _client_data.setSendChangeScene( false );
             }
         }
 
@@ -86,11 +87,12 @@ public class ApplicationManager : MonoBehaviour {
 		}
 	}
     
-    void sceneChange( ) { 
+    private void sceneChange( ) { 
         if ( _host_data.isChangeFieldScene( ) ) {
             Debug.Log( _host_data.getRecvData( ).scene.ToString( ) );
             _scene = _host_data.getRecvData( ).scene;
             _client_data.CmdSetSendChangedScene( true );
+            _client_data.setSendChangeScene( true );
         }
     }
 
@@ -119,8 +121,24 @@ public class ApplicationManager : MonoBehaviour {
 	/// GameSceneの更新
 	/// </summary>
 	private void updateGameScene( ) {
-
+        // フェイズの切り替え
+        if ( _host_data != null && _client_data != null ) {
+            phaseChange( );
+            if ( _client_data.getRecvData( ).changed_scene == true && _host_data.getRecvData( ).change_scene == false ) {
+                _client_data.CmdSetSendChangedScene( false );
+                _client_data.setSendChangeScene( false );
+            }
+        }
 	}
+
+    private void phaseChange( ) { 
+        if ( _host_data.isChangeFieldScene( ) ) {
+            Debug.Log( _host_data.getRecvData( ).scene.ToString( ) );
+            _scene = _host_data.getRecvData( ).scene;
+            _client_data.CmdSetSendChangedScene( true );
+            _client_data.setSendChangeScene( true );
+        }
+    }
 
 	/// <summary>
 	/// DicePhaseの更新

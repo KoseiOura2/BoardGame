@@ -15,6 +15,8 @@ public class HostData : NetworkBehaviour {
     public int _network_phase_data;
 	[ SyncVar ]
     public bool _network_change_scene;
+	[ SyncVar ]
+    public bool _network_change_phase;
 
     private NETWORK_FIELD_DATA _field_data;
 
@@ -22,10 +24,12 @@ public class HostData : NetworkBehaviour {
         _network_scene_data = 0;
         _network_phase_data = 0;
         _network_change_scene = false;
+        _network_change_phase = false;
 
         _field_data.scene = ( SCENE )_network_scene_data;
         _field_data.main_game_phase = ( MAIN_GAME_PHASE )_network_phase_data;
         _field_data.change_scene = _network_change_scene;
+        _field_data.change_phase = _network_change_phase;
     }
 
 	// Use this for initialization
@@ -78,6 +82,16 @@ public class HostData : NetworkBehaviour {
         _network_change_scene = flag;
     }
 
+    /// <summary>
+    /// フェイズが変化したかどうかを設定
+    /// </summary>
+	/// <param name="flag"></param>
+	[ Server ]
+    public void setSendChangeFieldPhase( bool flag ) { 
+        _field_data.change_phase = flag;
+        _network_change_phase = flag;
+    }
+
 	[ Client ]
 	public NETWORK_FIELD_DATA getRecvData( ) {
 		return _field_data;
@@ -91,6 +105,20 @@ public class HostData : NetworkBehaviour {
     public bool isChangeFieldScene( ) {
         if ( _network_change_scene == true ) {
             _field_data.scene = ( SCENE )_network_scene_data;
+            return true;
+        }
+
+        return false;
+    }
+
+	/// <summary>
+	/// 
+	/// </summary>
+	/// <returns><c>true</c>, if change field scene was ised, <c>false</c> otherwise.</returns>
+	[ Client ]
+    public bool isChangeFieldPhase( ) {
+        if ( _network_change_phase == true ) {
+            _field_data.main_game_phase = ( MAIN_GAME_PHASE )_network_phase_data;
             return true;
         }
 

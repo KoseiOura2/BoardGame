@@ -62,6 +62,7 @@ namespace Common {
         public SCENE scene;
         public MAIN_GAME_PHASE main_game_phase;
         public bool change_scene;
+        public bool change_phase;
     };
 
     /// <summary>
