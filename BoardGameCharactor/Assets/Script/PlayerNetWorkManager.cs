@@ -114,7 +114,7 @@ public class PlayerNetWorkManager : Manager<PlayerNetWorkManager> {
 		return DrowCompletion;
 	}
 
-	public bool networkDataAcross( MAIN_GAME_PHASE SetPhase, int RandomData = 0,  int Playertrout = 0, CARD_DATA DrowCardID = new CARD_DATA() ) {
+	public bool networkDataAcross( MAIN_GAME_PHASE SetPhase, int RandomData = 0, bool isGoal = false ,  int Playertrout = 0, CARD_DATA DrowCardID = new CARD_DATA() ) {
 		//ここでネットワークデータの送信を行います
         //送信が成功すればtrueに
 		bool isNetworkAcross = false;
@@ -136,12 +136,11 @@ public class PlayerNetWorkManager : Manager<PlayerNetWorkManager> {
 		case MAIN_GAME_PHASE.GAME_PHASE_ASSIGNMENT_BUFF:
 			//プレイヤーマネージャーからSelectのカードIDを渡す
 
-			//渡し終わったら削除をさせる
-			_player_manager.SelectAreaDelete();
 			isNetworkAcross = true;
 			break;
 
 		case MAIN_GAME_PHASE.GAME_PHASE_MOVE_CHARACTER:
+			//isGoalゴールしたかどうかを渡します
 			//プレイヤーの現在地からどのマスに調整したかを渡します
             //PlayerTrout
 			isNetworkAcross = true;

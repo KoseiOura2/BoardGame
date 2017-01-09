@@ -34,6 +34,9 @@ public class PlayerManager : Manager<PlayerManager> {
 	//プレイヤーの現在地
 	private int _playerHere;
 
+	//ゴールを取得
+	private int _goalPoint;
+
 	//1Pか2Pか
 	private PLAYER _isPlayer;
 
@@ -118,13 +121,19 @@ public class PlayerManager : Manager<PlayerManager> {
         //自身がプレイヤー1か2か取得
         _isPlayer = _player_NetWork_Manager.getPlayer( );
 
+		//ゴールエリアを取得
         //自身がmapのどの場所にいるかを設定（初期はスタート地点にいるのでStartを探します）
         for ( int i = 0; i < _file_manager.getMassCount( ); i++ ) {
 			_file_Data = _file_manager.getMapData( );
 			if ( _file_Data.mass[ i ].type == "start" ) {
                 _playerHere = i;
             }
+			if (_file_Data.mass [i].type == "goal") {
+				_goalPoint = i;
+				Debug.Log (_goalPoint);
+			}
         }
+
 		//テストで手札データを生成中
 		for (int i = 0; i < _debug_Hand; i++) {
 			_player_NetWork_Manager.networkCardIdReceipt (_card_Manager.distributeCard ());
@@ -154,6 +163,11 @@ public class PlayerManager : Manager<PlayerManager> {
 	//プレイヤーの現在地を取得する関数の生成
 	public int getPlayerHere(){
 		return _playerHere;
+	}
+
+	//ゴール地点を取得する関数
+	public int getGoalPoint(){
+		return _goalPoint;
 	}
 
 	//プレイヤーの勝敗を取得する関数
@@ -362,6 +376,10 @@ public class PlayerManager : Manager<PlayerManager> {
 		//プレイヤーの位置を参照してマスに向けて吹き出しを作ります
 		//移動数分をプレイヤーの現在地に
 		_playerHere += SetMoveNumber;
+		if (_playerHere >= _goalPoint) {
+			//ゴール地点より先に行ってしまったらゴール地点で止める
+			_playerHere = _goalPoint;
+		}
 
 		//エネミーの現在地をネットワークの持っているデータで取得
 		int _enemyHere = _player_NetWork_Manager.getEnemyHere();
@@ -399,7 +417,7 @@ public class PlayerManager : Manager<PlayerManager> {
 
 	public void SetSelectAreaCard( ){
 
-		//セレクトエリアに入っているなら手札リストからセレクトカードリストに移動して手札リストとオブジェクトリストから削除をする
+		//セレクトエリアに入っているなら手札リストからセレクトカードリストに移動する
 		//自身の現在の手札数を行う
 		for (int i = 0; i < _hand_Data.hand_List.Count; i++) {
 			bool SelectAreaCheck = _hand_Data.hand_Obj_List [i].GetComponent<Card> ().getInSelectArea ();
@@ -408,10 +426,6 @@ public class PlayerManager : Manager<PlayerManager> {
 
 				//オブジェクトをセレクトオブジェクトリストに追加
 				_hand_Data.select_Obj_List.Add (_hand_Data.hand_Obj_List [i]);
-
-				//手札リストとオブジェクトリストから削除
-				_hand_Data.hand_List.RemoveAt (i);
-				_hand_Data.hand_Obj_List.RemoveAt (i);
 			}
 		}
 	}
@@ -426,6 +440,7 @@ public class PlayerManager : Manager<PlayerManager> {
 				if (!_player_Flags.select_Position_Use [0] || _hand_Data.select_List[0].id == setCard.id ) {
 					//カードを保存しておく
 					_hand_Data.select_List.Add( _hand_Data.hand_List [i] );
+					_hand_Data.select_Obj_List.Add (_hand_Data.hand_Obj_List [i] );
 					//カードのポジションを変更
 					_hand_Data.hand_Obj_List [i].GetComponent<RectTransform>().anchoredPosition3D = _hand_Data.Select_Position[0];
 					_player_Flags.select_Position_Use[0] = true;
@@ -435,6 +450,7 @@ public class PlayerManager : Manager<PlayerManager> {
 				if (!_player_Flags.select_Position_Use [1] || _hand_Data.select_List[1].id == setCard.id ) {
 					//カードを保存しておく
 					_hand_Data.select_List.Add( _hand_Data.hand_List [i] );
+					_hand_Data.select_Obj_List.Add (_hand_Data.hand_Obj_List [i] );
 					//カードのポジションを変更
 					_hand_Data.hand_Obj_List [i].GetComponent<RectTransform>().anchoredPosition3D = _hand_Data.Select_Position[1];
 					_player_Flags.select_Position_Use[1] = true;
@@ -444,14 +460,16 @@ public class PlayerManager : Manager<PlayerManager> {
 				if (!_player_Flags.select_Position_Use [2] || _hand_Data.select_List[2].id == setCard.id ) {
 					//カードを保存しておく
 					_hand_Data.select_List.Add(_hand_Data.hand_List [i] );
+					_hand_Data.select_Obj_List.Add (_hand_Data.hand_Obj_List [i] );
 					//カードのポジションを変更
 					_hand_Data.hand_Obj_List [i].GetComponent<RectTransform>().anchoredPosition3D = _hand_Data.Select_Position[2];
 					_player_Flags.select_Position_Use[2] = true;
 					return true;
 				}
 				if (!_player_Flags.select_Position_Use [3] || _hand_Data.select_List[3].id == setCard.id ) {
-					//カードを保存しておく
+					//カードをセレクトエリアに
 					_hand_Data.select_List.Add( _hand_Data.hand_List [i] );
+					_hand_Data.select_Obj_List.Add (_hand_Data.hand_Obj_List [i] );
 					//カードのポジションを変更
 					_hand_Data.hand_Obj_List [i].GetComponent<RectTransform>().anchoredPosition3D = _hand_Data.Select_Position[3];
 					_player_Flags.select_Position_Use[3] = true;
@@ -468,7 +486,8 @@ public class PlayerManager : Manager<PlayerManager> {
 			//セレクトカードと消すカードのIDが一致した場合
 			if (_hand_Data.select_List [i].id == setCard.id) {
 				//その選択カードの情報を消してその場所のフラグをoffにする
-				_hand_Data.select_List.RemoveAt(i);
+				_hand_Data.hand_List.Add( _hand_Data.select_List[i]);
+				_hand_Data.hand_Obj_List.Add (_hand_Data.select_Obj_List [i] );
 				_player_Flags.select_Position_Use [i] = false;
 			}
 		}
@@ -535,6 +554,17 @@ public class PlayerManager : Manager<PlayerManager> {
 			//セレクトリストとセレクトオブジェクトリストから削除
 			_hand_Data.hand_List.RemoveAt (i);
 			_hand_Data.hand_Obj_List.RemoveAt (i);
+			_player_Flags.select_Position_Use [i] = false;
+		}
+	}
+
+	//セレクトエリアのカードを全て戻す
+	public void SelectAreaReturn(){
+		for (int i = _hand_Data.select_List.Count - 1; i >= 0; i--) {
+			//セレクトリストとセレクトオブジェクトリストから削除
+			_hand_Data.select_List.RemoveAt (i);
+			_hand_Data.select_Obj_List.RemoveAt (i);
+			_player_Flags.select_Position_Use [i] = false;
 		}
 	}
 }

@@ -200,7 +200,7 @@ public class BattlePhaseManager : MonoBehaviour {
 					//選択の結果ドローカードを使ったかどうか
 					if (_drowCard) {
 						//使用したカードのデータを送信する
-						_player_NetWork_Manager.networkDataAcross ( MAIN_GAME_PHASE.GAME_PHASE_DROW, 0, 0, _DrowCard );
+						_player_NetWork_Manager.networkDataAcross ( MAIN_GAME_PHASE.GAME_PHASE_DROW, 0, false, 0, _DrowCard );
 					}
 				}
 
@@ -328,14 +328,19 @@ public class BattlePhaseManager : MonoBehaviour {
 			switch( _Result ){
 			case RESULT.WINNER:
 				textSet (_textWindow, "WINNER");
+				//削除をさせる
+				_player_Manager.SelectAreaDelete();
 				break;
 
 			case RESULT.DROW:
 				textSet (_textWindow, "DROW");
+				//手札に戻す
+				_player_Manager.SelectAreaReturn();
 				break;
 
 			case RESULT.LOSE:
-				textSet (_textWindow, "RESULT");
+				textSet (_textWindow, "LOSE");
+				_player_Manager.SelectAreaReturn();
 				break;
 			}
 

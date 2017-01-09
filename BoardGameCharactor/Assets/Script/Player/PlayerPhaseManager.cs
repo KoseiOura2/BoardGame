@@ -149,6 +149,10 @@ public class PlayerPhaseManager : MonoBehaviour {
 			filedPhase ();
 			break;
 
+		case MAIN_GAME_PHASE.GAME_PHASE_FINISH:
+			finishPhase ();
+			break;
+
 		default:
 			Debug.LogError ("errorCase:" + _current_Phase);
 			break;
@@ -163,9 +167,6 @@ public class PlayerPhaseManager : MonoBehaviour {
 
 			//プレイヤー移動（今回は初期設定なので現在地に入れる）
 			_player_Manager.SetPlayerMove ();
-
-			//現在の手札を生成
-			//_player_Manager.setHandAllCardCreate();
 
 			//エネミーのテキストを設定
 			_player_Manager.SetEnemyObject();
@@ -257,6 +258,12 @@ public class PlayerPhaseManager : MonoBehaviour {
 		if (!initial_setting) {
 			Debug.Log ("フィールド移動画面です");
 
+			//プレイヤーによって変わる部分を変更
+			_player_Manager.setPlayerObject();
+
+			//プレイヤーの現在の手札を生成
+			_player_Manager.AllHandCreate();
+
 			//勝敗を取得
 			_isResult = _player_Manager.getBattleResult ();
 
@@ -266,9 +273,6 @@ public class PlayerPhaseManager : MonoBehaviour {
 			//エネミーのテキストを設定
 			_player_Manager.SetEnemyObject();
 
-			//プレイヤーによって変わる部分を変更
-			_player_Manager.setPlayerObject();
-
 			//初期設定完了フラグ
 			initial_setting = true;
 
@@ -277,10 +281,19 @@ public class PlayerPhaseManager : MonoBehaviour {
 				//リザルトの結果によってマス調整を出来る、出来ないを判定
 				switch (_isResult) {
 				case RESULT.WINNER:
-				case RESULT.DROW:
+					Debug.Log (_player_Manager.getPlayerHere ());
+					//プレイヤーがこの時点でゴールにいれば
+					if (_player_Manager.getPlayerHere () == _player_Manager.getGoalPoint ()) {
+						netData_Send = _player_NetWork_Manager.networkDataAcross ( MAIN_GAME_PHASE.GAME_PHASE_MOVE_CHARACTER, 0, true, _player_Trout_Result );
+					}
 					_trout_Adjustment = true;
 					break;
+				case RESULT.DROW:
 				case RESULT.LOSE:
+					//ゴールした地点で負けたら-1マス
+					if (_player_Manager.getPlayerHere () == _player_Manager.getGoalPoint ()) {
+						_player_Manager.SetPlayerMove ( -1 );
+					}
 					_trout_Adjustment = false;
 					break;
 				}
@@ -288,7 +301,7 @@ public class PlayerPhaseManager : MonoBehaviour {
 				if (_trout_Adjustment) {
 					//マスがクリックされたらそのマスの場所が前かその場かによって-1～1までを入れる
 					if(_isComplate){
-						netData_Send = _player_NetWork_Manager.networkDataAcross (MAIN_GAME_PHASE.GAME_PHASE_MOVE_CHARACTER, 0, _player_Trout_Result);
+						netData_Send = _player_NetWork_Manager.networkDataAcross ( MAIN_GAME_PHASE.GAME_PHASE_MOVE_CHARACTER, 0, false, _player_Trout_Result );
 						//テキストウィンドウを表示
 						_textWindow = canvasSet( _textWindow_Prefab, Vector3.zero );
 						textSet( _textWindow, PlayerWaitMessage );
@@ -298,13 +311,12 @@ public class PlayerPhaseManager : MonoBehaviour {
 				} else {
 					//どこに移動したかを送信します（マス調整ができないので0を入れます）
 					_player_Trout_Result = 0;
-					netData_Send = _player_NetWork_Manager.networkDataAcross (MAIN_GAME_PHASE.GAME_PHASE_MOVE_CHARACTER, 0, _player_Trout_Result);
+					netData_Send = _player_NetWork_Manager.networkDataAcross ( MAIN_GAME_PHASE.GAME_PHASE_MOVE_CHARACTER, 0, false, _player_Trout_Result );
 					//テキストウィンドウを表示
 					_textWindow = canvasSet( _textWindow_Prefab, Vector3.zero );
 					textSet( _textWindow, PlayerWaitMessage );
 				}
 			}
-
 			//受信フラグが立っていないのなら実行受信フラグが立ったならフェイズをチェンジ
 			if (!netData_Reception) {
 				//次のフェイズの受信命令がないか確認
@@ -325,6 +337,25 @@ public class PlayerPhaseManager : MonoBehaviour {
 			//フィールド画面に誘導するテキストを表示
 			_textWindow = canvasSet( _textWindow_Prefab, Vector3.zero );
 			textSet ( _textWindow, FieldNaviMessage );
+			//初期設定完了フラグ
+			initial_setting = true;
+		} else {
+			//受信フラグが立っていないのなら実行、受信フラグが立ったならフェイズをチェンジ
+			if (!netData_Reception) {
+				netData_Reception = _player_NetWork_Manager.networkPhaseChangeReceipt( );
+				DebugReceipt ();
+			} else {
+				phaseChange ();
+			}
+		}
+	}
+
+	void finishPhase( ) {
+		//初期設定が済んでなければ行う
+		if (!initial_setting) {
+			Debug.Log ("ゲームの終了などを行うフェイズです");
+			_textWindow = canvasSet( _textWindow_Prefab, Vector3.zero );
+			textSet ( _textWindow, "ゲームを終了します" );
 			//初期設定完了フラグ
 			initial_setting = true;
 		} else {
@@ -383,7 +414,13 @@ public class PlayerPhaseManager : MonoBehaviour {
 			break;
 
 		case MAIN_GAME_PHASE.GAME_PHASE_FIELD_GIMMICK:
-			_current_Phase = MAIN_GAME_PHASE.GAME_PHASE_THROW_DICE;
+			//プレイヤーがこの時点でゴールにいれば
+			if (_player_Manager.getPlayerHere () == _player_Manager.getGoalPoint ()) {
+				//フィニッシュシーンです
+				_current_Phase = MAIN_GAME_PHASE.GAME_PHASE_FINISH;
+			} else {
+				_current_Phase = MAIN_GAME_PHASE.GAME_PHASE_THROW_DICE;
+			}
 			break;
 		}
 	}
