@@ -130,7 +130,6 @@ public class PlayerManager : Manager<PlayerManager> {
             }
 			if (_file_Data.mass [i].type == "goal") {
 				_goalPoint = i;
-				Debug.Log (_goalPoint);
 			}
         }
 
@@ -241,6 +240,8 @@ public class PlayerManager : Manager<PlayerManager> {
 		}
 	}
 
+	//並び替え
+
 	//最新のカードを選択して生成を行う
 	public void setHandLatestCardCreate( CARD_DATA setCard ){
 
@@ -261,9 +262,16 @@ public class PlayerManager : Manager<PlayerManager> {
 		if (_hand_Data.hand_Obj_List == null) {
 			_hand_Data.hand_Obj_List = new List< GameObject > ();
 		}
-
+			
 		//カードを手札に追加
 		_hand_Data.hand_List.Add( setCard );
+
+		//手札の最大値6よりも大きいなら
+		if (_hand_Max < _hand_Data.hand_List.Count) {
+			_hand_Max = _hand_Data.hand_List.Count;
+		} else {
+			_hand_Max = 6;
+		}
 
 		//プレハブを生成してリストのオブジェクトに入れる
 		_hand_Data.hand_Obj_List.Add ((GameObject)Instantiate (_card_Template_Prefab));

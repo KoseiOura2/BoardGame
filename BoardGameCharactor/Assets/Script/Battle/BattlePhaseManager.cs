@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
+using System.Collections.Generic;
 using System;
 using Common;
 
@@ -29,6 +30,11 @@ public class BattlePhaseManager : MonoBehaviour {
 
 	//黒背景
 	public GameObject _blackout_Prefab;
+
+	//ディスカードエリアプレハブ
+	public GameObject _discardArea_Prefab;
+
+	public GameObject _discardSelectButton_Prefab;
 
 	//表示の待ち時間を設定
 	public float intervalTime = 1.0f;
@@ -83,7 +89,20 @@ public class BattlePhaseManager : MonoBehaviour {
 	//確定を押したかどうか
 	private bool _Select_Push = false;
 
+	//ディスカードフェイズでのテキストウィンドウの座標
+	private Vector3 discard_TextPosition = new Vector3 (0, 201, 0);
+
+	//ディスカードフェイズでのエリアの座標
+	private Vector3 discard_SelecAreaPosition = new Vector3 ( -125, -16, 0 );
+
+	//ディスカードフェイズでの選択ボタンの座標
+	private Vector3 discard_SelectButtonPosition = new Vector3 ( -140, -7, 0);
+
+	private List < GameObject > DisCard_Object;
+
 	private RESULT _Result;
+
+	private bool _discard_Ok = false;
 
 	// Use this for initialization
 	void Awake () {
@@ -101,6 +120,9 @@ public class BattlePhaseManager : MonoBehaviour {
 			GameObject _Player_Manager_Obj = GameObject.Find ("PlayerManager");
 			_player_Manager = _Player_Manager_Obj.GetComponent<PlayerManager> ();
 		}
+
+		//リストの初期化と設定
+		DisCard_Object = new List< GameObject >( );
 
 
 		//最初のフェイズをロード
@@ -276,12 +298,25 @@ public class BattlePhaseManager : MonoBehaviour {
 			Debug.Log ("カードを捨てるフェイズです");
 			//黒背景にする
 			_blackOut = canvasSet (_blackout_Prefab, Vector3.zero);
-
+			_blackOut.GetComponent<RectTransform>( ).sizeDelta = Vector2.zero;
 			//確定ボタン
+			DisCard_Object.Add ( canvasSet ( _discardSelectButton_Prefab, discard_SelectButtonPosition) );
+
+			//セレクトエリア
+			DisCard_Object.Add( canvasSet ( _discardArea_Prefab, discard_SelecAreaPosition ) );
+
+			//テキストウィンドウ
+			_textWindow = canvasSet (_textWindow_Prefab, discard_TextPosition);
+			textSet (_textWindow, "捨てるカードを選んでください");
 
 			//初期設定完了フラグ
 			initial_setting = true;
 		} else {
+			//確定ボタンが押されたら
+			if (_discard_Ok) {
+				//セレクトボタンにおいたものを削除
+			}
+
 			//受信フラグが立っていないのなら実行受信フラグが立ったならフェイズをチェンジ
 			if (!netData_Reception) {
 
@@ -367,6 +402,8 @@ public class BattlePhaseManager : MonoBehaviour {
 
 		Destroy( _textWindow );
 
+		Destroy (_blackOut);
+
 		//次のフェイズに移行する。リザルトフェイズで次のフェイズに移行した場合プレイヤーシーンへ、その時のフラグでMassActionフラグを渡す
 		switch (_current_Phase) {
 
@@ -448,4 +485,10 @@ public class BattlePhaseManager : MonoBehaviour {
 			_Select_Push = true;
 		}
 	}
+	public void disCardButton_Push(){
+		if (_current_Phase == MAIN_GAME_PHASE.GAME_PHASE_DIS_CARD) {
+			_discard_Ok = true;
+		}
+	}
+
 }
