@@ -111,7 +111,6 @@ public class ApplicationManager : Manager< ApplicationManager > {
 		if ( _client_data == null && _network_manager.getClientObj( 0 ) != null ) {
 			_client_data = _network_manager.getClientObj( 0 ).GetComponent< ClientData >( );
 		}
-
 		// デバッグ
         /*
 		if ( _network_data != null && !_network_data.isLocal( ) ) {
@@ -119,7 +118,6 @@ public class ApplicationManager : Manager< ApplicationManager > {
 			_phase_manager.setPhase(_network_data.getRecvData ().main_game_phase);
 		}
         */
-
 		switch( _scene ) {
 		case SCENE.SCENE_CONNECT:
 			updateConnectScene( );
@@ -153,6 +151,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
 			_network_gui_controll.setShowGUI( false );
 			_host_data.setSendScene( _scene );
             _host_data.setSendChangeFieldScene( true );
+			Debug.Log ("connect");
 		}
 	}
 
@@ -177,6 +176,8 @@ public class ApplicationManager : Manager< ApplicationManager > {
 			_host_data.setSendScene( _scene );
             _host_data.setSendChangeFieldScene( true );
 			_network_gui_controll.setShowGUI( false );
+
+			Debug.Log ("up");
 		}
 	}
 
@@ -258,9 +259,10 @@ public class ApplicationManager : Manager< ApplicationManager > {
 	/// MovePhaseの更新
 	/// </summary>
 	private void updateMovePhase( ) {
-		_player_manager.movePhaseUpdate( getResideCount( _player_manager.getPlayerID( ) ),
-			_stage_manager.getTargetMass( _player_manager.getPlayerCount( _player_manager.getPlayerID( ) ) + 1 ),
-			_stage_manager.getTargetMass( _player_manager.getPlayerCount( _player_manager.getPlayerID( ) ) - 1 )  );
+		/////////////////////////////////////////
+		_player_manager.movePhaseUpdate( getResideCount( ),
+			_stage_manager.getTargetMass( _player_manager.getTargetMassID( ) ) );
+		/////////////////////////////////////////
 		// ゴールまでの残りマスを表示
 		resideCount( );
 	}
@@ -276,6 +278,10 @@ public class ApplicationManager : Manager< ApplicationManager > {
 	/// GimmickPhaseの更新
 	/// </summary>
 	private void updateButtlePhase( ) {
+		//_player_manager.setPlayerAttack (  );
+		//////////////////////////////////
+		_player_manager.attackTopAndLowestPlayer( _player_manager.getPlayerAttack( ) );
+		//////////////////////////////////
 		
 	}
 
@@ -402,7 +408,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
 	/// </summary>
 	public void resideCount( ) {
 		for ( int i = 0; i < ( int )PLAYER_ORDER.MAX_PLAYER_NUM; i++ ) {
-			_reside_text[ i ].text = "プレイヤー" + i.ToString( ) + "：残り" + getResideCount( i ).ToString( ) + "マス";
+			_reside_text[ i ].text = "プレイヤー" + i.ToString( ) + "：残り" + getResideCount( )[ i ].ToString( ) + "マス";
 		}
 	}
 
@@ -411,8 +417,12 @@ public class ApplicationManager : Manager< ApplicationManager > {
     /// </summary>
     /// <param name="i"></param>
     /// <returns></returns>
-    public int getResideCount( int i ) {
-        return _file_manager.getMassCount( ) - 1 - _player_manager.getPlayerCount( i );
+    public int[ ] getResideCount( ) {
+		int[ ] count = new int[ 2 ];
+		for ( int i = 0; i < ( int )PLAYER_ORDER.MAX_PLAYER_NUM; i++ ) {
+			count[ i ] = _file_manager.getMassCount( ) - 1 - _player_manager.getPlayerCount( i );
+		}
+		return count;
     }
 
 	public void setEventCount( int count ) {

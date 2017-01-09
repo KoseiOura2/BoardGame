@@ -31,7 +31,7 @@ public class PhaseManager : MonoBehaviour {
             changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_DICE, "DicePhase" );
         }
         // Moveへ移行
-        if ( Input.GetKeyDown( KeyCode.F2 ) ) {
+		if ( Input.GetKeyDown( KeyCode.F2 ) ) {
             changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_MOVE_CHARACTER, "MovePhase" );
         }
         // DrawCardへ移行

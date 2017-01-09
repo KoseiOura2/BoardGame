@@ -119,5 +119,9 @@ namespace Common {
 		public GameObject obj;
 		public PLAYER_RANK rank;
 		public int advance_count;	//プレイヤーの進んでいる回数
+		//////////////////////////
+		public int attack;			//プレイヤーの攻撃力
+		public bool battle_winner;
+		//////////////////////////
 	}
 }
