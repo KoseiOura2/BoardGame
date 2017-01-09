@@ -27,6 +27,7 @@ namespace Common {
         GAME_PHASE_FINISH,
 		GAME_PHASE_DROW,
 		GAME_PHASE_FIELD_INDUCTION,
+		GAME_PHASE_DIS_CARD,
     };
 
 	public enum CARD_TYPE {
@@ -76,8 +77,15 @@ namespace Common {
 		public string environment; //環境情報
 	}
 
+	//プレイヤー1かプレイヤー2か
 	public enum PLAYER {
 		PLAYER_1,
 		PLAYER_2,
+	};
+
+	public enum RESULT{
+		WINNER,
+		DROW,
+		LOSE,
 	};
 }

@@ -3,16 +3,19 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.EventSystems;
 
-public class LongPressButton : 
+public class PressButton : 
 MonoBehaviour,
 IPointerEnterHandler,
-IPointerExitHandler
+IPointerExitHandler,
+IPointerClickHandler
 {
 	// マウスオーバー時に呼び出すイベント
 	public UnityEvent onMouseOver = new UnityEvent ();
 
 	//マウスオーバー終了時に呼び出すイベント
 	public UnityEvent onMouseOverExit = new UnityEvent();
+
+	public UnityEvent onClick = new UnityEvent ();
 
 	// マウスオーバー状態
 	public bool isMouseOver
@@ -26,6 +29,12 @@ IPointerExitHandler
 	{
 		get;
 		set;
+	}
+
+	void Update(){
+		if ((scroll ?? (scroll = FindObjectOfType<LongPressScroll> ())).CheckPressedStill (this)) {
+			EndMouseOver ();
+		}
 	}
 
 	//マウスカーソルが入った場合
@@ -42,11 +51,16 @@ IPointerExitHandler
 	//マウスカーソルが出た場合
 	public void OnPointerExit (PointerEventData eventData)
 	{
-		EndPress ();
+		EndMouseOver ();
+	}
+
+	//クリックされた場合
+	public void OnPointerClick(PointerEventData eventData){
+		onClick.Invoke ();
 	}
 		
 	/// マウスオーバー状態終了時に呼ぶメソッド
-	public void EndPress(){
+	public void EndMouseOver(){
 		onMouseOverExit.Invoke ();
 		isMouseOver = false;
 	}

@@ -21,15 +21,15 @@ public class LongPressScroll : ScrollRect{
 	private float _init_Content_Position = -280;
 
 	[SerializeField]
-	private LongPressButton _pressed_Button;
+	private PressButton _pressed_Button;
 
 	private Map2d _map_2D;
 
 	new void Awake () {
 		
 		// 子のLongPressButtonに自身の参照を持たせる
-		LongPressButton[] buttons = GetComponentsInChildren<LongPressButton> ();
-		foreach (LongPressButton item in buttons) {
+		PressButton[] buttons = GetComponentsInChildren<PressButton> ();
+		foreach (PressButton item in buttons) {
 			item.scroll = this;
 		}
 
@@ -61,7 +61,7 @@ public class LongPressScroll : ScrollRect{
 	}
 		
 	// 現在も押下状態であるかの判定を返す
-	public bool CheckPressedStill(LongPressButton button){
+	public bool CheckPressedStill(PressButton button){
 		_pressed_Button = button;
 		if (isDrag)
 			return true;
@@ -78,7 +78,7 @@ public class LongPressScroll : ScrollRect{
 		base.OnEndDrag (eventData);
 		isDrag = false;
 		if(_pressed_Button)
-		_pressed_Button.EndPress ();
+		//_pressed_Button.EndPress ();
 		_pressed_Button = null;
 	}
 }

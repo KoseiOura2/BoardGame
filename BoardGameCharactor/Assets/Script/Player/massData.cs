@@ -16,9 +16,18 @@ public class massData : MonoBehaviour {
 	//Canvasを取得
 	private GameObject _Canvas_Root;
 
+	//プレイヤーフェイズマネージャーを取得
+	private PlayerPhaseManager _player_Phase_Manager;
+
+	//プレイヤーマネージャーを取得
+	private PlayerManager _player_Manager;
+
 	//吹き出しの場所のXとYを設定
 	private float _baloon_X = 185;
 	private float _baloon_Y = 114;
+
+	//マスの場所を保存
+	private int MassID;
 
 	private float _start_Content_Postion;
 
@@ -33,8 +42,7 @@ public class massData : MonoBehaviour {
 
 	void Awake () {
 		img_Source = GetComponent<Image> ();
-		//吹き出しを保存
-		//_Mass_Baloon = Resources.Load ("Prefab/Mass_Baloon");
+
 		//キャンバスを取得
 		if (_Canvas_Root == null) {
 			_Canvas_Root = GameObject.Find ("Canvas");
@@ -44,9 +52,29 @@ public class massData : MonoBehaviour {
 			GameObject _Content_Obj = GameObject.Find ("Content");
 			_Content = _Content_Obj.GetComponent<RectTransform> ();
 		}
+		//プレイヤーフェイズのマネージャーを取得
+		if (_player_Phase_Manager == null) {
+			GameObject _player_Phase_Manager_Obj = GameObject.Find ("PlayerPhaseManager");
+			_player_Phase_Manager = _player_Phase_Manager_Obj.GetComponent<PlayerPhaseManager> ();
+		}
+
+		//プレイヤーマネージャーを取得
+		if ( _player_Manager == null){
+			GameObject _Player_Manager_Obj = GameObject.Find ("PlayerManager");
+			_player_Manager = _Player_Manager_Obj.GetComponent<PlayerManager> ();
+		}
+
 		//コンテンツポジションの開始時の位置を取得
 		_start_Content_Postion = _Content.GetComponent<RectTransform> ().anchoredPosition.x;
 	}
+
+	void Update(){
+		//プレイヤーのマス調整が可能なら
+		if (_player_Phase_Manager.getTroutAdjustment ()) {
+			//自身を光らせる
+		}
+	}
+
 	public void SetMassData( string SetData ){
 		//マスのスプライトを取得,設定をします。吹き出しを取得、テキストを設定をします
 		switch (SetData)
@@ -82,7 +110,8 @@ public class massData : MonoBehaviour {
 
 	public void SetBaloonPosition( int SetID ){
 		//IDをもらってその場所のIDに吹き出しが来るように座標を設定
-		_baloon_Position = new Vector3 ( -_baloon_X + (_baloon_X * SetID), _baloon_Y, 0 );
+		MassID = SetID;
+		_baloon_Position = new Vector3 ( -_baloon_X + (_baloon_X * MassID), _baloon_Y, 0 );
 	}
 
 	public void BaloonDrow(){
@@ -110,6 +139,19 @@ public class massData : MonoBehaviour {
 	public void BaloonDelete(){
 		//吹き出しの削除
 		Destroy (_Mass_Baloon);
+	}
+
+	public void massClick(){
+		//プレイヤーのマス調整が可能なら
+		if (_player_Phase_Manager.getTroutAdjustment ()) {
+			//プレイヤーの現在位置を取得
+			int player = _player_Manager.getPlayerHere();
+			int PlayerWhile = player - MassID;
+			//プレイヤーとマスの位置を見て-1から+1までか
+			if (PlayerWhile >= -1 && PlayerWhile <= 1) {
+				_player_Phase_Manager.SetClick (MassID);
+			}
+		}
 	}
 		
 }

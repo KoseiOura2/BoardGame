@@ -4,9 +4,6 @@ using Common;
 
 public class PlayerNetWorkManager : Manager<PlayerNetWorkManager> {
 
-    //各種マネージャー
-	public CardManager _card_manager;
-
 	public PlayerManager _player_manager;
 
     //自身がどっちのプレイヤーか
@@ -20,6 +17,9 @@ public class PlayerNetWorkManager : Manager<PlayerNetWorkManager> {
 
 	//敵の現在地
 	private int _EnemyHere;
+
+	//ドローが完了したか
+	private bool DrowCompletion;
 
 	// Awake関数の代わり
 	protected override void initialize( ) {
@@ -38,8 +38,13 @@ public class PlayerNetWorkManager : Manager<PlayerNetWorkManager> {
 		//相手の現在地を取得　仮で0固定
 		_EnemyHere = 0;
 
-		//今回は仮でプレイヤー1にする
+		//プレイヤーが1か2か取得今回は仮でプレイヤー1にする
 		_currentPlayer = PLAYER.PLAYER_1;
+
+		//今回は仮で勝利固定
+		networkResultReceipt(RESULT.WINNER);
+		//ドローが終了したかどうか
+		DrowCompletion = false;
 	}
 
 	//通信から次のフェイズに進む要求が出た場合に受信フラグをONにする
@@ -48,9 +53,6 @@ public class PlayerNetWorkManager : Manager<PlayerNetWorkManager> {
         bool isNetworkReceipt = false;
 
 		//通信を飛ばしてフェイズ受信命令がないかを確認をする。受信フラグが来ていたらtrue
-        /*          
-            通信お願いします
-        */
         if ( isNetworkReceipt ) {
             return true;
         } else {
@@ -58,17 +60,29 @@ public class PlayerNetWorkManager : Manager<PlayerNetWorkManager> {
         }
 	}
 
+	//通信から勝敗をセット
+	public bool networkResultReceipt( RESULT _SetBattleResult ){
+		//通信に成功したかどうか
+		bool isNetworkReceipt = false;
+
+		//勝敗をセット
+		_player_manager.SetBattleResult(_SetBattleResult);
+
+		//通信に成功したらtrue失敗したらfalse
+		if ( isNetworkReceipt ) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	//通信からカードIDをセット
     public bool networkCardIdReceipt( CARD_DATA SetCardID ) {
         //通信に成功したかどうか
         bool isNetworkReceipt = false;
         //貰うデータはドローカードのＩＤ
-        //IDの数だけ回す
-        int DrowCardMax = 0;
-        //今回は仮で直接カードマネージャーから生成してもらいます
-        for ( int i = 0; i < DrowCardMax; i++ ) {
-            //カードデータを生成して手札に加える
-            cardDataReceipt( SetCardID );
-        }
+        //プレイヤーマネージャーでカードデータを生成して手札に加える
+		_player_manager.DeckCardList( SetCardID );
         //通信に成功したらtrue失敗したらfalse
         if ( isNetworkReceipt ) {
             return true;
@@ -77,6 +91,7 @@ public class PlayerNetWorkManager : Manager<PlayerNetWorkManager> {
         }
     }
 
+	//通信から敵プレイヤーのデータをセット
 	public bool networkEnemyDataReceipt( int EnemyHand, int EnemyStatus, int EnemyHere ) {
         //通信に成功したかどうか
         bool isNetworkReceipt = false;
@@ -84,10 +99,6 @@ public class PlayerNetWorkManager : Manager<PlayerNetWorkManager> {
         _enemyHandNumber = EnemyHand;
         _enemyStatus = EnemyStatus;
 		_EnemyHere = EnemyHere;
-        //ステータスがちゃんとあるなら通信成功フラグをtrue
-		if (_enemyHandNumber != 0 && _enemyStatus != 0) {
-			isNetworkReceipt = true;
-		}
         //通信に成功したらtrue失敗したらfalse
         if ( isNetworkReceipt ) {
             return true;
@@ -96,41 +107,43 @@ public class PlayerNetWorkManager : Manager<PlayerNetWorkManager> {
         }
     }
 
-    public bool networkDataAcross( MAIN_GAME_PHASE SetPhase, int RandomData = 0, bool UseDrow = false, int Playertrout = 0 ) {
+	//通信からドローが終了したかどうかをセット
+	public bool isnetworkDrowDataLimit( bool isCardLimit ){
+		//ドローが終了したかどうかを取得
+		DrowCompletion = isCardLimit;
+		return DrowCompletion;
+	}
+
+	public bool networkDataAcross( MAIN_GAME_PHASE SetPhase, int RandomData = 0,  int Playertrout = 0, CARD_DATA DrowCardID = new CARD_DATA() ) {
 		//ここでネットワークデータの送信を行います
         //送信が成功すればtrueに
-			bool isNetworkAcross = false;
+		bool isNetworkAcross = false;
 		//対応したシーンによって渡すデータを決める
 		switch (SetPhase) {
 
 		case MAIN_GAME_PHASE.GAME_PHASE_THROW_DICE:
 			//ボタンを押した際に出たランダムデータを渡す
             //RandomData;
-            /*
-                通信お願いします
-            */
             isNetworkAcross = true;
 			break;
 
 		case MAIN_GAME_PHASE.GAME_PHASE_DROW:
-			//ドローカードを使用したかどうか
-            //UseDrowCard;
-            //使用したカードのＩＤを渡す
-            /*          
-                通信お願いします
-            */
+            //使用したドローカードのＩＤを渡す
+			//DrowCardID
 			isNetworkAcross = true;
 			break;
 		
 		case MAIN_GAME_PHASE.GAME_PHASE_ASSIGNMENT_BUFF:
-			//プレイヤーマネージャーから選択リストのカードIDを渡す
+			//プレイヤーマネージャーからSelectのカードIDを渡す
+
+			//渡し終わったら削除をさせる
+			_player_manager.SelectAreaDelete();
 			isNetworkAcross = true;
 			break;
 
-		case MAIN_GAME_PHASE.GAME_PHASE_FIELD_GIMMICK:
-			//どのマスに止まったかを渡します
+		case MAIN_GAME_PHASE.GAME_PHASE_MOVE_CHARACTER:
+			//プレイヤーの現在地からどのマスに調整したかを渡します
             //PlayerTrout
-			//プレイヤーデータ
 			isNetworkAcross = true;
 			break;
 
@@ -163,15 +176,15 @@ public class PlayerNetWorkManager : Manager<PlayerNetWorkManager> {
 		return _enemyStatus;
 	}
 
+	//敵の現在地を取得する関数
 	public int getEnemyHere(){
 		//敵の現在地
 		return _EnemyHere;
 	}
 
-	//通信からカードデータを貰い生成
-    void cardDataReceipt( CARD_DATA SetCardId ){
-        //DeckCardList()を使用して回す予定
-        _player_manager.DeckCardList( SetCardId );
+	//ドローが終了したかどうか
+	public bool getDrowCompletion(){
+		return DrowCompletion;
 	}
 
 }

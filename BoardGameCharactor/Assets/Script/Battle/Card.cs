@@ -4,6 +4,7 @@ using UnityEngine.UI;
 using Common;
 
 public class Card : MonoBehaviour {
+	
     //初期位置座標
     private Vector2 initCardPosition;
 
@@ -25,8 +26,15 @@ public class Card : MonoBehaviour {
 	//BattleManagerの取得
 	private BattlePhaseManager _battle_Phase_Manager;
 
+	private PlayerManager _player_Manager;
+
+	[SerializeField]
+	//自身のカードデータを取得
+	private CARD_DATA ownCardData;
+
 	//自身のイメージを取得
 	private Image _cardImage;
+
 	//カードの画像を取得
 	private Sprite _cardSprite;
 
@@ -48,13 +56,20 @@ public class Card : MonoBehaviour {
 				_battle_Phase_Manager = _battle_Manager_Obj.GetComponent<BattlePhaseManager> ();
 			}
 		}
-
-        //初期位置を取得
-		initCardPosition = uI_Element.anchoredPosition;
+		//プレイヤーマネージャーの取得
+		if (_player_Manager == null) {
+			GameObject _player_Manager_Obj = GameObject.Find ("PlayerManager");
+			_player_Manager = _player_Manager_Obj.GetComponent<PlayerManager> ();
+		}
 		//自身のImageを読み込む
 		_cardImage = GetComponent<Image>();
 
     }
+
+	void Start(){
+		//初期位置を取得
+		initCardPosition = uI_Element.anchoredPosition;
+	}
 	
 	// Update is called once per frame
 	void Update () {
@@ -90,39 +105,57 @@ public class Card : MonoBehaviour {
 		_cardImage.sprite = _cardSprite;
 	}
 
-    public void drag()
-    {
-		//バトルフェイズマネージャーが効果選択フェイズなら動くように、存在しなければ動かさない
+	public void SetCardData( CARD_DATA setCard ) {
+		ownCardData = setCard;
+	}
+
+    public void drag(){
+		//バトルフェイズマネージャーでカードセレクトが始まっているなら動くように、存在しなければ動かさない
 		if (_battle_Phase_Manager != null) {
-			if (_battle_Phase_Manager.GetMainGamePhase () == MAIN_GAME_PHASE.GAME_PHASE_ASSIGNMENT_BUFF) {
+			if (_battle_Phase_Manager.getCardSelectStart ()) {
 				//マウスの位置へカードが移動
 				uI_Element.anchoredPosition = ScreenPosition;
 			}
 		}
     }
     public void onPointUp(){
-        //現在のマウスカーソルの場所を取得
-        Vector3 mousePos = Input.mousePosition;
+		//バトルフェイズマネージャーでカードセレクトが始まっているなら動くように、存在しなければ動かさない
+		if (_battle_Phase_Manager != null) {
+			if (_battle_Phase_Manager.getCardSelectStart ()) {
+				//現在のマウスカーソルの場所を取得
+				Vector3 mousePos = Input.mousePosition;
 
-        //マウスカーソルの場所へ飛ばすRayの生成
-        Ray ray = Camera.main.ScreenPointToRay(mousePos);
-        RaycastHit hit = new RaycastHit();
+				//マウスカーソルの場所へ飛ばすRayの生成
+				Ray ray = Camera.main.ScreenPointToRay (mousePos);
+				RaycastHit hit = new RaycastHit ();
 
-        //ヒットしたなら
-        if (Physics.Raycast(ray, out hit)) { 
-            //セレクトエリアに当たったなら特定の位置へ移動
-			if (hit.collider.tag == "SelectArea"){
-				//セレクトエリアに入ったかのフラグを取得
-				InSelectArea = true;
-                Debug.Log("エリア内にいます");
-            } else {
-                //特定の場所以外で離した場合は初期位置へ
-                uI_Element.anchoredPosition = initCardPosition;
-            }
-        } else {
-            //特定の場所以外で離した場合は初期位置へ
-            uI_Element.anchoredPosition = initCardPosition;
-        }
+				//ヒットしたなら
+				if (Physics.Raycast (ray, out hit)) { 
+					//セレクトエリアに当たったなら特定の位置へ移動
+					if (hit.collider.tag == "SelectArea") {
+						//セレクトエリアに入ったかのフラグを取得
+						InSelectArea = true;
+						//セレクトエリアのポジションに移動できたかどうかを取得
+						bool isSelectAreaCheck = _player_Manager.SetSelectAreaPosition( ownCardData );
+						if (!isSelectAreaCheck) {
+							//セレクトエリアに入れられなかったら初期位置へ
+							uI_Element.anchoredPosition = initCardPosition;
+							InSelectArea = false;
+						}
+					} else {
+						//セレクトエリアから出たので自身を選択エリアから解除する
+						_player_Manager.SetSelectAreaOut( ownCardData);
+						//特定の場所以外で離した場合は初期位置へ
+						uI_Element.anchoredPosition = initCardPosition;
+					}
+				} else {
+					//セレクトエリアから出たので自身を選択エリアから解除する
+					_player_Manager.SetSelectAreaOut( ownCardData);
+					//特定の場所以外で離した場合は初期位置へ
+					uI_Element.anchoredPosition = initCardPosition;
+				}
+			}
+		}
     }
 
 	//セレクトエリアに入ってるかどうかを取得
