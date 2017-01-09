@@ -187,7 +187,7 @@ public class BattlePhaseManager : MonoBehaviour {
 			if (!netData_Reception) {
 
 				//ドローが終わったか確認
-				if (!_player_NetWork_Manager.getDrowCompletion( ) ) {
+				if (!_player_NetWork_Manager.getDrowCompletion ()) {
 					//ドローカードタイプがあればドローカードを使うかどうかを選択させる
 					if (_player_Manager.getHandSerach (CARD_TYPE.CARD_TYPE_NONE_TYPE)) {
 
@@ -213,7 +213,6 @@ public class BattlePhaseManager : MonoBehaviour {
 
 				//ドローカードを使うか使わないか選びました
 				if (_selectConfirm) {
-					
 					//オブジェクトを削除
 					Destroy (_yes_button);
 					Destroy (_no_button);
@@ -221,18 +220,25 @@ public class BattlePhaseManager : MonoBehaviour {
 
 					//選択の結果ドローカードを使ったかどうか
 					if (_drowCard) {
+						//ドローカードを手札から削除
+						_player_Manager.CardDelete (_DrowCard);
 						//使用したカードのデータを送信する
-						_player_NetWork_Manager.networkDataAcross ( MAIN_GAME_PHASE.GAME_PHASE_DROW, 0, false, 0, _DrowCard );
+						_player_NetWork_Manager.networkDataAcross (MAIN_GAME_PHASE.GAME_PHASE_DROW, 0, false, 0, _DrowCard);
+						//生成フラグをoff
+						_generateComplate = false;
+						//ドローカードの使用を選んだことをリセット
+						_selectConfirm = false;
 					}
 				}
-
-				_player_Manager.DebugCardDrow();
+				//Oキーを押したらカードをドロー
+				_player_Manager.DebugCardDrow ();
 
 				//次のフェイズの受信命令がないか確認
 				netData_Reception = _player_NetWork_Manager.networkPhaseChangeReceipt ();
 
 				//デバッグ用でPキーを押したら通信完了フラグ
 				DebugReceipt ();
+
 			} else {
 				phaseChange ();
 			}

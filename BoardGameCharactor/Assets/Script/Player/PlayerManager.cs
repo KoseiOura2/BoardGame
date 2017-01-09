@@ -547,6 +547,9 @@ public class PlayerManager : Manager<PlayerManager> {
 		for (int i = 0; i < _hand_Data.hand_List.Count; i++) {
 			//手札に同一のカードID
 			if ( _hand_Data.hand_List [i].id == Card.id ) {
+
+				//設定した手札を削除
+				Destroy (_hand_Data.hand_Obj_List [i]);
 				//手札リストとオブジェクトリストから削除
 				_hand_Data.hand_List.RemoveAt (i);
 				_hand_Data.hand_Obj_List.RemoveAt (i);
