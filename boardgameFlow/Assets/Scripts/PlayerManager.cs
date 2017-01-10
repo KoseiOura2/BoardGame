@@ -86,7 +86,6 @@ public class PlayerManager : MonoBehaviour {
 	}
 
     // MovePhaseの更新
-    // MovePhaseの更新
 	public void movePhaseUpdate( int[ ] count, GameObject target_pos ) {
 		dicisionTopAndLowestPlayer ( ref count );
 		if ( _limit_value > 0 && _player_id > -1 ) {
@@ -168,8 +167,10 @@ public class PlayerManager : MonoBehaviour {
 			_players[ 0 ].rank = PLAYER_RANK.RANK_FIRST;
 			_players[ 1 ].rank = PLAYER_RANK.RANK_FIRST;
 		}
+        /*
 		Debug.Log( "プレイヤー1ランク:" + _players[ 0 ].rank );
 		Debug.Log( "プレイヤー2ランク:" + _players[ 1 ].rank );
+        */
 	}
     
 	/// <summary>
@@ -180,16 +181,16 @@ public class PlayerManager : MonoBehaviour {
 		if ( winner == attack[ 0 ] ) {
 			_winner_player = _players[ 0 ].obj;
 			_loser_player  = _players[ 1 ].obj;
-			_players[ 0 ].battle_winner = true;
-			_players[ 1 ].battle_winner = false;
+			_players[ 0 ].battle_result = BATTLE_RESULT.WIN;
+			_players[ 1 ].battle_result = BATTLE_RESULT.LOSE;
 		} else if ( winner == attack[ 1 ] ){
 			_winner_player = _players[ 1 ].obj;
 			_loser_player  = _players[ 0 ].obj;
-			_players[ 1 ].battle_winner = true;
-			_players[ 0 ].battle_winner = false;
+			_players[ 1 ].battle_result = BATTLE_RESULT.WIN;
+			_players[ 0 ].battle_result = BATTLE_RESULT.LOSE;
 		} else {
-			_players[ 0 ].battle_winner = true;
-			_players[ 1 ].battle_winner = true;
+			_players[ 0 ].battle_result = BATTLE_RESULT.DRAW;
+			_players[ 1 ].battle_result = BATTLE_RESULT.DRAW;
 		}
 	}
 
@@ -280,10 +281,28 @@ public class PlayerManager : MonoBehaviour {
         return _move_flag;
     }
 
+    public BATTLE_RESULT getPlayerResult( int id ) {
+        return _players[ id ].battle_result;
+    }
+
+    public void refreshPlayerResult( ) {
+        for ( int i = 0; i < ( int )PLAYER_ORDER.MAX_PLAYER_NUM; i++ ) {
+            _players[ i ].battle_result = BATTLE_RESULT.BATTLE_RESULT_NONE;
+        }
+    }
+
     public void movedRefresh( ) {
         for ( int i = 0; i < ( int )PLAYER_ORDER.MAX_PLAYER_NUM; i++ ) {
             _move_finish[ i ] = false;
             _move_start[ i ] = false;
         }
+    }
+
+    public void setMoveFinish( int id, bool flag ) {
+        _move_finish[ id ] = flag;
+    }
+
+    public void setMoveStart( int id, bool flag ) {
+        _move_finish[ id ] = flag;
     }
 }

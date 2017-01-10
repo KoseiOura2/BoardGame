@@ -41,6 +41,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
     [ SerializeField ]
     private int[ ] _dice_value = new int[ ( int )PLAYER_ORDER.MAX_PLAYER_NUM ];
     private bool _game_playing = false;
+    private bool _goal_flag = false;
 
 	public Text _scene_text;
 	public Text[ ] _reside_text = new Text[ ( int )PLAYER_ORDER.MAX_PLAYER_NUM ];    //残りマス用テキスト
@@ -275,6 +276,9 @@ public class ApplicationManager : Manager< ApplicationManager > {
 			}
 		}
 
+        int[ ] count = getResideCount( );
+        _player_manager.dicisionTopAndLowestPlayer( ref count );
+
         // カメラの位置更新
 		_camera_manager.moveCameraPos( _player_manager.getTopPlayer( PLAYER_RANK.RANK_FIRST ), _player_manager.getLastPlayer( ) );
 	}
@@ -302,8 +306,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
             dice_value[ 0 ] = _client_data[ 0 ].getRecvData( ).dice_value;
             dice_value[ 1 ] = _client_data[ 1 ].getRecvData( ).dice_value;
 		    // ダイスを振ったら(通信)
-		    if ( Input.GetMouseButtonDown( 0 ) || 
-                 dice_value[ 0 ] > 0 && dice_value[ 1 ] > 0  ) {
+		    if ( dice_value[ 0 ] > 0 && dice_value[ 1 ] > 0  ) {
                 _dice_value[ 0 ] = dice_value[ 0 ];
                 _dice_value[ 1 ] = dice_value[ 1 ];
                 // キャラクター移動フェイズへの移行
@@ -314,7 +317,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
             int[ ] dice_value = new int[ ( int )PLAYER_ORDER.MAX_PLAYER_NUM ];
             dice_value[ 0 ] = _client_data[ 0 ].getRecvData( ).dice_value;
 		    // ダイスを振ったら(通信)
-		    if ( Input.GetMouseButtonDown( 0 ) || dice_value[ 0 ] > 0 ) {
+		    if ( dice_value[ 0 ] > 0 ) {
                 _dice_value[ 0 ] = dice_value[ 0 ];
                 // キャラクター移動フェイズへの移行
                 _phase_manager.changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_MOVE_CHARACTER, "MovePhase" );
@@ -375,7 +378,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
 
         if ( _mode == PROGRAM_MODE.PLAY_MODE ) {
             // 1Pにカード配布
-            if ( _host_data.getRecvData( ).card_list_0.Count == 0 ) {
+            if ( _host_data.getRecvData( ).card_list_one.Length == 0 ) {
 		        for ( int i = 0; i < _dice_value[ 0 ]; i++ ) {
 			        // デッキのカード数が０になったらリフレッシュ
 			        if ( _card_manager.getDeckCardNum( ) <= 0 ) {
@@ -389,7 +392,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
             }
             
             // 2Pにカード配布
-            if ( _host_data.getRecvData( ).card_list_1.Count == 0 ) {
+            if ( _host_data.getRecvData( ).card_list_two.Length == 0 ) {
 		        for ( int i = 0; i < _dice_value[ 1 ]; i++ ) {
 			        // デッキのカード数が０になったらリフレッシュ
 			        if ( _card_manager.getDeckCardNum( ) <= 0 ) {
@@ -410,7 +413,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
             }
         } else if ( _mode == PROGRAM_MODE.DEBUG_MODE ) {
             // 1Pにカード配布
-            if ( _host_data.getRecvData( ).card_list_0.Count == 0 ) {
+            if ( _host_data.getRecvData( ).card_list_one.Length == 0 ) {
 		        for ( int i = 0; i < _dice_value[ 0 ]; i++ ) {
 			        // デッキのカード数が０になったらリフレッシュ
 			        if ( _card_manager.getDeckCardNum( ) <= 0 ) {
@@ -435,14 +438,139 @@ public class ApplicationManager : Manager< ApplicationManager > {
 	/// ButtlePhaseの更新
 	/// </summary>
 	private void updateButtlePhase( ) {
-
+        if ( _mode == PROGRAM_MODE.PLAY_MODE ) {
+            if ( _client_data[ 0 ].getRecvData( ).battle_ready == true &&
+                 _client_data[ 1 ].getRecvData( ).battle_ready == true )  {
+                // プレイヤーのステータスを設定
+                _player_manager.setPlayerAttack( 0, _client_data[ 0 ].getRecvData( ).player_status );
+                _player_manager.setPlayerAttack( 1, _client_data[ 1 ].getRecvData( ).player_status );
+                // 攻撃力を比較
+                _player_manager.attackTopAndLowestPlayer( _player_manager.getPlayerAttack( ) );
+                // 次のフェイズへ
+                _phase_manager.changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_RESULT, "ResultPhase" );
+            }
+        } else if ( _mode == PROGRAM_MODE.DEBUG_MODE ) {
+            if ( _client_data[ 0 ].getRecvData( ).battle_ready == true )  {
+                // プレイヤーのステータスを設定
+                _player_manager.setPlayerAttack( 0, _client_data[ 0 ].getRecvData( ).player_status );
+                _player_manager.setPlayerAttack( 1, _client_data[ 0 ].getRecvData( ).player_status );
+                // 攻撃力を比較
+                _player_manager.attackTopAndLowestPlayer( _player_manager.getPlayerAttack( ) );
+                // 次のフェイズへ
+                _phase_manager.changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_RESULT, "ResultPhase" );
+            }
+        }
 	}
 
 	/// <summary>
 	/// ResultPhaseの更新
 	/// </summary>
 	private void updateResultPhase( ) {
-		_player_manager.attackTopAndLowestPlayer( _player_manager.getPlayerAttack( ) );
+        // 戦闘結果を送信
+		if ( _host_data.getRecvData( ).send_result == false ) {
+            _host_data.setSendBattleResult( _player_manager.getPlayerResult( 0 ), _player_manager.getPlayerResult( 1 ), true );
+        }
+
+        if ( _mode == PROGRAM_MODE.PLAY_MODE ) {
+            if ( _client_data[ 0 ].getRecvData( ).ready == true &&
+                 _client_data[ 1 ].getRecvData( ).ready == true )  {
+                if ( _client_data[ 0 ].getRecvData( ).mass_adjust == MASS_ADJUST.ADVANCE &&
+                     _player_manager.isPlayerMoveStart( 0 ) == false ) {
+                    // 1Pを前に動かす
+		            _player_manager.setPlayerID( 0 );
+		            _player_manager.setLimitValue( 1 );
+		            _player_manager.setAdvanceFlag( true );
+                    _event_count = 0;
+                } else if ( _client_data[ 0 ].getRecvData( ).mass_adjust == MASS_ADJUST.BACK &&
+                     _player_manager.isPlayerMoveStart( 0 ) == false ) {
+                    // 1Pを後ろに動かす
+		            _player_manager.setPlayerID( 0 );
+		            _player_manager.setLimitValue( 1 );
+		            _player_manager.setAdvanceFlag( false );
+                    _event_count = 0;
+                } else if ( _client_data[ 0 ].getRecvData( ).mass_adjust == MASS_ADJUST.NO_ADJUST &&
+                     _player_manager.isPlayerMoveStart( 0 ) == false ) {
+                    // 1Pを動かさない
+		            _player_manager.setMoveFinish( 0, true );
+                    _player_manager.setMoveStart( 0, true );
+                } else if ( _client_data[ 1 ].getRecvData( ).mass_adjust == MASS_ADJUST.ADVANCE &&
+                     _player_manager.isPlayerMoveStart( 1 ) == false && _player_manager.isPlayerMove( ) == false  ) {
+                    // 2Pを前に動かす
+		            _player_manager.setPlayerID( 1 );
+		            _player_manager.setLimitValue( 1 );
+		            _player_manager.setAdvanceFlag( true );
+                    _event_count = 0;
+                } else if ( _client_data[ 1 ].getRecvData( ).mass_adjust == MASS_ADJUST.BACK &&
+                     _player_manager.isPlayerMoveStart( 1 ) == false && _player_manager.isPlayerMove( ) == false  ) {
+                    // 2Pを後ろに動かす
+		            _player_manager.setPlayerID( 1 );
+		            _player_manager.setLimitValue( 1 );
+		            _player_manager.setAdvanceFlag( false );
+                    _event_count = 0;
+                } else if ( _client_data[ 1 ].getRecvData( ).mass_adjust == MASS_ADJUST.NO_ADJUST &&
+                     _player_manager.isPlayerMoveStart( 1 ) == false && _player_manager.isPlayerMove( ) == false  ) {
+                    // 2Pを動かさない
+		            _player_manager.setMoveFinish( 1, true );
+                    _player_manager.setMoveStart( 1, true );
+                }
+            }
+        } else if ( _mode == PROGRAM_MODE.DEBUG_MODE ) {
+            if ( _client_data[ 0 ].getRecvData( ).ready == true )  {
+                    Debug.Log( "ok1" );
+                if ( _client_data[ 0 ].getRecvData( ).mass_adjust == MASS_ADJUST.ADVANCE &&
+                     _player_manager.isPlayerMoveStart( 0 ) == false ) {
+                    // 1Pを前に動かす
+		            _player_manager.setPlayerID( 0 );
+		            _player_manager.setLimitValue( 1 );
+		            _player_manager.setAdvanceFlag( true );
+                    _event_count = 0;
+                    Debug.Log( "ok1" );
+                } else if ( _client_data[ 0 ].getRecvData( ).mass_adjust == MASS_ADJUST.BACK &&
+                     _player_manager.isPlayerMoveStart( 0 ) == false ) {
+                    // 1Pを後ろに動かす
+		            _player_manager.setPlayerID( 0 );
+		            _player_manager.setLimitValue( 1 );
+		            _player_manager.setAdvanceFlag( false );
+                    _event_count = 0;
+                } else if ( _client_data[ 0 ].getRecvData( ).mass_adjust == MASS_ADJUST.NO_ADJUST &&
+                     _player_manager.isPlayerMoveStart( 0 ) == false ) {
+                    // 1Pを動かさない
+		            _player_manager.setMoveFinish( 0, true );
+                    _player_manager.setMoveStart( 0, true );
+                } else if ( _client_data[ 0 ].getRecvData( ).mass_adjust == MASS_ADJUST.ADVANCE &&
+                     _player_manager.isPlayerMoveStart( 1 ) == false && _player_manager.isPlayerMove( ) == false  ) {
+                    // 2Pを前に動かす
+		            _player_manager.setPlayerID( 1 );
+		            _player_manager.setLimitValue( 1 );
+		            _player_manager.setAdvanceFlag( true );
+                    _event_count = 0;
+                    Debug.Log( "ok2" );
+                } else if ( _client_data[ 0 ].getRecvData( ).mass_adjust == MASS_ADJUST.BACK &&
+                     _player_manager.isPlayerMoveStart( 1 ) == false && _player_manager.isPlayerMove( ) == false  ) {
+                    // 2Pを後ろに動かす
+		            _player_manager.setPlayerID( 1 );
+		            _player_manager.setLimitValue( 1 );
+		            _player_manager.setAdvanceFlag( false );
+                    _event_count = 0;
+                } else if ( _client_data[ 0 ].getRecvData( ).mass_adjust == MASS_ADJUST.NO_ADJUST &&
+                     _player_manager.isPlayerMoveStart( 1 ) == false && _player_manager.isPlayerMove( ) == false  ) {
+                    // 2Pを動かさない
+		            _player_manager.setMoveFinish( 1, true );
+                    _player_manager.setMoveStart( 1, true );
+                }
+            }
+        }
+		
+		_player_manager.movePhaseUpdate( getResideCount( ), _stage_manager.getTargetMass( _player_manager.getTargetMassID( ) ) );
+		// ゴールまでの残りマスを表示
+		resideCount( );
+
+        // 両方の移動が終わったら次のフェイズへ
+        if ( _player_manager.isPlayerMoveFinish( 0 ) == true && _player_manager.isPlayerMoveFinish( 1 ) == true ) {
+            _player_manager.movedRefresh( );
+            _host_data.setSendBattleResult( BATTLE_RESULT.BATTLE_RESULT_NONE, BATTLE_RESULT.BATTLE_RESULT_NONE, false );
+            _phase_manager.changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_EVENT, "EventPhase" );
+        }
 	}
 
 	/// <summary>

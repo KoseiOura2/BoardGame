@@ -64,13 +64,20 @@
   <ItemGroup>
     <Compile Include="Assets\MoveTest.cs" />
     <Compile Include="Assets\Scripts\ApplicationManager.cs" />
+    <Compile Include="Assets\Scripts\CameraManager.cs" />
     <Compile Include="Assets\Scripts\CardManager.cs" />
     <Compile Include="Assets\Scripts\ClientData.cs" />
     <Compile Include="Assets\Scripts\Common.cs" />
+    <Compile Include="Assets\Scripts\DebugManager.cs" />
+    <Compile Include="Assets\Scripts\FileManager.cs" />
     <Compile Include="Assets\Scripts\HostData.cs" />
+    <Compile Include="Assets\Scripts\Manager.cs" />
+    <Compile Include="Assets\Scripts\NetworkData.cs" />
     <Compile Include="Assets\Scripts\NetworkGUIControll.cs" />
     <Compile Include="Assets\Scripts\NetworkMNG.cs" />
     <Compile Include="Assets\Scripts\PhaseManager.cs" />
+    <Compile Include="Assets\Scripts\PlayerManager.cs" />
+    <Compile Include="Assets\Scripts\StageManager.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\SyntaxTree\UnityVS\2013\UnityVS.CSharp.targets" />
 </Project>

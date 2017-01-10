@@ -57,6 +57,44 @@ namespace Common {
 	}
 
     /// <summary>
+    /// 現在のプレイヤーの行動順
+    /// </summary>
+    public enum PLAYER_ORDER {
+        PLAYER_ONE,
+        PLAYER_TWO,
+        MAX_PLAYER_NUM,
+        NO_PLAYER
+    }
+
+	/// <summary>
+	/// プレイヤーの順位
+	/// </summary>
+	public enum PLAYER_RANK {
+		NO_RANK,
+		RANK_FIRST,
+		RANK_SECOND,
+	}
+
+    /// <summary>
+    /// プレイヤーの勝敗結果
+    /// </summary>
+    public enum BATTLE_RESULT {
+        BATTLE_RESULT_NONE,
+        WIN,
+        LOSE,
+        DRAW,
+    };
+
+    /// <summary>
+    /// マス調整
+    /// </summary>
+    public enum MASS_ADJUST {
+        NO_ADJUST,
+        ADVANCE,
+        BACK,
+    };
+
+    /// <summary>
     /// 通信で送受信するフィールド側のデータ
     /// </summary>
     public struct NETWORK_FIELD_DATA {
@@ -64,8 +102,11 @@ namespace Common {
         public MAIN_GAME_PHASE main_game_phase;
         public bool change_scene;
         public bool change_phase;
-        public List< int > card_list_0;
-        public List< int > card_list_1;
+        public int[ ] card_list_one;
+        public int[ ] card_list_two;
+        public BATTLE_RESULT result_player_one;
+        public BATTLE_RESULT result_player_two;
+        public bool send_result;
     };
 
     /// <summary>
@@ -76,6 +117,10 @@ namespace Common {
 		public bool changed_phase;
         public int dice_value;
         public bool ready;
+        public int player_status;
+        public int[ ] used_card_list;
+        public bool battle_ready;
+        public MASS_ADJUST mass_adjust;
     };
 
     /// <summary>
@@ -98,25 +143,6 @@ namespace Common {
 	public struct FILE_DATA {
 		public POSS_DATA[ ] mass; // マス配列
 	}
-		
-    /// <summary>
-    /// 現在のプレイヤーの行動順
-    /// </summary>
-    public enum PLAYER_ORDER {
-        PLAYER_ONE,
-        PLAYER_TWO,
-        MAX_PLAYER_NUM,
-        NO_PLAYER
-    }
-
-	/// <summary>
-	/// プレイヤーの順位
-	/// </summary>
-	public enum PLAYER_RANK {
-		NO_RANK,
-		RANK_FIRST,
-		RANK_SECOND,
-	}
 
 	/// <summary>
 	/// プレイヤーのデータ
@@ -125,5 +151,7 @@ namespace Common {
 		public GameObject obj;
 		public PLAYER_RANK rank;
 		public int advance_count;	//プレイヤーの進んでいる回数
+		public int attack;			//プレイヤーの攻撃力
+		public BATTLE_RESULT battle_result;
 	}
 }

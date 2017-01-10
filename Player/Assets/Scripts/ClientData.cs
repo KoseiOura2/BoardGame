@@ -10,20 +10,26 @@ public class ClientData : NetworkBehaviour {
     
 	[ SerializeField ]
 	private NETWORK_PLAYER_DATA _player_data;
+    
+    public int MAX_CARD_NUM = 4;
 
     void Awake( ) {
 		_player_data.changed_scene = false;
         _player_data.changed_phase = false;
         _player_data.dice_value = -1;
         _player_data.ready = false;
+        _player_data.used_card_list = new int[ MAX_CARD_NUM ];
+        _player_data.player_status = 0;
+        _player_data.battle_ready = false;
+        _player_data.mass_adjust = MASS_ADJUST.NO_ADJUST;
     }
 
 	// Use this for initialization
 	void Start( ) {
 		if ( isLocalPlayer == true ) {
-			_server_state = SERVER_STATE.STATE_HOST;
-		} else {
 			_server_state = SERVER_STATE.STATE_CLIANT;
+		} else {
+			_server_state = SERVER_STATE.STATE_HOST;
 		}
 	}
 	
@@ -94,6 +100,47 @@ public class ClientData : NetworkBehaviour {
     public void setReady( bool flag ) { 
 		_player_data.ready = flag;
 
+    }
+    
+    /// <summary>
+    /// 戦闘結果を送信
+    /// </summary>
+    /// <param name="ready"></param>
+    /// <param name="status"></param>
+    /// <param name="card_list"></param>
+	[ Command ]
+    public void CmdSetSendBattleData( bool ready, int status, int[ ] card_list ) { 
+        _player_data.battle_ready  = ready;
+        _player_data.player_status = status;
+        for ( int i = 0; i < card_list.Length; i++ ) {
+            _player_data.used_card_list[ i ] = card_list[ i ];
+        }
+    }
+    
+	[ Client ]
+    public void setBattleData( bool ready, int status, int[ ] card_list ) { 
+        _player_data.battle_ready  = ready;
+        _player_data.player_status = status;
+        for ( int i = 0; i < card_list.Length; i++ ) {
+            _player_data.used_card_list[ i ] = card_list[ i ];
+        }
+    }
+    
+    /// <summary>
+    /// マス調整の結果を送る
+    /// </summary>
+    /// <param name="ready"></param>
+    /// <param name="advance"></param>
+	[ Command ]
+    public void CmdSetSendMassAdjust( bool ready, MASS_ADJUST adjust ) { 
+        _player_data.ready = ready;
+        _player_data.mass_adjust = adjust;
+    }
+    
+	[ Client ]
+    public void setMassAdjust( bool ready, MASS_ADJUST adjust ) { 
+        _player_data.ready = ready;
+        _player_data.mass_adjust = adjust;
     }
 
 	public NETWORK_PLAYER_DATA getRecvData( ) {

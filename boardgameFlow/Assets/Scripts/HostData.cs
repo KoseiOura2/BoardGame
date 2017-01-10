@@ -17,25 +17,40 @@ public class HostData : NetworkBehaviour {
 
     public SyncListInt _network_card_list_0 = new SyncListInt( );
     public SyncListInt _network_card_list_1 = new SyncListInt( );
+
 	[ SyncVar ]
     public bool _network_change_scene;
 	[ SyncVar ]
     public bool _network_change_phase;
+	[ SyncVar ]
+    public int _network_battle_result_one;
+	[ SyncVar ]
+    public int _network_battle_result_two;
+	[ SyncVar ]
+    public bool _network_send_result;
 
     private NETWORK_FIELD_DATA _field_data;
+
+    public int DISTRIBUT_CARD_NUM = 3;
 
     void Awake( ) {
         _network_scene_data = 0;
         _network_phase_data = 0;
         _network_change_scene = false;
         _network_change_phase = false;
+        _network_battle_result_one = 0;
+        _network_battle_result_two = 0;
+        _network_send_result = false;
 
         _field_data.scene = ( SCENE )_network_scene_data;
         _field_data.main_game_phase = ( MAIN_GAME_PHASE )_network_phase_data;
         _field_data.change_scene = _network_change_scene;
         _field_data.change_phase = _network_change_phase;
-        _field_data.card_list_0 = new List< int >( );
-        _field_data.card_list_1 = new List< int >( );
+        _field_data.card_list_one = new int[ DISTRIBUT_CARD_NUM ];
+        _field_data.card_list_two = new int[ DISTRIBUT_CARD_NUM ];
+        _field_data.result_player_one = ( BATTLE_RESULT )_network_battle_result_one;
+        _field_data.result_player_two = ( BATTLE_RESULT )_network_battle_result_two;
+        _field_data.send_result = _network_send_result;
     }
 
 	// Use this for initialization
@@ -107,10 +122,10 @@ public class HostData : NetworkBehaviour {
     public void setSendCardlist( int player_num, List< int > card_list ) { 
         for ( int i = 0; i < card_list.Count; i++ ) {
             if ( player_num == ( int )PLAYER_ORDER.PLAYER_ONE ) {
-                _field_data.card_list_0.Add( card_list[ i ] );
+                _field_data.card_list_one[ i ] = card_list[ i ];
                 _network_card_list_0.Add( card_list[ i ] );
             } else if ( player_num == ( int )PLAYER_ORDER.PLAYER_TWO ) {
-                _field_data.card_list_1.Add( card_list[ i ] );
+                _field_data.card_list_two[ i ] = card_list[ i ];
                 _network_card_list_1.Add( card_list[ i ] );
             }
         }
@@ -119,12 +134,32 @@ public class HostData : NetworkBehaviour {
 	[ Server ]
     public void refreshCardList( int player_num ) { 
         if ( player_num == ( int )PLAYER_ORDER.PLAYER_ONE ) {
-            _field_data.card_list_0.Clear( );
+            for ( int i = 0; i < _field_data.card_list_one.Length; i++ ) {
+                _field_data.card_list_one[ i ] = -1;
+            }
             _network_card_list_0.Clear( );
         } else if ( player_num == ( int )PLAYER_ORDER.PLAYER_TWO ) {
-            _field_data.card_list_1.Clear( );
+            for ( int i = 0; i < _field_data.card_list_one.Length; i++ ) {
+                _field_data.card_list_two[ i ] = -1;
+            }
             _network_card_list_1.Clear( );
         }
+    }
+
+    /// <summary>
+    /// 戦闘結果を送る
+    /// </summary>
+    /// <param name="result_one"></param>
+    /// <param name="result_two"></param>
+    /// <param name="result"></param>
+	[ Server ]
+    public void setSendBattleResult( BATTLE_RESULT result_one, BATTLE_RESULT result_two, bool result ) { 
+        _field_data.result_player_one = result_one;
+        _field_data.result_player_two = result_two;
+        _field_data.send_result = result;
+        _network_battle_result_one = ( int )result_one;
+        _network_battle_result_two = ( int )result_two;
+        _network_send_result = result;
     }
 
 	[ Client ]
@@ -168,4 +203,12 @@ public class HostData : NetworkBehaviour {
 	public SERVER_STATE getServerState( ) {
 		return _server_state;
 	}
+
+    public int getBattleResultOne( ) {
+        return _network_battle_result_one;
+    }
+    
+    public int getBattleResultTwo( ) {
+        return _network_battle_result_two;
+    }
 }

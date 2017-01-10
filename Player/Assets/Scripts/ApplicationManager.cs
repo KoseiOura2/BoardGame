@@ -214,10 +214,15 @@ public class ApplicationManager : MonoBehaviour {
 	/// </summary>
 	private void updateDrawPhase( ) {
         if ( _player_num == 0 ) {
-		    if ( _host_data.getRecvData( ).card_list_0.Count > 0 ) {
+		    if ( _host_data.getRecvData( ).card_list_one.Length > 0 ) {
+                // 手札にカードを加える処理
+            }
+        } else if ( _player_num == 1 ) {
+		    if ( _host_data.getRecvData( ).card_list_two.Length > 0 ) {
                 // 手札にカードを加える処理
             }
         }
+
         if ( Input.GetKeyDown( KeyCode.A ) ) {
             // 準備完了を送る
             _client_data.CmdSetSendReady( true );
@@ -234,20 +239,64 @@ public class ApplicationManager : MonoBehaviour {
             _client_data.CmdSetSendReady( false );
             _client_data.setReady( false );
         }
+
+        
+        if ( Input.GetKeyDown( KeyCode.A ) ) {
+            // 選択結果を送る
+            int player_status = 10;
+            int[ ] card_list = new int[ ] { 0, 1, 2 };
+
+            _client_data.CmdSetSendBattleData( true, player_status, card_list );
+            _client_data.setBattleData( true, player_status, card_list );
+        }
 	}
     
 	/// <summary>
 	/// ResultPhaseの更新
 	/// </summary>
 	private void updateResultPhase( ) {
-		
+        if ( _player_num == 0 ) {
+		    if ( _host_data.getBattleResultOne( ) == ( int )BATTLE_RESULT.WIN ||
+                 _host_data.getBattleResultOne( ) == ( int )BATTLE_RESULT.DRAW ) {
+                // マス調整の処理
+                MASS_ADJUST adjust = MASS_ADJUST.ADVANCE;
+
+                _client_data.CmdSetSendMassAdjust( true, adjust );
+                _client_data.setMassAdjust( true, adjust );
+            } else if ( _host_data.getBattleResultOne( ) == ( int )BATTLE_RESULT.LOSE ) {
+                // マス調整の処理
+                MASS_ADJUST adjust = MASS_ADJUST.NO_ADJUST;
+
+                _client_data.CmdSetSendMassAdjust( true, adjust );
+                _client_data.setMassAdjust( true, adjust );
+            }
+        } else if ( _player_num == 1 ) {
+		    if ( _host_data.getBattleResultTwo( ) == ( int )BATTLE_RESULT.WIN ||
+                 _host_data.getBattleResultTwo( ) == ( int )BATTLE_RESULT.DRAW ) {
+                // マス調整の処理
+                MASS_ADJUST adjust = MASS_ADJUST.ADVANCE;
+
+                _client_data.CmdSetSendMassAdjust( true, adjust );
+                _client_data.setMassAdjust( true, adjust );
+            } else if ( _host_data.getBattleResultTwo( ) == ( int )BATTLE_RESULT.LOSE ) {
+                // マス調整の処理
+                MASS_ADJUST adjust = MASS_ADJUST.NO_ADJUST;
+
+                _client_data.CmdSetSendMassAdjust( true, adjust );
+                _client_data.setMassAdjust( true, adjust );
+            }
+        }
 	}
     
 	/// <summary>
 	/// EventPhaseの更新
 	/// </summary>
 	private void updateEventPhase( ) {
-
+		if ( _client_data.getRecvData( ).ready == true ) {
+            // 準備完了を初期化
+            _client_data.CmdSetSendMassAdjust( false, MASS_ADJUST.NO_ADJUST );
+            _client_data.setMassAdjust( true, MASS_ADJUST.NO_ADJUST );
+        }
 	}
 
 	/// <summary>
