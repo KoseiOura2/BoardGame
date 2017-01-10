@@ -64,6 +64,8 @@ namespace Common {
         public MAIN_GAME_PHASE main_game_phase;
         public bool change_scene;
         public bool change_phase;
+        public List< int > card_list_0;
+        public List< int > card_list_1;
     };
 
     /// <summary>
@@ -71,6 +73,9 @@ namespace Common {
     /// </summary>
     public struct NETWORK_PLAYER_DATA {
 		public bool changed_scene;
+		public bool changed_phase;
+        public int dice_value;
+        public bool ready;
     };
 
     /// <summary>
@@ -120,5 +125,7 @@ namespace Common {
 		public GameObject obj;
 		public PLAYER_RANK rank;
 		public int advance_count;	//プレイヤーの進んでいる回数
+		public int attack;			//プレイヤーの攻撃力
+		public bool battle_winner;
 	}
 }

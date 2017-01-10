@@ -19,12 +19,17 @@ public class PlayerManager : MonoBehaviour {
     private GameObject _target;             //進む先のターゲットを設定
 	private GameObject _firstest_player;
 	private GameObject _latest_player;
+	private GameObject _winner_player;
+	private GameObject _loser_player;
 
     private int _player_id     = -1;    //動かすプレイヤーID設定
+    [ SerializeField ]
     private int _limit_value   = -1;    //進むマス数設定
     private float _time = 1;
     private float _startTime;
     private bool _move_flag    = false;     //動かす時のフラグが立っているか
+    private bool[ ] _move_start = new bool[ ]{ false, false };
+    private bool[ ] _move_finish = new bool[ ]{ false, false };
     private bool _advance_flag = true;   	//前に進むか後ろに戻るか
 
     /// <summary>
@@ -81,12 +86,14 @@ public class PlayerManager : MonoBehaviour {
 	}
 
     // MovePhaseの更新
-	public void movePhaseUpdate( int count, GameObject advance_pos, GameObject back_pos ) {
+    // MovePhaseの更新
+	public void movePhaseUpdate( int[ ] count, GameObject target_pos ) {
+		dicisionTopAndLowestPlayer ( ref count );
 		if ( _limit_value > 0 && _player_id > -1 ) {
 			if ( !_move_flag ) {
-				setTargetPos( count, ref advance_pos, ref back_pos );
+				setTargetPos( ref target_pos );
 			} else {
-				playerMove( count );
+				playerMove( );
 			}
 		} else if ( _limit_value == 0 ) {
 			_limit_value--;
@@ -94,8 +101,7 @@ public class PlayerManager : MonoBehaviour {
 			_player_id = -1;
 			_target = null;
 		}
-		dicisionTopAndLowestPlayer (  );
-    }
+	}
 
 	/// <summary>
 	/// ターゲットの設定
@@ -103,7 +109,7 @@ public class PlayerManager : MonoBehaviour {
 	/// <param name="count">Count.</param>
 	/// <param name="advance_pos">Advance position.</param>
 	/// <param name="back_pos">Back position.</param>
-	private void setTargetPos( int count, ref GameObject advance_pos, ref GameObject back_pos ) {
+	private void setTargetPos( ref GameObject target_pos ) {
         if ( _time <= 0 ) {
 			_players[ _player_id ].obj.transform.position = _end_position;
 			_player_id = -1;
@@ -113,21 +119,17 @@ public class PlayerManager : MonoBehaviour {
 
         _startTime = Time.timeSinceLevelLoad;
 		_start_position = _players[ _player_id ].obj.transform.position;
-        if( _advance_flag ) {
-			_target = advance_pos;
-        } else { 
-			_target = back_pos;
-        }
+		_target = target_pos;
         _end_position = _target.transform.localPosition;
         _end_position.y += 0.3f;
         _move_flag = true;
+        _move_start[ _player_id ] = true;
     }
 
 	/// <summary>
 	/// プレイヤーを動かす処理
 	/// </summary>
-	/// <param name="count">Count.</param>
-    private void playerMove( int count ) {
+    private void playerMove( ) {
         var diff = Time.timeSinceLevelLoad - _startTime;
 		if ( diff > _time ) {
 			_players[ _player_id ].obj.transform.position = _end_position;
@@ -139,28 +141,69 @@ public class PlayerManager : MonoBehaviour {
 			}
             _move_flag = false;
             _target    = null;
+            _move_finish[ _player_id ] = true;
         }
 
 		var rate = diff / _time;
 
 		_players[ _player_id ].obj.transform.position = Vector3.Lerp ( _start_position, _end_position, rate );
     }
-
-	public void dicisionTopAndLowestPlayer(  ) {
-
-		if ( getPlayerCount( 0 ) < getPlayerCount( 1 ) ) {
-			_players [ 0 ].rank = PLAYER_RANK.RANK_FIRST;
-			_players [ 1 ].rank = PLAYER_RANK.RANK_SECOND;
-		} else if ( getPlayerCount( 0 ) > getPlayerCount( 1 ) ) {
-			_players [ 0 ].rank = PLAYER_RANK.RANK_SECOND;
-			_players [ 1 ].rank = PLAYER_RANK.RANK_FIRST;
+    
+	/// <summary>
+	/// ランク付け関数
+	/// </summary>
+	public void dicisionTopAndLowestPlayer( ref int[ ] count ) {
+		float first = Mathf.Min( count[ 0 ], count[ 1 ] );
+		if ( first == count[ 0 ] ) {
+			_firstest_player	= _players[ 0 ].obj;
+			_latest_player		= _players[ 1 ].obj;
+			_players[ 0 ].rank = PLAYER_RANK.RANK_FIRST;
+			_players[ 1 ].rank = PLAYER_RANK.RANK_SECOND;
+		} else if ( first == count[ 1 ] ) {
+			_firstest_player	= _players[ 1 ].obj;
+			_latest_player		= _players[ 0 ].obj;
+			_players[ 0 ].rank = PLAYER_RANK.RANK_SECOND;
+			_players[ 1 ].rank = PLAYER_RANK.RANK_FIRST;
+		} else {
+			_players[ 0 ].rank = PLAYER_RANK.RANK_FIRST;
+			_players[ 1 ].rank = PLAYER_RANK.RANK_FIRST;
 		}
-
+		Debug.Log( "プレイヤー1ランク:" + _players[ 0 ].rank );
+		Debug.Log( "プレイヤー2ランク:" + _players[ 1 ].rank );
+	}
+    
+	/// <summary>
+	/// 攻撃力比較用関数
+	/// </summary>
+	public void attackTopAndLowestPlayer( int[ ] attack ){
+		float winner = Mathf.Max ( attack[ 0 ], attack[ 1 ] );
+		if ( winner == attack[ 0 ] ) {
+			_winner_player = _players[ 0 ].obj;
+			_loser_player  = _players[ 1 ].obj;
+			_players[ 0 ].battle_winner = true;
+			_players[ 1 ].battle_winner = false;
+		} else if ( winner == attack[ 1 ] ){
+			_winner_player = _players[ 1 ].obj;
+			_loser_player  = _players[ 0 ].obj;
+			_players[ 1 ].battle_winner = true;
+			_players[ 0 ].battle_winner = false;
+		} else {
+			_players[ 0 ].battle_winner = true;
+			_players[ 1 ].battle_winner = true;
+		}
 	}
 
-    //プレイヤーがどれくらい進んでいるかを取得
+    /// <summary>
+    /// プレイヤーがどれくらい進んでいるかを取得
+    /// </summary>
+    /// <param name="i"></param>
+    /// <returns></returns>
     public int getPlayerCount( int i ) {
-		return _players[ i ].advance_count;
+		if ( i >= 0 ) {
+            return _players[ i ].advance_count;
+        }
+		
+        return 0;
     }
 
     /// <summary>
@@ -183,4 +226,64 @@ public class PlayerManager : MonoBehaviour {
 		_player_id = id;
 	}
 
+    /// <summary>
+	/// 攻撃力受け取り用関数
+	/// </summary>
+	/// <param name="id">Identifier.</param>
+	/// <param name="attack">Attack.</param>
+	public void setPlayerAttack( int id, int attack ) {
+		_players[ id ].attack = attack;
+	}
+
+	//各プレイヤーの攻撃力を取得
+	public int[ ] getPlayerAttack( ) {
+		int[ ] attack = new int[ 2 ];
+		for ( int i = 0; i < ( int )PLAYER_ORDER.MAX_PLAYER_NUM; i++ ) {
+			attack[ i ] = _players[ i ].attack;
+		}
+		return attack;
+	}
+
+	//ターゲットとなるマスIDを取得
+	public int getTargetMassID( ) {
+		if ( _advance_flag ) {
+			return getPlayerCount( getPlayerID ( ) ) + 1;
+		} else {
+			return getPlayerCount( getPlayerID ( ) ) - 1;
+		}
+	}
+
+	//指定ランクプレイヤーのゲームオブジェクトを返す
+	public GameObject getTopPlayer( PLAYER_RANK player_rank ) {
+		for ( int i = 0; i < ( int )PLAYER_ORDER.MAX_PLAYER_NUM; i++ ) {
+			if ( player_rank == _players[ i ].rank ) {
+				return _players[ i ].obj;
+			} 
+		}
+		return null;
+	}
+
+	//最下位プレイヤーのゲームオブジェクトを返す
+	public GameObject getLastPlayer( ) {
+		return _latest_player;
+	}
+
+    public bool isPlayerMoveFinish( int i ) {
+        return _move_finish[ i ];
+    }
+    
+    public bool isPlayerMoveStart( int i ) {
+        return _move_start[ i ];
+    }
+
+    public bool isPlayerMove( ) {
+        return _move_flag;
+    }
+
+    public void movedRefresh( ) {
+        for ( int i = 0; i < ( int )PLAYER_ORDER.MAX_PLAYER_NUM; i++ ) {
+            _move_finish[ i ] = false;
+            _move_start[ i ] = false;
+        }
+    }
 }

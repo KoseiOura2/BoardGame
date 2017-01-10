@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.Networking;
 using System.Collections;
+using System.Collections.Generic;
 using Common;
 
 public class HostData : NetworkBehaviour {
@@ -13,6 +14,9 @@ public class HostData : NetworkBehaviour {
     public int _network_scene_data;
 	[ SyncVar ]
     public int _network_phase_data;
+
+    public SyncListInt _network_card_list_0 = new SyncListInt( );
+    public SyncListInt _network_card_list_1 = new SyncListInt( );
 	[ SyncVar ]
     public bool _network_change_scene;
 	[ SyncVar ]
@@ -30,6 +34,8 @@ public class HostData : NetworkBehaviour {
         _field_data.main_game_phase = ( MAIN_GAME_PHASE )_network_phase_data;
         _field_data.change_scene = _network_change_scene;
         _field_data.change_phase = _network_change_phase;
+        _field_data.card_list_0 = new List< int >( );
+        _field_data.card_list_1 = new List< int >( );
     }
 
 	// Use this for initialization
@@ -90,6 +96,35 @@ public class HostData : NetworkBehaviour {
     public void setSendChangeFieldPhase( bool flag ) { 
         _field_data.change_phase = flag;
         _network_change_phase = flag;
+    }
+
+    /// <summary>
+    /// 配布するカードの設定
+    /// </summary>
+    /// <param name="player_num"></param>
+    /// <param name="card_list"></param>
+	[ Server ]
+    public void setSendCardlist( int player_num, List< int > card_list ) { 
+        for ( int i = 0; i < card_list.Count; i++ ) {
+            if ( player_num == ( int )PLAYER_ORDER.PLAYER_ONE ) {
+                _field_data.card_list_0.Add( card_list[ i ] );
+                _network_card_list_0.Add( card_list[ i ] );
+            } else if ( player_num == ( int )PLAYER_ORDER.PLAYER_TWO ) {
+                _field_data.card_list_1.Add( card_list[ i ] );
+                _network_card_list_1.Add( card_list[ i ] );
+            }
+        }
+    }
+    
+	[ Server ]
+    public void refreshCardList( int player_num ) { 
+        if ( player_num == ( int )PLAYER_ORDER.PLAYER_ONE ) {
+            _field_data.card_list_0.Clear( );
+            _network_card_list_0.Clear( );
+        } else if ( player_num == ( int )PLAYER_ORDER.PLAYER_TWO ) {
+            _field_data.card_list_1.Clear( );
+            _network_card_list_1.Clear( );
+        }
     }
 
 	[ Client ]

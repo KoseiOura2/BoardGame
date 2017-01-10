@@ -13,6 +13,9 @@ public class ClientData : NetworkBehaviour {
 
     void Awake( ) {
 		_player_data.changed_scene = false;
+        _player_data.changed_phase = false;
+        _player_data.dice_value = -1;
+        _player_data.ready = false;
     }
 
 	// Use this for initialization
@@ -40,8 +43,56 @@ public class ClientData : NetworkBehaviour {
     }
     
 	[ Client ]
-    public void setSendChangedScene( bool flag ) { 
+    public void setChangedScene( bool flag ) { 
 		_player_data.changed_scene = flag;
+
+    }
+    
+    /// <summary>
+    /// フェイズが変化したかどうかを設定
+    /// </summary>
+    /// <param name="flag"></param>
+	[ Command ]
+    public void CmdSetSendChangedPhase( bool flag ) { 
+		_player_data.changed_phase = flag;
+
+    }
+    
+	[ Client ]
+    public void setChangedPhase( bool flag ) { 
+		_player_data.changed_phase = flag;
+
+    }
+
+    /// <summary>
+    /// さいの目を送る
+    /// </summary>
+    /// <param name="value"></param>
+	[ Command ]
+    public void CmdSetSendDiceValue( int value ) { 
+		_player_data.dice_value = value;
+
+    }
+    
+	[ Client ]
+    public void setDiceValue( int value ) { 
+		_player_data.dice_value = value;
+
+    }
+    
+    /// <summary>
+    /// 準備完了を送信
+    /// </summary>
+    /// <param name="flag"></param>
+	[ Command ]
+    public void CmdSetSendReady( bool flag ) { 
+		_player_data.ready = flag;
+
+    }
+    
+	[ Client ]
+    public void setReady( bool flag ) { 
+		_player_data.ready = flag;
 
     }
 
@@ -49,9 +100,26 @@ public class ClientData : NetworkBehaviour {
 		return _player_data;
 	}
 
+    /// <summary>
+    /// シーンが変化したかどうかを返す
+    /// </summary>
+    /// <returns></returns>
     public bool isChangeFieldScene( ) {
 		if ( _player_data.changed_scene == true ) {
 			_player_data.changed_scene = false;
+            return true;
+        }
+
+        return false;
+    }
+    
+    /// <summary>
+    /// フェイズが変化したかどうかを返す
+    /// </summary>
+    /// <returns></returns>
+    public bool isChangeFieldPhase( ) {
+		if ( _player_data.changed_phase == true ) {
+			_player_data.changed_phase = false;
             return true;
         }
 

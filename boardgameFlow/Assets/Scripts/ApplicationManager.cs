@@ -1,9 +1,15 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
+using System.Collections.Generic;
 using Common;
 
 public class ApplicationManager : Manager< ApplicationManager > {
+
+    enum PROGRAM_MODE {
+        PLAY_MODE,
+        DEBUG_MODE,
+    };
 
 	[ SerializeField ]
 	private NetworkMNG _network_manager;
@@ -25,14 +31,17 @@ public class ApplicationManager : Manager< ApplicationManager > {
     [ SerializeField ]
     private HostData _host_data;
     [ SerializeField ]
-    private ClientData _client_data;
+    private ClientData[ ] _client_data = new ClientData[ ( int )PLAYER_ORDER.MAX_PLAYER_NUM ];
     
+	[ SerializeField ]
+	private PROGRAM_MODE _mode = PROGRAM_MODE.DEBUG_MODE;
 	[ SerializeField ]
 	private SCENE _scene = SCENE.SCENE_CONNECT;
     private int _event_count = 0;        //イベントを起こす回数 
+    [ SerializeField ]
+    private int[ ] _dice_value = new int[ ( int )PLAYER_ORDER.MAX_PLAYER_NUM ];
     private bool _game_playing = false;
 
-	public GameObject[ ] debug_objs = new GameObject[ 2 ];
 	public Text _scene_text;
 	public Text[ ] _reside_text = new Text[ ( int )PLAYER_ORDER.MAX_PLAYER_NUM ];    //残りマス用テキスト
 	public Text[ ] _environment = new Text[ ( int )PLAYER_ORDER.MAX_PLAYER_NUM ];    //環境情報用テキスト
@@ -107,17 +116,15 @@ public class ApplicationManager : Manager< ApplicationManager > {
 			_host_data = _network_manager.getHostObj( ).GetComponent< HostData >( );
 		}
         
-		if ( _client_data == null && _network_manager.getClientObj( 0 ) != null ) {
-			_client_data = _network_manager.getClientObj( 0 ).GetComponent< ClientData >( );
+		if ( _client_data[ 0 ] == null && _network_manager.getClientObj( 0 ) != null ) {
+			_client_data[ 0 ] = _network_manager.getClientObj( 0 ).GetComponent< ClientData >( );
 		}
-
-		// デバッグ
-        /*
-		if ( _network_data != null && !_network_data.isLocal( ) ) {
-			_scene = _network_data.getRecvData( ).scene;
-			_phase_manager.setPhase(_network_data.getRecvData ().main_game_phase);
-		}
-        */
+        
+        if ( _mode == PROGRAM_MODE.PLAY_MODE ) {
+		    if ( _client_data[ 1 ] == null && _network_manager.getClientObj( 1 ) != null ) {
+			    _client_data[ 1 ] = _network_manager.getClientObj( 1 ).GetComponent< ClientData >( );
+		    }
+        }
 
 		switch( _scene ) {
 		case SCENE.SCENE_CONNECT:
@@ -134,12 +141,27 @@ public class ApplicationManager : Manager< ApplicationManager > {
 			break;
 		}
 
-        // player側の変更が完了したかどうか
-		if ( _host_data != null && _client_data != null ) {
-			if ( _client_data.getRecvData( ).changed_scene == true ) {
+		if ( _host_data != null && _client_data[ 0 ] != null /* && _client_data[ 1 ] != null */ ) {
+            // player側のシーン変更が完了したかどうか
+			if ( _client_data[ 0 ].getRecvData( ).changed_scene == true ) {
 				_host_data.setSendChangeFieldScene( false );
-				Debug.Log( "ok" );
 			}
+            // player側のフェイズ変更が完了したかどうか
+			if ( _client_data[ 0 ].getRecvData( ).changed_phase == true ) {
+				_host_data.setSendChangeFieldPhase( false );
+			}
+            if ( _mode == PROGRAM_MODE.PLAY_MODE ) {
+                // player側のシーン変更が完了したかどうか
+			    if ( _client_data[ 1 ].getRecvData( ).changed_scene == true ) {
+				    _host_data.setSendChangeFieldScene( false );
+				    Debug.Log( "scene_ok" );
+			    }
+                // player側のフェイズ変更が完了したかどうか
+			    if ( _client_data[ 1 ].getRecvData( ).changed_phase == true ) {
+				    _host_data.setSendChangeFieldPhase( false );
+				    Debug.Log( "phase_ok" );
+			    }
+            }
  		}
 	}
 
@@ -253,7 +275,8 @@ public class ApplicationManager : Manager< ApplicationManager > {
 			}
 		}
 
-		_camera_manager.moveCameraPos( debug_objs[ 0 ], debug_objs[ 1 ] );
+        // カメラの位置更新
+		_camera_manager.moveCameraPos( _player_manager.getTopPlayer( PLAYER_RANK.RANK_FIRST ), _player_manager.getLastPlayer( ) );
 	}
 
 	/// <summary>
@@ -273,65 +296,165 @@ public class ApplicationManager : Manager< ApplicationManager > {
 	/// DicePhaseの更新
 	/// </summary>
 	private void updateDicePhase( ) {
-		// ダイスを振ったら(通信)
-		if ( Input.GetMouseButtonDown( 0 ) ) {
-			int sai = 3;	// 送られてきた賽の目の数
-			for ( int i = 0; i < sai; i++ ) {
-				// デッキのカード数が０になったらリフレッシュ
-				if ( _card_manager.getDeckCardNum( ) <= 0 ) {
-					_card_manager.createDeck( );
-				}
-				Debug.Log( _card_manager.distributeCard( ) );
-			}
-		}
+        if ( _mode == PROGRAM_MODE.PLAY_MODE ) {
+            // 送られてきた賽の目の数
+            int[ ] dice_value = new int[ ( int )PLAYER_ORDER.MAX_PLAYER_NUM ];
+            dice_value[ 0 ] = _client_data[ 0 ].getRecvData( ).dice_value;
+            dice_value[ 1 ] = _client_data[ 1 ].getRecvData( ).dice_value;
+		    // ダイスを振ったら(通信)
+		    if ( Input.GetMouseButtonDown( 0 ) || 
+                 dice_value[ 0 ] > 0 && dice_value[ 1 ] > 0  ) {
+                _dice_value[ 0 ] = dice_value[ 0 ];
+                _dice_value[ 1 ] = dice_value[ 1 ];
+                // キャラクター移動フェイズへの移行
+                _phase_manager.changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_MOVE_CHARACTER, "MovePhase" );
+            }
+        } else if ( _mode == PROGRAM_MODE.DEBUG_MODE ) {
+            // 送られてきた賽の目の数
+            int[ ] dice_value = new int[ ( int )PLAYER_ORDER.MAX_PLAYER_NUM ];
+            dice_value[ 0 ] = _client_data[ 0 ].getRecvData( ).dice_value;
+		    // ダイスを振ったら(通信)
+		    if ( Input.GetMouseButtonDown( 0 ) || dice_value[ 0 ] > 0 ) {
+                _dice_value[ 0 ] = dice_value[ 0 ];
+                // キャラクター移動フェイズへの移行
+                _phase_manager.changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_MOVE_CHARACTER, "MovePhase" );
+            }
+        }
 	}
 
 	/// <summary>
 	/// MovePhaseの更新
 	/// </summary>
 	private void updateMovePhase( ) {
-		_player_manager.movePhaseUpdate( getResideCount( _player_manager.getPlayerID( ) ),
-			_stage_manager.getTargetMass( _player_manager.getPlayerCount( _player_manager.getPlayerID( ) ) + 1 ),
-			_stage_manager.getTargetMass( _player_manager.getPlayerCount( _player_manager.getPlayerID( ) ) - 1 )  );
+        if ( _mode == PROGRAM_MODE.PLAY_MODE ) {
+            if ( _player_manager.isPlayerMoveStart( 0 ) == false ) {
+                // 1Pを動かす
+		        _player_manager.setPlayerID( 0 );
+		        _player_manager.setLimitValue( _dice_value[ 0 ] );
+		        _player_manager.setAdvanceFlag( true );
+                _event_count = 0;
+            } else if ( _player_manager.isPlayerMoveStart( 1 ) == false && _player_manager.isPlayerMove( ) == false ) {
+                // 2Pを動かす
+		        _player_manager.setPlayerID( 1 );
+		        _player_manager.setLimitValue( _dice_value[ 1 ] );
+		        _player_manager.setAdvanceFlag( true );
+                _event_count = 0;
+            }
+        } else if ( _mode == PROGRAM_MODE.DEBUG_MODE ) {
+            if ( _player_manager.isPlayerMoveStart( 0 ) == false ) {
+                // 1Pを動かす
+		        _player_manager.setPlayerID( 0 );
+		        _player_manager.setLimitValue( _dice_value[ 0 ] );
+		        _player_manager.setAdvanceFlag( true );
+                _event_count = 0;
+            } else if ( _player_manager.isPlayerMoveStart( 1 ) == false && _player_manager.isPlayerMove( ) == false ) {
+                // 2Pを動かす
+		        _player_manager.setPlayerID( 1 );
+		        _player_manager.setLimitValue( _dice_value[ 0 ] );
+		        _player_manager.setAdvanceFlag( true );
+                _event_count = 0;
+            }
+        }
+		
+		_player_manager.movePhaseUpdate( getResideCount( ), _stage_manager.getTargetMass( _player_manager.getTargetMassID( ) ) );
 		// ゴールまでの残りマスを表示
 		resideCount( );
+
+        // 両方の移動が終わったら次のフェイズへ
+        if ( _player_manager.isPlayerMoveFinish( 0 ) == true && _player_manager.isPlayerMoveFinish( 1 ) == true ) {
+            _player_manager.movedRefresh( );
+            _phase_manager.changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_DRAW_CARD, "DrawPhase" );
+        }
 	}
 
 	/// <summary>
-	/// BuffPhaseの更新
+	/// DrawPhaseの更新
 	/// </summary>
 	private void updateDrawPhase( ) {
-		
+        List< int > card_list = new List< int >( );
+
+        if ( _mode == PROGRAM_MODE.PLAY_MODE ) {
+            // 1Pにカード配布
+            if ( _host_data.getRecvData( ).card_list_0.Count == 0 ) {
+		        for ( int i = 0; i < _dice_value[ 0 ]; i++ ) {
+			        // デッキのカード数が０になったらリフレッシュ
+			        if ( _card_manager.getDeckCardNum( ) <= 0 ) {
+				        _card_manager.createDeck( );
+			        }
+                    card_list.Add( _card_manager.distributeCard( ).id );
+		        }
+                _host_data.setSendCardlist( ( int )PLAYER_ORDER.PLAYER_ONE, card_list );
+                // カードリストを初期化
+                card_list.Clear( );
+            }
+            
+            // 2Pにカード配布
+            if ( _host_data.getRecvData( ).card_list_1.Count == 0 ) {
+		        for ( int i = 0; i < _dice_value[ 1 ]; i++ ) {
+			        // デッキのカード数が０になったらリフレッシュ
+			        if ( _card_manager.getDeckCardNum( ) <= 0 ) {
+				        _card_manager.createDeck( );
+			        }
+                    card_list.Add( _card_manager.distributeCard( ).id );
+		        }
+                _host_data.setSendCardlist( ( int )PLAYER_ORDER.PLAYER_TWO, card_list );
+            }
+
+            // ドローカード処理を追加
+
+            // 両方の準備が終わったら次のフェイズへ
+            if ( _client_data[ 0 ].getRecvData( ).ready == true && _client_data[ 1 ].getRecvData( ).ready == true ) {
+                _host_data.refreshCardList( 0 );
+                _host_data.refreshCardList( 1 );
+                _phase_manager.changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_BATTLE, "ButtlePhase" );
+            }
+        } else if ( _mode == PROGRAM_MODE.DEBUG_MODE ) {
+            // 1Pにカード配布
+            if ( _host_data.getRecvData( ).card_list_0.Count == 0 ) {
+		        for ( int i = 0; i < _dice_value[ 0 ]; i++ ) {
+			        // デッキのカード数が０になったらリフレッシュ
+			        if ( _card_manager.getDeckCardNum( ) <= 0 ) {
+				        _card_manager.createDeck( );
+			        }
+                    card_list.Add( _card_manager.distributeCard( ).id );
+		        }
+                _host_data.setSendCardlist( ( int )PLAYER_ORDER.PLAYER_ONE, card_list );
+            }
+            
+            // ドローカード処理を追加
+
+            // 準備が終わったら次のフェイズへ
+            if ( _client_data[ 0 ].getRecvData( ).ready == true ) {
+                _host_data.refreshCardList( 0 );
+                _phase_manager.changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_BATTLE, "ButtlePhase" );
+            }
+        }
 	}
 
 	/// <summary>
-	/// GimmickPhaseの更新
+	/// ButtlePhaseの更新
 	/// </summary>
 	private void updateButtlePhase( ) {
-		
+
 	}
 
 	/// <summary>
 	/// ResultPhaseの更新
 	/// </summary>
 	private void updateResultPhase( ) {
-		
+		_player_manager.attackTopAndLowestPlayer( _player_manager.getPlayerAttack( ) );
 	}
 
 	/// <summary>
 	/// EventPhaseの更新
 	/// </summary>
 	private void updateEventPhase( ) {
-		eventPhaseUpdate( );
-	}
-    
-    public void eventPhaseUpdate( ) {
 		Debug.Log( "マスイベント！" );
 		if ( _event_count < 2 ) {
 			massEvent( _player_manager.getPlayerCount( _player_manager.getPlayerID( ) ) );
 			_event_count++;
 		}
-    }
+	}
 
 	/// <summary>
 	/// マスイベントの処理
@@ -439,17 +562,20 @@ public class ApplicationManager : Manager< ApplicationManager > {
 	/// </summary>
 	public void resideCount( ) {
 		for ( int i = 0; i < ( int )PLAYER_ORDER.MAX_PLAYER_NUM; i++ ) {
-			_reside_text[ i ].text = "プレイヤー" + i.ToString( ) + "：残り" + getResideCount( i ).ToString( ) + "マス";
+			_reside_text[ i ].text = "プレイヤー" + i.ToString( ) + "：残り" + getResideCount( )[ i ].ToString( ) + "マス";
 		}
 	}
-
+    
     /// <summary>
     /// ゴールまでどれくらい残っているか取得
     /// </summary>
-    /// <param name="i"></param>
     /// <returns></returns>
-    public int getResideCount( int i ) {
-        return _file_manager.getMassCount( ) - 1 - _player_manager.getPlayerCount( i );
+    public int[ ] getResideCount( ) {
+		int[ ] count = new int[ 2 ];
+		for ( int i = 0; i < ( int )PLAYER_ORDER.MAX_PLAYER_NUM; i++ ) {
+			count[ i ] = _file_manager.getMassCount( ) - 1 - _player_manager.getPlayerCount( i );
+		}
+		return count;
     }
 
 	public void setEventCount( int count ) {
