@@ -84,7 +84,7 @@ public class PlayerManager : Manager<PlayerManager> {
 		public List < Vector3 > Select_Position;
 	}
 
-	private struct PLAYER_FLAG
+	private struct PLAYER_FLAGS
 	{
 		public List < bool > select_Position_Use;
 	}
@@ -96,7 +96,7 @@ public class PlayerManager : Manager<PlayerManager> {
 	private HAND_DATA _hand_Data = new HAND_DATA( );
 
 	//プレイヤーのフラグを管理
-	private PLAYER_FLAG _player_Flags = new PLAYER_FLAG( );
+	private PLAYER_FLAGS _player_Flags = new PLAYER_FLAGS( );
 
 	// Awake関数の代わり
 	protected override void initialize( ) {
@@ -149,9 +149,9 @@ public class PlayerManager : Manager<PlayerManager> {
 			//セレクトエリアのポジションをセレクトエリアの数分作成
 			_hand_Data.Select_Position.Add( _position );
 		}
-
     }
 
+    //テスト用にOキーを押したらカードをドローする関数
 	public void DebugCardDrow(){
 		if (Input.GetKeyDown (KeyCode.O)) {
 			//キー入力をしたらカードをドロー
@@ -174,6 +174,7 @@ public class PlayerManager : Manager<PlayerManager> {
 		return _isResult;
 	}
 
+    //マスアクションフェイズのフラグを確認します
 	public bool getIsActionPhase(){
 		return _isActionPhase;
 	}
@@ -183,6 +184,7 @@ public class PlayerManager : Manager<PlayerManager> {
 		_isResult = setResult;
 	}
 
+    //マスアクションフェイズに行くフラグをONにします
 	public void SetIsActionPhase( ){
 		_isActionPhase = true;
 	}
@@ -208,12 +210,16 @@ public class PlayerManager : Manager<PlayerManager> {
 			_hand_Data.hand_Obj_List = new List< GameObject > ();
 		}
 
-		for (int i = 0; i < _hand_Data.hand_List.Count; i++) {
+        //手札の最大値6よりも大きいなら手札の最大値を更新
+        if (_hand_Max < _hand_Data.hand_List.Count) {
+            _hand_Max = _hand_Data.hand_List.Count;
+        } else {
+            _hand_Max = 6;
+        }
+
+        for (int i = 0; i < _hand_Data.hand_List.Count; i++) {
 			//プレハブを生成してリストのオブジェクトに入れる
 			_hand_Data.hand_Obj_List[i] = ((GameObject)Instantiate (_card_Template_Prefab));
-
-			//カード画像設定
-			_hand_Data.hand_Obj_List [i].GetComponent<Card> ().SetCardImage (_hand_Data.hand_List [i].type);
 
 			//カードデータ設定
 			_hand_Data.hand_Obj_List [i].GetComponent<Card> ().SetCardData (_hand_Data.hand_List [i]);
@@ -226,10 +232,14 @@ public class PlayerManager : Manager<PlayerManager> {
 
 			//ハンドエリアの大きさを取得
 			float HandArea_Width_Size = _hand_Area.GetComponent<RectTransform> ().sizeDelta.x;
+
+            //ハンドエリアの座標を取得
 			float HandArea_Postion_Size = _hand_Area.GetComponent<RectTransform> ().anchoredPosition.y;
 
+            //カードの横幅を取得
 			float HandCard_Width_Size = _hand_Data.hand_Obj_List [i].GetComponent<RectTransform> ().sizeDelta.x;
-			//ハンドエリアの大きさを反転して半分にした数値とカードの大きさのサイズの半分を足した数値をスタート地点に
+
+			//ハンドエリアの端から手札の横幅1.5倍の場所をスタート地点に
 			float Start_Card_Point = ((-HandArea_Width_Size / 2) + (HandCard_Width_Size / 2)) + HandCard_Width_Size;
 
 			//手札エリアの大きさ/手札限界数で割った後に現在の生成中の手札の順番を掛ける
@@ -240,9 +250,7 @@ public class PlayerManager : Manager<PlayerManager> {
 		}
 	}
 
-	//並び替え
-
-	//最新のカードを選択して生成を行う
+	//最新のカードを生成を行う(ドロー関数)
 	public void setHandLatestCardCreate( CARD_DATA setCard ){
 
 		//キャンバスを取得
@@ -279,9 +287,6 @@ public class PlayerManager : Manager<PlayerManager> {
 		//最新の手札の配列値を取得
 		int HandDataLatest =_hand_Data.hand_List.Count - 1;
 
-		//カード画像設定
-		_hand_Data.hand_Obj_List [HandDataLatest].GetComponent<Card> ().SetCardImage ( _hand_Data.hand_List[HandDataLatest].type );
-
 		//カードデータ設定
 		_hand_Data.hand_Obj_List [HandDataLatest].GetComponent<Card> ().SetCardData ( _hand_Data.hand_List[HandDataLatest]);
 
@@ -293,11 +298,15 @@ public class PlayerManager : Manager<PlayerManager> {
 
 		//ハンドエリアの大きさを取得
 		float HandArea_Width_Size = _hand_Area.GetComponent<RectTransform>().sizeDelta.x;
-		float HandArea_Postion_Size = _hand_Area.GetComponent<RectTransform>().anchoredPosition.y;
 
-		float HandCard_Width_Size = _hand_Data.hand_Obj_List [HandDataLatest].GetComponent<RectTransform> ().sizeDelta.x;
-		//ハンドエリアの大きさを反転して半分にした数値とカードの大きさのサイズの半分を足した数値をスタート地点に
-		float Start_Card_Point = ((-HandArea_Width_Size / 2) + ( HandCard_Width_Size / 2)) + HandCard_Width_Size ;
+        //ハンドエリアの座標を取得
+        float HandArea_Postion_Size = _hand_Area.GetComponent<RectTransform>().anchoredPosition.y;
+
+        //カードの横幅を取得
+        float HandCard_Width_Size = _hand_Data.hand_Obj_List [HandDataLatest].GetComponent<RectTransform> ().sizeDelta.x;
+
+        //ハンドエリアの端から手札の横幅1.5倍の場所をスタート地点に
+        float Start_Card_Point = ((-HandArea_Width_Size / 2) + ( HandCard_Width_Size / 2)) + HandCard_Width_Size ;
 
 		//手札エリアの大きさ/手札限界数で割った後に現在の生成中の手札の順番を掛ける
 		float Card_While_X = ( HandArea_Width_Size / _hand_Max ) * HandDataLatest;
@@ -307,6 +316,7 @@ public class PlayerManager : Manager<PlayerManager> {
 
 	}
 
+    //対応したプレイヤーによってオブジェクトを変更
 	public void setPlayerObject( ){
 		//タグでプレイヤーによって変わる部分を取得し色とテキストを変えます
 		GameObject[] PlayerChanges = GameObject.FindGameObjectsWithTag("PlayerChange");
@@ -343,6 +353,7 @@ public class PlayerManager : Manager<PlayerManager> {
 		}
 	}
 
+    //相手の状態によって変わるオブジェクトをセット
 	public void SetEnemyObject(){
 		//敵のオブジェクトをセット
 		//テキストと手札を取得
@@ -352,24 +363,27 @@ public class PlayerManager : Manager<PlayerManager> {
 			switch (EnemyChanges [i].name) {
 
 			case "EnemyHand":
-				//テキストを取得
-				Text _enemyHandText = EnemyChanges [i].GetComponentInChildren<Text> ();
-				//相手の手札を取得
-				int _enemyHand = _player_NetWork_Manager.getEnemyHand();
-				_enemyHandText.text = "相手の手札　" + _enemyHand + "枚";
+				    //テキストを取得
+				    Text _enemyHandText = EnemyChanges [i].GetComponentInChildren<Text> ();
+				    //相手の手札を取得
+				    int _enemyHand = _player_NetWork_Manager.getEnemyHand();
+                    //テキストを設定
+				    _enemyHandText.text = "相手の手札　" + _enemyHand + "枚";
 				break;
 
 			case "EnemyStates":
-				//テキストを取得
-				Text _enemyStatusText = EnemyChanges [i].GetComponentInChildren<Text> ();
-				//相手のステータスを取得
-				int _enemyStatus = _player_NetWork_Manager.getEnemyStatus();
-				_enemyStatusText.text = "ステータス " + _enemyStatus;
+				    //テキストを取得
+				    Text _enemyStatusText = EnemyChanges [i].GetComponentInChildren<Text> ();
+				    //相手のステータスを取得
+				    int _enemyStatus = _player_NetWork_Manager.getEnemyStatus();
+                    //テキストを設定
+                    _enemyStatusText.text = "ステータス " + _enemyStatus;
 				break;
 			}
 		}
 	}
 
+    //プレイヤーの移動を2D簡易マップで行います。また0で行う事でプレイヤーの現在地のオブジェクトを生成できます（移動数,裏で行うか)
 	public void SetPlayerMove( int SetMoveNumber = 0, bool Setback = false ){
 		
 		//キャンバスを取得
@@ -423,64 +437,62 @@ public class PlayerManager : Manager<PlayerManager> {
 		}
 	}
 
+    //セレクトエリアに入ってるカードを手札からセレクトエリアのカードリストに移動します
 	public void SetSelectAreaCard( ){
-
 		//セレクトエリアに入っているなら手札リストからセレクトカードリストに移動する
 		//自身の現在の手札数を行う
 		for (int i = 0; i < _hand_Data.hand_List.Count; i++) {
 			bool SelectAreaCheck = _hand_Data.hand_Obj_List [i].GetComponent<Card> ().getInSelectArea ();
 			//セレクトエリアに入っているか
 			if (SelectAreaCheck) {
-
 				//オブジェクトをセレクトオブジェクトリストに追加
 				_hand_Data.select_Obj_List.Add (_hand_Data.hand_Obj_List [i]);
 			}
 		}
 	}
 
-	public bool SetSelectAreaPosition( CARD_DATA setCard ){
+    //セレクトエリアにカードをドロップした際にセレクトエリアの空いてる場所に入れるようにする
+    public bool SetSelectAreaPosition(CARD_DATA setCard) {
 
-		//セレクトエリアのポジションに開いてる順番に入れるようにします
-		for (int i = 0; i < _hand_Data.hand_List.Count; i++) {
-			//手札とセットカードのIDが一致した場合
-			if (_hand_Data.hand_List [i].id == setCard.id) {
+        //セレクトエリアのポジションに開いてる順番に入れるようにします
+        for (int i = 0; i < _hand_Data.hand_List.Count; i++) {
+            //手札とセットカードのIDが一致した場合
+            if (_hand_Data.hand_List[i].id == setCard.id ) {
 				//セレクトエリアのポジションの0番目から～3番目までを順番に確認して使われているかどうかを見る
+                //また、セレクトリストのカードがドロップされた場合は位置を戻す
 				if (!_player_Flags.select_Position_Use [0] || _hand_Data.select_List[0].id == setCard.id ) {
-					//カードを保存しておく
-					_hand_Data.select_List.Add( _hand_Data.hand_List [i] );
-					_hand_Data.select_Obj_List.Add (_hand_Data.hand_Obj_List [i] );
 					//カードのポジションを変更
 					_hand_Data.hand_Obj_List [i].GetComponent<RectTransform>().anchoredPosition3D = _hand_Data.Select_Position[0];
-					_player_Flags.select_Position_Use[0] = true;
+                    //カードにどこの選択エリアを使用しているかをセット
+                    _hand_Data.hand_Obj_List[i].GetComponent<Card>().setSelectAreaUseId(0);
+                    //使用フラグをtrueに
+                    _player_Flags.select_Position_Use[0] = true;
 					return true;
 				}
 
 				if (!_player_Flags.select_Position_Use [1] || _hand_Data.select_List[1].id == setCard.id ) {
-					//カードを保存しておく
-					_hand_Data.select_List.Add( _hand_Data.hand_List [i] );
-					_hand_Data.select_Obj_List.Add (_hand_Data.hand_Obj_List [i] );
 					//カードのポジションを変更
 					_hand_Data.hand_Obj_List [i].GetComponent<RectTransform>().anchoredPosition3D = _hand_Data.Select_Position[1];
 					_player_Flags.select_Position_Use[1] = true;
-					return true;
+                    //カードにどこの選択エリアを使用しているかをセット
+                    _hand_Data.hand_Obj_List[i].GetComponent<Card>().setSelectAreaUseId(1);
+                    return true;
 				}
 
 				if (!_player_Flags.select_Position_Use [2] || _hand_Data.select_List[2].id == setCard.id ) {
-					//カードを保存しておく
-					_hand_Data.select_List.Add(_hand_Data.hand_List [i] );
-					_hand_Data.select_Obj_List.Add (_hand_Data.hand_Obj_List [i] );
 					//カードのポジションを変更
 					_hand_Data.hand_Obj_List [i].GetComponent<RectTransform>().anchoredPosition3D = _hand_Data.Select_Position[2];
-					_player_Flags.select_Position_Use[2] = true;
+                    //カードにどこの選択エリアを使用しているかをセット
+                    _hand_Data.hand_Obj_List[i].GetComponent<Card>().setSelectAreaUseId(2);
+                    _player_Flags.select_Position_Use[2] = true;
 					return true;
 				}
 				if (!_player_Flags.select_Position_Use [3] || _hand_Data.select_List[3].id == setCard.id ) {
-					//カードをセレクトエリアに
-					_hand_Data.select_List.Add( _hand_Data.hand_List [i] );
-					_hand_Data.select_Obj_List.Add (_hand_Data.hand_Obj_List [i] );
 					//カードのポジションを変更
 					_hand_Data.hand_Obj_List [i].GetComponent<RectTransform>().anchoredPosition3D = _hand_Data.Select_Position[3];
-					_player_Flags.select_Position_Use[3] = true;
+                    //カードにどこの選択エリアを使用しているかをセット
+                    _hand_Data.hand_Obj_List[i].GetComponent<Card>().setSelectAreaUseId(3);
+                    _player_Flags.select_Position_Use[3] = true;
 					return true;
 				}
 			}
@@ -488,15 +500,20 @@ public class PlayerManager : Manager<PlayerManager> {
 		return false;
 	}
 
+    //選択カード以外にドロップされた
 	public void SetSelectAreaOut( CARD_DATA setCard ){
 		//選択カードから手札に戻す場合にフラグをアウトにする
-		for (int i = 0; i < _hand_Data.select_List.Count; i++) {
-			//セレクトカードと消すカードのIDが一致した場合
-			if (_hand_Data.select_List [i].id == setCard.id) {
-				//その選択カードの情報を消してその場所のフラグをoffにする
-				_hand_Data.hand_List.Add( _hand_Data.select_List[i]);
-				_hand_Data.hand_Obj_List.Add (_hand_Data.select_Obj_List [i] );
-				_player_Flags.select_Position_Use [i] = false;
+		for (int i = 0; i < _hand_Data.hand_List.Count; i++) {
+			if (_hand_Data.hand_List[i].id == setCard.id) {
+                //セレクトエリアに入っているか確認
+                bool SelectAreaCheck = _hand_Data.hand_Obj_List[i].GetComponent<Card>().getInSelectArea();
+                if (SelectAreaCheck) {
+                    //そのカードがどこの選択エリアを使っているのか取得
+                    //カードにどこの選択エリアを使用しているかをセット
+                    int SelectAreaID = _hand_Data.hand_Obj_List[i].GetComponent<Card>().getSelectUseId();
+                    //その場所のフラグをoffにする
+                    _player_Flags.select_Position_Use[SelectAreaID] = false;
+                }
 			}
 		}
 	}

@@ -36,7 +36,7 @@ public class CardManager : MonoBehaviour {
 
 	public void loadCardDataFile( ) {
 		// デバッグ
-		int card_num = 5;
+		int card_num = 30;
 		for ( int i = 1; i <= card_num; i++ ) {
 			CARD_DATA card_data = new CARD_DATA( );
 			card_data.id = i;
