@@ -79,8 +79,7 @@ public class Map2d : MonoBehaviour {
 		obj.transform.SetParent (_Contect);
 		obj.GetComponent<RectTransform> ().anchoredPosition3D
 		= new Vector3 ( _start_Mass_X + (count * _mass_While_X), _start_Mass_Y, 0 );
-		obj.GetComponent<massData>().SetMassData( _file_manager.getMapData().mass[ count ].type );
-		obj.GetComponent<massData> ().SetBaloonPosition (count);
+		obj.GetComponent<massData>().SetMassData( _file_manager.getMapData().mass[ count ].type, count );
 		obj.GetComponent<RectTransform> ().localScale = new Vector3 (1, 1, 1);
 		obj.name = "Mass:ID" + count;
 	}
