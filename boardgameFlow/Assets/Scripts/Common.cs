@@ -47,15 +47,6 @@ namespace Common {
 		CARD_TYPE_UNAVAILABLE,
 	};
 
-	/// <summary>
-	/// カードの構造体データ
-	/// </summary>
-	public struct CARD_DATA {
-		public int id;
-		public string name;
-		public CARD_TYPE type;
-	}
-
     /// <summary>
     /// 現在のプレイヤーの行動順
     /// </summary>
@@ -93,6 +84,14 @@ namespace Common {
         ADVANCE,
         BACK,
     };
+
+	/// <summary>
+	/// スペシャルカード　効果
+	/// </summary>
+	public enum SPECIAL_LIST {
+		ENHANCE_TYPE_DRAW,
+		NO_DATA
+	}
 
     /// <summary>
     /// 通信で送受信するフィールド側のデータ
@@ -151,7 +150,28 @@ namespace Common {
 		public GameObject obj;
 		public PLAYER_RANK rank;
 		public int advance_count;	//プレイヤーの進んでいる回数
-		public int attack;			//プレイヤーの攻撃力
 		public BATTLE_RESULT battle_result;
+		public int draw;
+		public int power;
+	}
+
+	/// <summary>
+	/// カードデータ
+	/// </summary>
+	public struct CARD_DATA {
+		public int id;
+		public string name;
+		public string enchant_type;
+		public int enchant_value;
+		public int special_value;
+		public int rarity;
+		public CARD_DATA( int id, string name, string enchant_type, int enchant_value, int special_value, int rarity ) {
+			this.id = id;
+			this.name = name;
+			this.enchant_type = enchant_type;
+			this.enchant_value = enchant_value;
+			this.special_value = special_value;
+			this.rarity = rarity;
+		}
 	}
 }

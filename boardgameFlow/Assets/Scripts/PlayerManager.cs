@@ -21,15 +21,28 @@ public class PlayerManager : MonoBehaviour {
 	private GameObject _latest_player;
 	private GameObject _winner_player;
 	private GameObject _loser_player;
-
+	[ SerializeField ]
     private int _player_id     = -1;    //動かすプレイヤーID設定
     [ SerializeField ]
-    private int _limit_value   = -1;    //進むマス数設定
+	private int _limit_value   = -1;    //進むマス数設定
+	[ SerializeField ]
+	private int _defalut_draw = 0;
+	[ SerializeField ]
+	private int _defalut_power = 0;
+	private int _plus_draw;
+	private int _plus_power;
     private float _time = 1;
     private float _startTime;
+	[ SerializeField ]
     private bool _move_flag    = false;     //動かす時のフラグが立っているか
+	[ SerializeField ]
     private bool[ ] _move_start = new bool[ ]{ false, false };
+	[ SerializeField ]
     private bool[ ] _move_finish = new bool[ ]{ false, false };
+	[ SerializeField ]
+	private bool[ ] _event_start = new bool[ ]{ false, false };
+	[ SerializeField ]
+	private bool[ ] _event_finish = new bool[ ]{ false, false };
     private bool _advance_flag = true;   	//前に進むか後ろに戻るか
 
     /// <summary>
@@ -46,6 +59,10 @@ public class PlayerManager : MonoBehaviour {
         
         _players[ 0 ].obj.GetComponent< Renderer>( ).material.color = Color.magenta;
         _players[ 1 ].obj.GetComponent< Renderer>( ).material.color = Color.green;
+
+		// ステータス値の初期化
+		setDefalutStatus( );
+		plusValueInit( );
 
     }
     
@@ -75,6 +92,24 @@ public class PlayerManager : MonoBehaviour {
         }
     }
 
+	/// <summary>
+	/// プレイヤーのステータスを初期値へ戻す
+	/// </summary>
+	public void setDefalutStatus( ) {
+		for ( int i = 0; i < ( int )PLAYER_ORDER.MAX_PLAYER_NUM; i++ ) {
+			_players[ i ].draw = _defalut_draw;
+			_players[ i ].power = _defalut_power;
+		}
+	}
+
+	/// <summary>
+	/// 強化値を初期化
+	/// </summary>
+	public void plusValueInit( ) {
+		_plus_power = 0;
+		_plus_draw = 0;
+	}
+
 	// Use this for initialization
 	void Start( ) {
 	
@@ -88,16 +123,21 @@ public class PlayerManager : MonoBehaviour {
     // MovePhaseの更新
 	public void movePhaseUpdate( int[ ] count, GameObject target_pos ) {
 		dicisionTopAndLowestPlayer ( ref count );
-		if ( _limit_value > 0 && _player_id > -1 ) {
-			if ( !_move_flag ) {
-				setTargetPos( ref target_pos );
-			} else {
-				playerMove( );
+		if ( _limit_value > 0 ) {
+			if ( _player_id > -1 ) {
+				if (!_move_flag) {
+					setTargetPos (ref target_pos);
+				} else {
+					playerMove ();
+				}
 			}
+
 		} else if ( _limit_value == 0 ) {
+			Debug.Log ("uaaaaaaaaaa");
+			_move_finish[ _player_id ] = true;
 			_limit_value--;
 		} else {
-			_player_id = -1;
+			//_player_id = -1;
 			_target = null;
 		}
 	}
@@ -140,7 +180,6 @@ public class PlayerManager : MonoBehaviour {
 			}
             _move_flag = false;
             _target    = null;
-            _move_finish[ _player_id ] = true;
         }
 
 		var rate = diff / _time;
@@ -152,20 +191,24 @@ public class PlayerManager : MonoBehaviour {
 	/// ランク付け関数
 	/// </summary>
 	public void dicisionTopAndLowestPlayer( ref int[ ] count ) {
-		float first = Mathf.Min( count[ 0 ], count[ 1 ] );
-		if ( first == count[ 0 ] ) {
-			_firstest_player	= _players[ 0 ].obj;
-			_latest_player		= _players[ 1 ].obj;
-			_players[ 0 ].rank = PLAYER_RANK.RANK_FIRST;
-			_players[ 1 ].rank = PLAYER_RANK.RANK_SECOND;
-		} else if ( first == count[ 1 ] ) {
-			_firstest_player	= _players[ 1 ].obj;
-			_latest_player		= _players[ 0 ].obj;
-			_players[ 0 ].rank = PLAYER_RANK.RANK_SECOND;
-			_players[ 1 ].rank = PLAYER_RANK.RANK_FIRST;
+		if( !Mathf.Approximately( count[ 0 ], count[ 1 ] ) ) {
+			float first = Mathf.Min( count[ 0 ], count[ 1 ] );
+			if( first == count[ 0 ] ) {
+				_firstest_player	= _players[ 0 ].obj;
+				_latest_player = _players[ 1 ].obj;
+				_players[ 0 ].rank = PLAYER_RANK.RANK_FIRST;
+				_players[ 1 ].rank = PLAYER_RANK.RANK_SECOND;
+			} else if( first == count[ 1 ] ) {
+				_firstest_player	= _players[ 1 ].obj;
+				_latest_player = _players[ 0 ].obj;
+				_players[ 0 ].rank = PLAYER_RANK.RANK_SECOND;
+				_players[ 1 ].rank = PLAYER_RANK.RANK_FIRST;
+			}
 		} else {
 			_players[ 0 ].rank = PLAYER_RANK.RANK_FIRST;
-			_players[ 1 ].rank = PLAYER_RANK.RANK_FIRST;
+			_players[ 1 ].rank = PLAYER_RANK.RANK_SECOND;
+			_firstest_player	= _players[ 0 ].obj;
+			_latest_player = _players[ 1 ].obj;
 		}
         /*
 		Debug.Log( "プレイヤー1ランク:" + _players[ 0 ].rank );
@@ -177,21 +220,75 @@ public class PlayerManager : MonoBehaviour {
 	/// 攻撃力比較用関数
 	/// </summary>
 	public void attackTopAndLowestPlayer( int[ ] attack ){
-		float winner = Mathf.Max ( attack[ 0 ], attack[ 1 ] );
-		if ( winner == attack[ 0 ] ) {
-			_winner_player = _players[ 0 ].obj;
-			_loser_player  = _players[ 1 ].obj;
-			_players[ 0 ].battle_result = BATTLE_RESULT.WIN;
-			_players[ 1 ].battle_result = BATTLE_RESULT.LOSE;
-		} else if ( winner == attack[ 1 ] ){
-			_winner_player = _players[ 1 ].obj;
-			_loser_player  = _players[ 0 ].obj;
-			_players[ 1 ].battle_result = BATTLE_RESULT.WIN;
-			_players[ 0 ].battle_result = BATTLE_RESULT.LOSE;
+		if( !Mathf.Approximately( attack[ 0 ], attack[ 1 ] ) ) {
+			float winner = Mathf.Max( attack[ 0 ], attack[ 1 ] );
+			if( winner == attack[ 0 ] ) {
+				_winner_player = _players[ 0 ].obj;
+				_loser_player = _players[ 1 ].obj;
+				_players[ 0 ].battle_result = BATTLE_RESULT.WIN;
+				_players[ 1 ].battle_result = BATTLE_RESULT.LOSE;
+			} else if( winner == attack[ 1 ] ) {
+				_winner_player = _players[ 1 ].obj;
+				_loser_player = _players[ 0 ].obj;
+				_players[ 1 ].battle_result = BATTLE_RESULT.WIN;
+				_players[ 0 ].battle_result = BATTLE_RESULT.LOSE;
+			} 
 		} else {
+			Debug.Log( "aaa" );
 			_players[ 0 ].battle_result = BATTLE_RESULT.DRAW;
 			_players[ 1 ].battle_result = BATTLE_RESULT.DRAW;
 		}
+	}
+
+	/// <summary>
+	/// カード効果適応
+	/// </summary>
+	/// <param name="card">Card.</param>
+	public void playCard( CARD_DATA data ) {
+		switch ( data.enchant_type ) {
+		case "enhance":
+			addPower( data.enchant_value );
+			Debug.Log( "強化効果" + data.enchant_value );
+			Debug.Log( "power" + _plus_power );
+			break;
+		case "turn":
+			addPower( data.enchant_value );
+			Debug.Log( "強化効果" + data.enchant_value );
+			Debug.Log( "power" + _plus_power );
+			break;
+		case "special":
+			specialEnhance( data );
+			Debug.Log( "スペシャル効果" );
+			break;
+		case "demerit":
+			addPower( -data.enchant_value );
+			Debug.Log( "power" + _plus_power );
+			Debug.Log( "デメリット効果" + data.enchant_value );
+			break;
+		}
+	}
+
+	/// <summary>
+	/// Adds the power.
+	/// </summary>
+	/// <param name="enhance">Enhance.</param>
+	private void addPower( int enhance ) {
+		_plus_power += enhance;
+	}
+
+	/// <summary>
+	/// スペシャルタイプのカード効果
+	/// </summary>
+	/// <param name="data">Data.</param>
+	private void specialEnhance( CARD_DATA data ) {
+		if ( data.special_value == ( int )SPECIAL_LIST.ENHANCE_TYPE_DRAW ) {
+			_plus_draw += data.enchant_value;
+		}
+	}
+
+	public void endStatus( int id ) {
+		_players[ id ].draw  = _plus_draw;
+		_players[ id ].power = _plus_power;
 	}
 
     /// <summary>
@@ -199,11 +296,14 @@ public class PlayerManager : MonoBehaviour {
     /// </summary>
     /// <param name="i"></param>
     /// <returns></returns>
-    public int getPlayerCount( int i ) {
+	public int getPlayerCount( int i, int length ) {
 		if ( i >= 0 ) {
-            return _players[ i ].advance_count;
+			if( _players[ i ].advance_count < length - 1 ) {
+				return _players[ i ].advance_count;
+			} else {
+				return length - 1;
+			}
         }
-		
         return 0;
     }
 
@@ -215,42 +315,33 @@ public class PlayerManager : MonoBehaviour {
 		return _player_id;
     }
 
-	public void setAdvanceFlag( bool flag ) {
-		_advance_flag = flag;
+	public bool isEventStart( int id ){
+		return _event_start[ id ];
 	}
 
-	public void setLimitValue( int value ) {
-		_limit_value = value;
-	}
-
-	public void setPlayerID( int id ) {
-		_player_id = id;
-	}
-
-    /// <summary>
-	/// 攻撃力受け取り用関数
-	/// </summary>
-	/// <param name="id">Identifier.</param>
-	/// <param name="attack">Attack.</param>
-	public void setPlayerAttack( int id, int attack ) {
-		_players[ id ].attack = attack;
+	public bool isEventFinish( int id ){
+		return _event_finish[ id ];
 	}
 
 	//各プレイヤーの攻撃力を取得
-	public int[ ] getPlayerAttack( ) {
-		int[ ] attack = new int[ 2 ];
+	public int[ ] getPlayerPower( ) {
+		int[ ] power = new int[ 2 ];
 		for ( int i = 0; i < ( int )PLAYER_ORDER.MAX_PLAYER_NUM; i++ ) {
-			attack[ i ] = _players[ i ].attack;
+			power[ i ] = _players[ i ].power;
 		}
-		return attack;
+		return power;
 	}
 
 	//ターゲットとなるマスIDを取得
-	public int getTargetMassID( ) {
-		if ( _advance_flag ) {
-			return getPlayerCount( getPlayerID ( ) ) + 1;
+	public int getTargetMassID( int length ) {
+		if( _advance_flag ) {
+			if( getPlayerCount( getPlayerID( ), length ) < length - 1 ) {
+				return getPlayerCount( getPlayerID( ), length ) + 1;
+			} else {
+				return getPlayerCount( getPlayerID( ), length );
+			}
 		} else {
-			return getPlayerCount( getPlayerID ( ) ) - 1;
+			return getPlayerCount( getPlayerID( ), length ) - 1;
 		}
 	}
 
@@ -277,10 +368,6 @@ public class PlayerManager : MonoBehaviour {
         return _move_start[ i ];
     }
 
-    public bool isPlayerMove( ) {
-        return _move_flag;
-    }
-
     public BATTLE_RESULT getPlayerResult( int id ) {
         return _players[ id ].battle_result;
     }
@@ -303,6 +390,30 @@ public class PlayerManager : MonoBehaviour {
     }
 
     public void setMoveStart( int id, bool flag ) {
-        _move_finish[ id ] = flag;
-    }
+		_move_start[ id ] = flag;
+	}
+
+	public void setAdvanceFlag( bool flag ) {
+		_advance_flag = flag;
+	}
+
+	public void setLimitValue( int value ) {
+		_limit_value = value;
+	}
+
+	public void setPlayerID( int id ) {
+		_player_id = id;
+	}
+
+	public void setPlayerPower( int id, int power ) {
+		_players[ id ].power = power;
+	}
+
+	public void setEventStart( int id, bool flag ){
+		_event_start[ id ] = flag;
+	}
+
+	public void setEventFinish( int id, bool flag ){
+		_event_finish[ id ] = flag;
+	}
 }

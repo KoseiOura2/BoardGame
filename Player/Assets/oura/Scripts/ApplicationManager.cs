@@ -336,3 +336,65 @@ public class ApplicationManager : MonoBehaviour {
 	}
 
 }
+/*
+using UnityEngine;
+using UnityEngine.UI;
+using System.Collections;
+using Common;
+
+public class ApplicationManager : MonoBehaviour {
+	private PlayerManager _player_manager;
+	private CardManager _card_Manager;
+	private int _debug_turn = 0;
+	public enum CARD_BATTLE_PHASE {
+		STAND_BY,
+		SELECT,
+		BATTLE,
+		END
+	}
+	public CARD_BATTLE_PHASE _phase = CARD_BATTLE_PHASE.STAND_BY;
+	void Start( ) {
+		if ( _player_manager == null ) {
+			_player_manager = GameObject.Find( "PlayerManager" ).GetComponent<PlayerManager>( );
+		}
+		if ( _card_Manager == null ) {
+			_card_Manager = GameObject.Find( "CardManager" ).GetComponent<CardManager>( );
+		}
+	}
+	void Update( ) {
+		cardSettingDebug( );
+	}
+	/// <summary>
+	/// カード使用、ステータス変更のデバッグ キーボードのAで実行
+	/// </summary>
+	private void cardSettingDebug( ) {
+		if ( Input.GetKeyDown( KeyCode.A ) ) {
+			switch( _phase ) {
+			case CARD_BATTLE_PHASE.STAND_BY:
+				_debug_turn++;
+				Debug.Log( _debug_turn + "ターン目" );
+				//カードゲーム開始処理 
+				_phase = CARD_BATTLE_PHASE.SELECT;
+				//持続エンハンス効果をカウントダウン
+				_player_manager.turnTypeCardCountDown( );
+				break;
+			case CARD_BATTLE_PHASE.SELECT:
+				_player_manager.debugPlayTurnCard( );
+				_phase = CARD_BATTLE_PHASE.BATTLE;
+				break;
+			case CARD_BATTLE_PHASE.BATTLE:
+				//ステータス計算
+				if ( _player_manager.getHandRange( ) > 0 ) {
+					_player_manager.debugPlayCard( );
+				}
+				_phase = CARD_BATTLE_PHASE.STAND_BY;
+				break;
+			case CARD_BATTLE_PHASE.END:
+				//終了処理
+				_phase = CARD_BATTLE_PHASE.STAND_BY;
+				break;
+			}
+		}
+	}
+}
+*/

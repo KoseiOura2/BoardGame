@@ -40,7 +40,7 @@ public class DebugManager : MonoBehaviour {
         if( _input_field.text != "" ) {
 			_player_manager.setLimitValue( int.Parse( _input_field.text ) );
 			_player_manager.setAdvanceFlag( true );
-			_application_manager.setEventCount( 0 );
+			//_application_manager.setEventCount( 0 );
             InitInputField( );
         }
     }

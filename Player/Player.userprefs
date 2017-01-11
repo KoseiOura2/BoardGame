@@ -2,9 +2,11 @@
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" PreferredExecutionTarget="Unity.Instance.Unity Editor" />
   <MonoDevelop.Ide.Workbench ActiveDocument="Assets/Scripts/ApplicationManager.cs">
     <Files>
-      <File FileName="Assets/Scripts/ApplicationManager.cs" Line="1" Column="1" />
-      <File FileName="Assets/Scripts/NetworkData.cs" Line="9" Column="41" />
-      <File FileName="Assets/Scripts/Common.cs" Line="1" Column="1" />
+      <File FileName="Assets/Scripts/Common.cs" Line="157" Column="1" />
+      <File FileName="Assets/Scripts/ApplicationManager.cs" Line="6" Column="14" />
+      <File FileName="Assets/Scripts/NetworkData.cs" Line="1" Column="1" />
+      <File FileName="Assets/Scripts/CardManager.cs" Line="126" Column="73" />
+      <File FileName="Assets/Hashimoto/Scripts/PlayerManager.cs" Line="168" Column="2" />
     </Files>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>
