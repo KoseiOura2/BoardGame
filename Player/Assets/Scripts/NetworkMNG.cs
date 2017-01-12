@@ -1,12 +1,11 @@
 ﻿using UnityEngine;
 using UnityEngine.Networking;
 using System.Collections;
-using System.Collections.Generic;
 using System.Net.Sockets;//必要です。
 using System.Net;//これもいるかもしれない
 using Common;
 
-public class NetworkMNG : NetworkManager  {
+public class NetworkMNG : MonoBehaviour {
 
 	//ファイヤーウォールを無効化してテスト
 	//ファイヤーウォールの接続を許可すること.
@@ -14,8 +13,8 @@ public class NetworkMNG : NetworkManager  {
 	private static IPAddress _ip_address;
 	private GameObject _object_prefab;
 	private GameObject _object_prefab_2;
-	private GameObject _host_obj   = null;
-	private List< GameObject > _client_obj = new List< GameObject >( );
+    private GameObject _host_obj = null;
+    private GameObject _client_obj = null;
 	private string _ip   = "localhost";
 	private string _port = "5037";
 	private bool _connected = false;
@@ -35,7 +34,6 @@ public class NetworkMNG : NetworkManager  {
 		try {
 			// IPアドレスの取得
 			_ip_address = IPAddress.Parse( Network.player.ipAddress );
-            GetComponent< NetworkManager >( ).networkAddress = _ip_address.ToString( );
 		}
 		catch {
 			Debug.Log( "IPの取得に失敗しまいました" );
@@ -48,53 +46,29 @@ public class NetworkMNG : NetworkManager  {
             _host_obj = GameObject.FindWithTag( "HostObj" );
         }
 
-		if ( _client_obj.Count < 1 ) { // 後でなおすToDo
-			foreach( GameObject obj in GameObject.FindGameObjectsWithTag( "ClientObj" ) ) {
-				if ( !_client_obj.Contains( obj ) ) {
-					_client_obj.Add( obj );
-				}
-			}
-		}
-        
-	    // IPアドレスの取得
-        GetComponent< NetworkManager >( ).networkAddress = _ip_address.ToString( );
+        if ( _client_obj == null ) {
+            _client_obj = GameObject.FindWithTag( "ClientObj" );
+        }
+
 	}
-    /*
-	//サーバ立ち上げ時に呼ばれるメソッド
-	public void OnServerInitialized( ) {
+
+	//サーバに接続したときに呼ばれるメソッド
+	public void OnConnectedToServer( ) {
 		try {
-			//ネットワーク内のすべてのPCでインスタンス化が行われるメソッド
-			_host_obj = ( GameObject )Network.Instantiate( _object_prefab, _object_prefab.transform.position, _object_prefab.transform.rotation, 1 );
+			_connected  = true;
+            _host_obj   = GameObject.FindWithTag( "HostObj" );
+			_client_obj = ( GameObject )Network.Instantiate( _object_prefab_2, _object_prefab_2.transform.position, _object_prefab_2.transform.rotation, 2 );
 		}
 		catch {
-			Debug.Log( "サーバーの初期化に失敗しました" );
+			Debug.Log( "サーバーの接続に失敗しました" );
 		}
 	}
-    */
-
-    
-	//サーバ立ち上げ時に呼ばれるメソッド
-	public void OnServerInitialized( ) {
-        _connected = true;
-	}
-    
-    //サーバーに接続したときクライアント上で呼び出されます。
-    public override void OnServerConnect( NetworkConnection conn ) {
-        if ( _host_obj != null ) {
-            _host_obj.GetComponent< HostData >( ).increasePlayerNum( );
-        }
-    }
 
     /// <summary>
     /// サーバー時新しいクライアント接続で呼ばれる
     /// </summary>
     void OnPlayerConnected( ) {
         _player_num++;
-        foreach( GameObject obj in GameObject.FindGameObjectsWithTag( "ClientObj" ) ) {
-            if ( !_client_obj.Contains( obj ) ) {
-                _client_obj.Add( obj );
-            }
-        }
         if ( _player_num >= 1 ) {
             _connected = true;
         }
@@ -148,14 +122,10 @@ public class NetworkMNG : NetworkManager  {
 	public GameObject getHostObj( ) {
 		return _host_obj;
 	}
-    
-	public GameObject getClientObj( int num ) {
-        if ( num >= _client_obj.Count ) {
-            return null;
-        }
 
-		return _client_obj[ num ];
-	}
+    public GameObject getClientObj( ) {
+        return _client_obj;
+    }
 
 }
 

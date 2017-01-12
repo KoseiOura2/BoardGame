@@ -93,14 +93,6 @@ namespace Common {
 		NO_DATA
 	}
 
-    public enum EVENT_TYPE {
-        EVENT_NONE,
-        EVENT_DRAW,
-        EVENT_MOVE,
-        EVENT_ACTION,
-        EVENT_GOAL
-    }
-
 	/// <summary>
 	/// 通信で送受信するフィールド側のデータ
 	/// </summary>
@@ -163,7 +155,6 @@ namespace Common {
 		public BATTLE_RESULT battle_result;
 		public int draw;
 		public int power;
-        public EVENT_TYPE event_type;
 
 	}
 

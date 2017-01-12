@@ -18,8 +18,10 @@ public class HostData : NetworkBehaviour {
     public SyncListInt _network_card_list_0 = new SyncListInt( );
     public SyncListInt _network_card_list_1 = new SyncListInt( );
     
+    /// //////////////////////////////////////////////////////~
 	[ SyncVar ]
     public int _network_player_num;
+    /// ///////////////////////////////////////////////////////////\
 	[ SyncVar ]
     public bool _network_change_scene;
 	[ SyncVar ]
@@ -36,7 +38,9 @@ public class HostData : NetworkBehaviour {
     public int DISTRIBUT_CARD_NUM = 3;
 
     void Awake( ) {
+        ///////////////////////////////////////~
         _network_player_num = -1;
+        /////////////////////////////////////////\
         _network_scene_data = 0;
         _network_phase_data = 0;
         _network_change_scene = false;
@@ -45,7 +49,9 @@ public class HostData : NetworkBehaviour {
         _network_battle_result_two = 0;
         _network_send_result = false;
 
+        /////////////////////////////////////////////////////~
         _field_data.player_num = -1;
+        /////////////////////////////////////////////////////\
         _field_data.scene = ( SCENE )_network_scene_data;
         _field_data.main_game_phase = ( MAIN_GAME_PHASE )_network_phase_data;
         _field_data.change_scene = _network_change_scene;
@@ -60,11 +66,11 @@ public class HostData : NetworkBehaviour {
 	// Use this for initialization
 	void Start( ) {
 		if ( isLocalPlayer == true ) {
-			_server_state = SERVER_STATE.STATE_HOST;
-			this.gameObject.tag = "HostObj";
-		} else {
 			_server_state = SERVER_STATE.STATE_CLIANT;
 			this.gameObject.tag = "ClientObj";
+		} else {
+			_server_state = SERVER_STATE.STATE_HOST;
+			this.gameObject.tag = "HostObj";
 		}
 	}
 	
@@ -73,6 +79,7 @@ public class HostData : NetworkBehaviour {
 	
 	}
 
+    ////////////////////////////////////////////////////////~
     /// <summary>
     /// 新しいプレイヤー接続時、プレイヤー番号を一つ繰り上げ
     /// </summary>
@@ -83,6 +90,7 @@ public class HostData : NetworkBehaviour {
             _network_player_num++;
         }
     }
+    /////////////////////////////////////////////////////////\
 
     /// <summary>
     /// scenedataのセット
@@ -177,6 +185,7 @@ public class HostData : NetworkBehaviour {
         _network_send_result = result;
     }
     
+    /////////////////////////////////////////////////////////////////~
 	[ Client ]
 	public NETWORK_FIELD_DATA getRecvData( ) {
         _field_data.player_num        = _network_player_num;
@@ -197,6 +206,7 @@ public class HostData : NetworkBehaviour {
 
 		return _field_data;
 	}
+    ///////////////////////////////////////////////////////////////////\
 
 	/// <summary>
 	/// 

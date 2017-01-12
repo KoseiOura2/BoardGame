@@ -599,6 +599,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
         if ( _player_manager.isPlayerMoveFinish( 0 ) == true && _player_manager.isPlayerMoveFinish( 1 ) == true ) {
             _host_data.setSendBattleResult( BATTLE_RESULT.BATTLE_RESULT_NONE, BATTLE_RESULT.BATTLE_RESULT_NONE, false );
             _phase_manager.changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_EVENT, "EventPhase" );
+            _player_manager.movedRefresh( );
         }
 	}
 
@@ -614,10 +615,12 @@ public class ApplicationManager : Manager< ApplicationManager > {
 
 		// マス移動終了時にイベントフラグをfalseにしてもう一度イベントが発生するようにする
 		for ( int i = 0; i < ( int )PLAYER_ORDER.MAX_PLAYER_NUM; i++ ) {
-			if ( _player_manager.isPlayerMoveFinish( i ) == true ) {
-				_player_manager.setEventStart( i, false );
-				_player_manager.movedRefresh( );
-			}
+            if( _player_manager.getEventType( i ) == EVENT_TYPE.EVENT_MOVE ){
+			    if ( _player_manager.isPlayerMoveFinish( i ) == true ) {
+				    _player_manager.setEventStart( i, false );
+				    _player_manager.movedRefresh( );
+			    }
+            }
 
 		}
 		_player_manager.movePhaseUpdate( getResideCount( ), _stage_manager.getTargetMass( _player_manager.getTargetMassID( _stage_manager.getMassCount( ) ) ) );
@@ -654,6 +657,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
 			// カードリストを初期化
 			card_list.Clear( );
 			_player_manager.setEventFinish( id, true );
+            _player_manager.setEventType( id, EVENT_TYPE.EVENT_DRAW );
 			break;
 		case "trap1":
 			Debug.Log ("トラップ発動");
@@ -662,6 +666,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
 			_player_manager.setPlayerID( id );
 			_player_manager.setAdvanceFlag( true );
 			_player_manager.setLimitValue( _file_manager.getMassValue( i )[ 0 ] );
+            _player_manager.setEventType( id, EVENT_TYPE.EVENT_MOVE );
 			break;
 		case "trap2":
 			Debug.Log( "トラップ発動");
@@ -670,16 +675,19 @@ public class ApplicationManager : Manager< ApplicationManager > {
 			_player_manager.setPlayerID( id );
 			_player_manager.setAdvanceFlag( false );
 			_player_manager.setLimitValue( _file_manager.getMassValue( i )[ 1 ] );
+            _player_manager.setEventType( id, EVENT_TYPE.EVENT_MOVE );
 			break;
 		case "advance":
 			Debug.Log(_file_manager.getMassValue( i )[ 0 ] + "マス進む" );
 			_player_manager.setPlayerID( id );
 			_player_manager.setAdvanceFlag( true );
 			_player_manager.setLimitValue( _file_manager.getMassValue( i )[ 0 ] );
+            _player_manager.setEventType( id, EVENT_TYPE.EVENT_MOVE );
 			break;
 		case "event":
 			Debug.Log( "イベント発生!!" );
 			_player_manager.setEventFinish( id, true );
+            _player_manager.setEventType( id, EVENT_TYPE.EVENT_ACTION );
 			break;
 		case "goal":
 			if( _player_manager.getPlayerResult( id ) == BATTLE_RESULT.WIN ){
@@ -687,10 +695,12 @@ public class ApplicationManager : Manager< ApplicationManager > {
 				Debug.Log( "プレイヤー" + ( id + 1 ) +":Goal!!" );
 				_goal_flag = true;
 				_player_manager.setEventFinish( id, true );
+                _player_manager.setEventType( id, EVENT_TYPE.EVENT_GOAL );
 			} else if ( _player_manager.getPlayerResult( id ) == BATTLE_RESULT.LOSE || _player_manager.getPlayerResult( id ) == BATTLE_RESULT.DRAW ) {
 				_player_manager.setPlayerID( id );
 				_player_manager.setAdvanceFlag ( false );
 				_player_manager.setLimitValue( 1 );
+                _player_manager.setEventType( id, EVENT_TYPE.EVENT_MOVE );
 			}
 			break;
 		}  

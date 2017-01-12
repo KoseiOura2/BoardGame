@@ -89,6 +89,7 @@ public class PlayerManager : MonoBehaviour {
 			_players[ i ].obj = ( GameObject )Instantiate( _player_pref[ i ], first_pos, Quaternion.identity );
             _players[ i ].obj.transform.parent = transform;
             _players[ i ].obj.name = "Player" + i;
+            _players[ i ].event_type = EVENT_TYPE.EVENT_NONE;
         }
     }
 
@@ -131,9 +132,8 @@ public class PlayerManager : MonoBehaviour {
 					playerMove ();
 				}
 			}
-
 		} else if ( _limit_value == 0 ) {
-			Debug.Log ("uaaaaaaaaaa");
+            Debug.Log( "aaa" );
 			_move_finish[ _player_id ] = true;
 			_limit_value--;
 		} else {
@@ -234,7 +234,6 @@ public class PlayerManager : MonoBehaviour {
 				_players[ 0 ].battle_result = BATTLE_RESULT.LOSE;
 			} 
 		} else {
-			Debug.Log( "aaa" );
 			_players[ 0 ].battle_result = BATTLE_RESULT.DRAW;
 			_players[ 1 ].battle_result = BATTLE_RESULT.DRAW;
 		}
@@ -338,6 +337,7 @@ public class PlayerManager : MonoBehaviour {
 			if( getPlayerCount( getPlayerID( ), length ) < length - 1 ) {
 				return getPlayerCount( getPlayerID( ), length ) + 1;
 			} else {
+                _limit_value = 0;
 				return getPlayerCount( getPlayerID( ), length );
 			}
 		} else {
@@ -359,6 +359,10 @@ public class PlayerManager : MonoBehaviour {
 	public GameObject getLastPlayer( ) {
 		return _latest_player;
 	}
+
+    public EVENT_TYPE getEventType( int id ) {
+        return _players[ id ].event_type;
+    }
 
     public bool isPlayerMoveFinish( int i ) {
         return _move_finish[ i ];
@@ -416,4 +420,8 @@ public class PlayerManager : MonoBehaviour {
 	public void setEventFinish( int id, bool flag ){
 		_event_finish[ id ] = flag;
 	}
+
+    public void setEventType( int id, EVENT_TYPE event_type ) {
+        _players[ id ].event_type = event_type;
+    }
 }
