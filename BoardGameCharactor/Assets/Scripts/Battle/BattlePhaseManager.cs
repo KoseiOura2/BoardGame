@@ -39,17 +39,19 @@ public class BattlePhaseManager : MonoBehaviour {
 	struct OBJECT_DATA {
 		public GameObject obj;
 		public int id;
+		public OBJECT_LIST type;
 	};
 
 	/// <summary>
 	/// オブジェクトのリスト
 	/// </summary>
 	private enum OBJECT_LIST{
+		BLACKOUT_PANEL,
 		TEXT_WINDOW,
 		YES_BUTTON,
 		NO_BUTTON,
-
-
+		DISCARD_AREA,
+		DISCARD_BUTTON
 	}
 
 
@@ -63,6 +65,10 @@ public class BattlePhaseManager : MonoBehaviour {
 
 		//リストの初期化
 		_battlePhaseObjects = new List<  OBJECT_DATA >( );
+
+		//各種オブジェクトのロード
+		objectLoad( ( GameObject )Resources.Load( "Prefab/Button" ), OBJECT_LIST.YES_BUTTON );
+		objectLoad( ( GameObject )Resources.Load( "Prefab/Button" ), OBJECT_LIST.NO_BUTTON );
 	}
 
 	void drowPhase( CARD_DATA drowCard ){
@@ -82,11 +88,9 @@ public class BattlePhaseManager : MonoBehaviour {
 			if( !_generate_Complate ) {
 
 				//ボタンオブジェクトをリストに追加
-				OBJECT_DATA _yes_Button = objectLoad( ( GameObject )Resources.Load( "Prefab/Button" ), 
-				                                    new Vector3( -_setButton_Position.x, _setButton_Position.y, _setButton_Position.z ) );
+				objectLoad( ( GameObject )Resources.Load( "Prefab/Button" ), OBJECT_LIST.YES_BUTTON );
 
-				OBJECT_DATA _no_Button = objectLoad( ( GameObject )Resources.Load( "Prefab/Button" ),
-				                                   new Vector3( -_setButton_Position.x, _setButton_Position.y, _setButton_Position.z ) );
+			 	objectLoad( ( GameObject )Resources.Load( "Prefab/Button" ), OBJECT_LIST.NO_BUTTON );
 
 				//テキストを設定
 				textSet( _yes_Button.id, "YES" );
@@ -148,21 +152,21 @@ public class BattlePhaseManager : MonoBehaviour {
 				_player_manager.SetSelectAreaCard( );
 				//テキストウィンドウを表示
 				canvasSet( ( GameObject )Resources.Load( "Prefab/TextWindow" ), Vector3.zero );
-				textSet( _textWindow, PLAYER_WAIT_MESSAGE );
+				textSet( _textWindow , PLAYER_WAIT_MESSAGE );
 				//確定フラグ
 
 			} else {
-				nowTime += Time.deltaTime;
-				float CountDawn = BattleTime - nowTime;
+				_nowTime += Time.deltaTime;
+				float CountDawn = _battleTime - _nowTime;
 				//タイムテキストを取得
-				TimeText.text = "残り時間 " + CountDawn.ToString( "00" );
+				.text = "残り時間 " + CountDawn.ToString( "00" );
 			}
 		}
 	}
 
 	void disCardPhase( ){
 		//初期設定が済んでなければ行う
-		if ( !initial_setting ) {
+		if ( !_initial_setting ) {
 			Debug.Log ( "カードを捨てるフェイズです" );
 			//黒背景にする
 			_blackOut = canvasSet ( _blackout_Prefab, Vector3.zero );
@@ -247,7 +251,7 @@ public class BattlePhaseManager : MonoBehaviour {
 		_initial_setting = false;
 	}
 
-	canvasSet( GameObject _setPrefab, Vector3 _setPosition ){
+	void canvasSet( GameObject _setPrefab, Vector3 _setPosition ){
 		//セットされたプレハブの生成、座標の修正、キャンパスの中に生成します
 		GameObject _Setobj = ( GameObject )Instantiate( _setPrefab );
 		_Setobj.transform.SetParent ( _canvas_Root.transform );
@@ -257,13 +261,14 @@ public class BattlePhaseManager : MonoBehaviour {
 		return _Setobj;
 	}
 
-	OBJECT_ID objectLoad( GameObject _loadObject, Vector3 _setPos ){
+	OBJECT_ID objectLoad( GameObject _load_Object, OBJECT_LIST _set_Type ){
 		//オブジェクト構造体
 		OBJECT_DATA obj;
 
 		//オブジェクトとIDを設定
-		obj.obj = _loadObject;
+		obj.obj = _load_Object;
 		obj.id = _battlePhaseObjects.Count;
+		obj.type = _set_Type;
 
 		//リストに追加
 		_battlePhaseObjects.Add (obj);
