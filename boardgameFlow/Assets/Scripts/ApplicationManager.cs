@@ -7,8 +7,9 @@ using Common;
 public class ApplicationManager : Manager< ApplicationManager > {
 
     enum PROGRAM_MODE {
-        PLAY_MODE,
-        DEBUG_MODE,
+		MODE_NO_CONNECT,
+        MODE_ONE_CONNECT,
+		MODE_TWO_CONNECT,
     };
 
 	[ SerializeField ]
@@ -34,7 +35,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
     private ClientData[ ] _client_data = new ClientData[ ( int )PLAYER_ORDER.MAX_PLAYER_NUM ];
     
 	[ SerializeField ]
-	private PROGRAM_MODE _mode = PROGRAM_MODE.DEBUG_MODE;
+	private PROGRAM_MODE _mode = PROGRAM_MODE.MODE_NO_CONNECT;
 	[ SerializeField ]
 	private SCENE _scene = SCENE.SCENE_CONNECT;
 	private int[ ] _event_count = new int[ ]{ 0, 0 };        //イベントを起こす回数 
@@ -113,15 +114,21 @@ public class ApplicationManager : Manager< ApplicationManager > {
 	
 	// Update is called once per frame
 	void FixedUpdate( ) {
-		if ( _host_data == null && _network_manager.getHostObj( ) != null ) {
-			_host_data = _network_manager.getHostObj( ).GetComponent< HostData >( );
-		}
         
-		if ( _client_data[ 0 ] == null && _network_manager.getClientObj( 0 ) != null ) {
-			_client_data[ 0 ] = _network_manager.getClientObj( 0 ).GetComponent< ClientData >( );
-		}
-        
-        if ( _mode == PROGRAM_MODE.PLAY_MODE ) {
+		if ( _mode == PROGRAM_MODE.MODE_ONE_CONNECT ) {
+			if ( _host_data == null && _network_manager.getHostObj( ) != null ) {
+				_host_data = _network_manager.getHostObj( ).GetComponent< HostData >( );
+			}
+			if ( _client_data[ 0 ] == null && _network_manager.getClientObj( 0 ) != null ) {
+				_client_data[ 0 ] = _network_manager.getClientObj( 0 ).GetComponent< ClientData >( );
+			}
+		} else if ( _mode == PROGRAM_MODE.MODE_TWO_CONNECT ) {
+			if ( _host_data == null && _network_manager.getHostObj( ) != null ) {
+				_host_data = _network_manager.getHostObj( ).GetComponent< HostData >( );
+			}
+			if ( _client_data[ 0 ] == null && _network_manager.getClientObj( 0 ) != null ) {
+				_client_data[ 0 ] = _network_manager.getClientObj( 0 ).GetComponent< ClientData >( );
+			}
 		    if ( _client_data[ 1 ] == null && _network_manager.getClientObj( 1 ) != null ) {
 			    _client_data[ 1 ] = _network_manager.getClientObj( 1 ).GetComponent< ClientData >( );
 		    }
@@ -143,24 +150,31 @@ public class ApplicationManager : Manager< ApplicationManager > {
 		}
 
 		if ( _host_data != null && _client_data[ 0 ] != null /* && _client_data[ 1 ] != null */ ) {
-            // player側のシーン変更が完了したかどうか
-			if ( _client_data[ 0 ].getRecvData( ).changed_scene == true ) {
-				_host_data.setSendChangeFieldScene( false );
-			}
-            // player側のフェイズ変更が完了したかどうか
-			if ( _client_data[ 0 ].getRecvData( ).changed_phase == true ) {
-				_host_data.setSendChangeFieldPhase( false );
-			}
-            if ( _mode == PROGRAM_MODE.PLAY_MODE ) {
+			if ( _mode == PROGRAM_MODE.MODE_ONE_CONNECT ) {
+				// player側のシーン変更が完了したかどうか
+				if ( _client_data[ 0 ].getRecvData( ).changed_scene == true ) {
+					_host_data.setSendChangeFieldScene( false );
+				}
+				// player側のフェイズ変更が完了したかどうか
+				if ( _client_data[ 0 ].getRecvData( ).changed_phase == true ) {
+					_host_data.setSendChangeFieldPhase( false );
+				}
+			} else if ( _mode == PROGRAM_MODE.MODE_TWO_CONNECT ) {
+				// player側のシーン変更が完了したかどうか
+				if ( _client_data[ 0 ].getRecvData( ).changed_scene == true ) {
+					_host_data.setSendChangeFieldScene( false );
+				}
+				// player側のフェイズ変更が完了したかどうか
+				if ( _client_data[ 0 ].getRecvData( ).changed_phase == true ) {
+					_host_data.setSendChangeFieldPhase( false );
+				}
                 // player側のシーン変更が完了したかどうか
 			    if ( _client_data[ 1 ].getRecvData( ).changed_scene == true ) {
 				    _host_data.setSendChangeFieldScene( false );
-				    Debug.Log( "scene_ok" );
 			    }
                 // player側のフェイズ変更が完了したかどうか
 			    if ( _client_data[ 1 ].getRecvData( ).changed_phase == true ) {
 				    _host_data.setSendChangeFieldPhase( false );
-				    Debug.Log( "phase_ok" );
 			    }
             }
  		}
@@ -170,16 +184,24 @@ public class ApplicationManager : Manager< ApplicationManager > {
 	/// ConnectSceneの更新
 	/// </summary>
 	private void updateConnectScene( ) {
-		if ( _network_manager.isConnected( ) ||  Input.GetKeyDown( KeyCode.A ) ) {
-			_scene = SCENE.SCENE_TITLE;
-			_scene_text.text = "SCENE_TITLE";
-			_network_gui_controll.setShowGUI( false );
-			try {
-				_host_data.setSendScene( _scene );
-            	_host_data.setSendChangeFieldScene( true );
+		if ( _mode == PROGRAM_MODE.MODE_NO_CONNECT ) {
+			if ( Input.GetKeyDown( KeyCode.A ) ) {
+				_scene = SCENE.SCENE_TITLE;
+				_scene_text.text = "SCENE_TITLE";
+				_network_gui_controll.setShowGUI( false );
 			}
-			catch {
-				Debug.Log( "通信に失敗しまいました" );
+		} else {
+			if ( _network_manager.isConnected( ) ||  Input.GetKeyDown( KeyCode.A ) ) {
+				_scene = SCENE.SCENE_TITLE;
+				_scene_text.text = "SCENE_TITLE";
+				_network_gui_controll.setShowGUI( false );
+				try {
+					_host_data.setSendScene( _scene );
+	            	_host_data.setSendChangeFieldScene( true );
+				}
+				catch {
+					Debug.Log( "通信に失敗しまいました" );
+				}
 			}
 		}
 	}
@@ -202,13 +224,15 @@ public class ApplicationManager : Manager< ApplicationManager > {
 			}
 			_stage_manager.init( );
 
-			try {
-				_host_data.setSendScene( _scene );
-				_host_data.setSendChangeFieldScene( true );
+			if ( _mode != PROGRAM_MODE.MODE_NO_CONNECT ) {
+				try {
+					_host_data.setSendScene( _scene );
+					_host_data.setSendChangeFieldScene( true );
+				} catch {
+					Debug.Log( "通信に失敗しまいました" );
+				}
 			}
-			catch {
-				Debug.Log( "通信に失敗しまいました" );
-			}
+
 			_network_gui_controll.setShowGUI( false );
 		}
 	}
@@ -220,12 +244,13 @@ public class ApplicationManager : Manager< ApplicationManager > {
 		if ( Input.GetKeyDown( KeyCode.A ) ) {
 			_scene = SCENE.SCENE_TITLE;
 			_scene_text.text = "SCENE_TITLE";
-			try {
-				_host_data.setSendScene( _scene );
-				_host_data.setSendChangeFieldScene( true );
-			}
-			catch {
-				Debug.Log( "通信に失敗しまいました" );
+			if ( _mode != PROGRAM_MODE.MODE_NO_CONNECT ) {
+				try {
+					_host_data.setSendScene( _scene );
+					_host_data.setSendChangeFieldScene( true );
+				} catch {
+					Debug.Log( "通信に失敗しまいました" );
+				}
 			}
 		}
 	}
@@ -263,9 +288,9 @@ public class ApplicationManager : Manager< ApplicationManager > {
 		}
 
 		// 通信データのセット
-		if ( _phase_manager.isPhaseChanged( ) ) {
+		if ( _phase_manager.isPhaseChanged( ) && _mode != PROGRAM_MODE.MODE_NO_CONNECT ) {
 			_host_data.setSendGamePhase( _phase_manager.getMainGamePhase( ) );
-		    _host_data.setSendChangeFieldPhase( true );
+			_host_data.setSendChangeFieldPhase( true );
 		}
 
         // playerの環境情報を更新
@@ -300,7 +325,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
 	/// DicePhaseの更新
 	/// </summary>
 	private void updateDicePhase( ) {
-        if ( _mode == PROGRAM_MODE.PLAY_MODE ) {
+		if ( _mode == PROGRAM_MODE.MODE_TWO_CONNECT ) {
             // 送られてきた賽の目の数
             int[ ] dice_value = new int[ ( int )PLAYER_ORDER.MAX_PLAYER_NUM ];
             dice_value[ 0 ] = _client_data[ 0 ].getRecvData( ).dice_value;
@@ -312,7 +337,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
                 // キャラクター移動フェイズへの移行
                 _phase_manager.changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_MOVE_CHARACTER, "MovePhase" );
             }
-        } else if ( _mode == PROGRAM_MODE.DEBUG_MODE ) {
+		} else if ( _mode == PROGRAM_MODE.MODE_ONE_CONNECT ) {
             // 送られてきた賽の目の数
             int[ ] dice_value = new int[ ( int )PLAYER_ORDER.MAX_PLAYER_NUM ];
             dice_value[ 0 ] = _client_data[ 0 ].getRecvData( ).dice_value;
@@ -322,42 +347,69 @@ public class ApplicationManager : Manager< ApplicationManager > {
                 // キャラクター移動フェイズへの移行
                 _phase_manager.changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_MOVE_CHARACTER, "MovePhase" );
             }
-        }
+		} else if ( _mode == PROGRAM_MODE.MODE_NO_CONNECT ) {
+			if ( Input.GetKeyDown( KeyCode.A ) ) {
+				// 送られてきた賽の目の数
+				int[ ] dice_value = new int[ ( int )PLAYER_ORDER.MAX_PLAYER_NUM ];
+				for ( int i = 0; i < ( int )PLAYER_ORDER.MAX_PLAYER_NUM; i++ ) {
+					dice_value[ i ] = ( int )Random.Range( 1.0f, 4.0f );
+				}
+				_dice_value[ 0 ] = dice_value[ 0 ];
+				// キャラクター移動フェイズへの移行
+				_phase_manager.changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_MOVE_CHARACTER, "MovePhase" );
+			}
+		}
 	}
 
 	/// <summary>
 	/// MovePhaseの更新
 	/// </summary>
 	private void updateMovePhase( ) {
-        if ( _mode == PROGRAM_MODE.PLAY_MODE ) {
+		if ( _mode == PROGRAM_MODE.MODE_TWO_CONNECT || _mode == PROGRAM_MODE.MODE_NO_CONNECT ) {
             if ( _player_manager.isPlayerMoveStart( 0 ) == false ) {
                 // 1Pを動かす
-		        _player_manager.setPlayerID( 0 );
-		        _player_manager.setLimitValue( _dice_value[ 0 ] );
-		        _player_manager.setAdvanceFlag( true );
-                _event_count[ 0 ] = 0;
+				if ( _player_manager.getPlayerOnMove( 0 ) ) {
+					_player_manager.setPlayerID( 0 );
+					_player_manager.setLimitValue( _dice_value[ 0 ] );
+					_player_manager.setAdvanceFlag( true );
+				} else {
+					_player_manager.setPlayerOnMove( 0, true );
+				}
+				_event_count[ 0 ] = 0;
 			} else if ( _player_manager.isPlayerMoveStart( 1 ) == false && _player_manager.isPlayerMoveFinish( 0 ) == true ) {
                 // 2Pを動かす
-		        _player_manager.setPlayerID( 1 );
-		        _player_manager.setLimitValue( _dice_value[ 1 ] );
-		        _player_manager.setAdvanceFlag( true );
-                _event_count[ 0 ] = 0;
+				if ( _player_manager.getPlayerOnMove( 1 ) ) {
+					_player_manager.setPlayerID( 1 );
+					_player_manager.setLimitValue( _dice_value[ 1 ] );
+					_player_manager.setAdvanceFlag( true );
+				} else {
+					_player_manager.setPlayerOnMove( 1, true );
+				}
+				_event_count[ 0 ] = 0;
             }
-        } else if ( _mode == PROGRAM_MODE.DEBUG_MODE ) {
+		} else if ( _mode == PROGRAM_MODE.MODE_ONE_CONNECT ) {
             if ( _player_manager.isPlayerMoveStart( 0 ) == false ) {
                 // 1Pを動かす
-		        _player_manager.setPlayerID( 0 );
-		        _player_manager.setLimitValue( _dice_value[ 0 ] );
-		        _player_manager.setAdvanceFlag( true );
-                _event_count[ 1 ] = 0;
+				if ( _player_manager.getPlayerOnMove( 0 ) ) {
+					_player_manager.setPlayerID( 0 );
+					_player_manager.setLimitValue( _dice_value[ 0 ] );
+					_player_manager.setAdvanceFlag( true );
+				}else {
+					_player_manager.setPlayerOnMove( 0, true );
+				}
+				_event_count[ 1 ] = 0;
 			} else if ( _player_manager.isPlayerMoveStart( 1 ) == false && _player_manager.isPlayerMoveFinish( 0 ) == true ) {
                 // 2Pを動かす
-		        _player_manager.setPlayerID( 1 );
-		        _player_manager.setLimitValue( _dice_value[ 0 ] );
-		        _player_manager.setAdvanceFlag( true );
-                _event_count[ 1 ] = 0;
+				if ( _player_manager.getPlayerOnMove( 1 ) ) {
+					_player_manager.setPlayerID( 1 );
+					_player_manager.setLimitValue( _dice_value[ 0 ] );
+					_player_manager.setAdvanceFlag( true );
+				} else {
+					_player_manager.setPlayerOnMove( 1, true );
+				}
+				_event_count[ 1 ] = 0;
             }
-        }
+		}
 		
 		_player_manager.movePhaseUpdate( getResideCount( ), _stage_manager.getTargetMass( _player_manager.getTargetMassID( _stage_manager.getMassCount( ) ) ) );
 		// ゴールまでの残りマスを表示
@@ -376,7 +428,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
 	private void updateDrawPhase( ) {
         List< int > card_list = new List< int >( );
 
-        if ( _mode == PROGRAM_MODE.PLAY_MODE ) {
+		if ( _mode == PROGRAM_MODE.MODE_TWO_CONNECT ) {
             // 1Pにカード配布
             if ( _host_data.getRecvData( ).card_list_one.Length == 0 ) {
 		        for ( int i = 0; i < _dice_value[ 0 ]; i++ ) {
@@ -411,7 +463,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
                 _host_data.refreshCardList( 1 );
                 _phase_manager.changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_BATTLE, "ButtlePhase" );
             }
-        } else if ( _mode == PROGRAM_MODE.DEBUG_MODE ) {
+		} else if ( _mode == PROGRAM_MODE.MODE_ONE_CONNECT ) {
             // 1Pにカード配布
             if ( _host_data.getRecvData( ).card_list_one.Length == 0 ) {
 		        for ( int i = 0; i < _dice_value[ 0 ]; i++ ) {
@@ -431,14 +483,19 @@ public class ApplicationManager : Manager< ApplicationManager > {
                 _host_data.refreshCardList( 0 );
                 _phase_manager.changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_BATTLE, "ButtlePhase" );
             }
-        }
+		} else if ( _mode == PROGRAM_MODE.MODE_NO_CONNECT ) {
+			// 準備が終わったら次のフェイズへ
+			if ( Input.GetKeyDown( KeyCode.A ) ) {
+				_phase_manager.changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_BATTLE, "ButtlePhase" );
+			}
+		}
 	}
 
 	/// <summary>
 	/// ButtlePhaseの更新
 	/// </summary>
 	private void updateButtlePhase( ) {
-        if ( _mode == PROGRAM_MODE.PLAY_MODE ) {
+		if ( _mode == PROGRAM_MODE.MODE_TWO_CONNECT ) {
             if ( _client_data[ 0 ].getRecvData( ).battle_ready == true &&
 				_client_data[ 1 ].getRecvData( ).battle_ready == true )  {
 				// 1Pのステータスを設定
@@ -466,7 +523,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
                 // 次のフェイズへ
                 _phase_manager.changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_RESULT, "ResultPhase" );
             }
-        } else if ( _mode == PROGRAM_MODE.DEBUG_MODE ) {
+		} else if ( _mode == PROGRAM_MODE.MODE_ONE_CONNECT ) {
 			if ( _client_data[ 0 ].getRecvData( ).battle_ready == true )  {
 				// 1Pのステータスを設定
 				_player_manager.setPlayerPower( 0, _client_data[ 0 ].getRecvData( ).player_status );
@@ -493,7 +550,12 @@ public class ApplicationManager : Manager< ApplicationManager > {
                 // 次のフェイズへ
                 _phase_manager.changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_RESULT, "ResultPhase" );
             }
-        }
+		} else if ( _mode == PROGRAM_MODE.MODE_NO_CONNECT ) {
+			if ( Input.GetKeyDown( KeyCode.A ) )  {
+				// 次のフェイズへ
+				_phase_manager.changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_RESULT, "ResultPhase" );
+			}
+		}
 	}
 
 	/// <summary>
@@ -505,7 +567,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
             _host_data.setSendBattleResult( _player_manager.getPlayerResult( 0 ), _player_manager.getPlayerResult( 1 ), true );
         }
 
-        if ( _mode == PROGRAM_MODE.PLAY_MODE ) {
+		if ( _mode == PROGRAM_MODE.MODE_TWO_CONNECT ) {
             if ( _client_data[ 0 ].getRecvData( ).ready == true &&
                  _client_data[ 1 ].getRecvData( ).ready == true )  {
                 if ( _client_data[ 0 ].getRecvData( ).mass_adjust == MASS_ADJUST.ADVANCE &&
@@ -548,7 +610,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
                     _player_manager.setMoveStart( 1, true );
                 }
             }
-        } else if ( _mode == PROGRAM_MODE.DEBUG_MODE ) {
+		} else if ( _mode == PROGRAM_MODE.MODE_ONE_CONNECT ) {
             if ( _client_data[ 0 ].getRecvData( ).ready == true )  {
                 if ( _client_data[ 0 ].getRecvData( ).mass_adjust == MASS_ADJUST.ADVANCE &&
                      _player_manager.isPlayerMoveStart( 0 ) == false ) {
@@ -590,14 +652,64 @@ public class ApplicationManager : Manager< ApplicationManager > {
 					_player_manager.setMoveStart( 1, true );
                 }
             }
-        }
+		} else if ( _mode == PROGRAM_MODE.MODE_NO_CONNECT ) {
+			if ( Input.GetKeyDown( KeyCode.A ) ) {
+				MASS_ADJUST[ ] adjust = new MASS_ADJUST[ ( int )PLAYER_ORDER.MAX_PLAYER_NUM ];
+				for ( int i = 0; i < ( int )PLAYER_ORDER.MAX_PLAYER_NUM; i++ ) {
+					adjust[ i ] = ( MASS_ADJUST )( ( int )Random.Range( 0.0f, 3.0f ) );
+				}
+
+				if ( adjust[ 0 ] == MASS_ADJUST.ADVANCE &&
+					_player_manager.isPlayerMoveStart( 0 ) == false ) {
+					// 1Pを前に動かす
+					_player_manager.setPlayerID( 0 );
+					_player_manager.setLimitValue( 1 );
+					_player_manager.setAdvanceFlag( true );
+					_event_count[ 0 ] = 0;
+				} else if ( adjust[ 0 ] == MASS_ADJUST.BACK &&
+					_player_manager.isPlayerMoveStart( 0 ) == false ) {
+					// 1Pを後ろに動かす
+					_player_manager.setPlayerID( 0 );
+					_player_manager.setLimitValue( 1 );
+					_player_manager.setAdvanceFlag( false );
+					_event_count[ 0 ] = 0;
+				} else if ( adjust[ 0 ] == MASS_ADJUST.NO_ADJUST &&
+					_player_manager.isPlayerMoveStart( 0 ) == false ) {
+					// 1Pを動かさない
+					_player_manager.setMoveFinish( 0, true );
+					_player_manager.setMoveStart( 0, true );
+				} else if ( adjust[ 1 ] == MASS_ADJUST.ADVANCE &&
+					_player_manager.isPlayerMoveStart( 1 ) == false && _player_manager.isPlayerMoveFinish( 0 ) == true ) {
+					// 2Pを前に動かす
+					_player_manager.setPlayerID( 1 );
+					_player_manager.setLimitValue( 1 );
+					_player_manager.setAdvanceFlag( true );
+					_event_count[ 1 ] = 0;
+				} else if ( adjust[ 1 ] == MASS_ADJUST.BACK &&
+					_player_manager.isPlayerMoveStart( 1 ) == false && _player_manager.isPlayerMoveFinish( 0 ) == true ) {
+					// 2Pを後ろに動かす
+					_player_manager.setPlayerID( 1 );
+					_player_manager.setLimitValue( 1 );
+					_player_manager.setAdvanceFlag( false );
+					_event_count[ 1 ] = 0;
+				} else if ( adjust[ 1 ] == MASS_ADJUST.NO_ADJUST &&
+					_player_manager.isPlayerMoveStart( 1 ) == false && _player_manager.isPlayerMoveFinish( 0 ) == true ) {
+					// 2Pを動かさない
+					_player_manager.setMoveFinish( 1, true );
+					_player_manager.setMoveStart( 1, true );
+				}
+			}
+		}
+
 		_player_manager.movePhaseUpdate( getResideCount( ), _stage_manager.getTargetMass( _player_manager.getTargetMassID( _stage_manager.getMassCount( ) ) ) );
 		// ゴールまでの残りマスを表示
 		resideCount( );
 
         // 両方の移動が終わったら次のフェイズへ
         if ( _player_manager.isPlayerMoveFinish( 0 ) == true && _player_manager.isPlayerMoveFinish( 1 ) == true ) {
-            _host_data.setSendBattleResult( BATTLE_RESULT.BATTLE_RESULT_NONE, BATTLE_RESULT.BATTLE_RESULT_NONE, false );
+			if ( _mode != PROGRAM_MODE.MODE_NO_CONNECT ) {
+				_host_data.setSendBattleResult( BATTLE_RESULT.BATTLE_RESULT_NONE, BATTLE_RESULT.BATTLE_RESULT_NONE, false );
+			}
             _phase_manager.changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_EVENT, "EventPhase" );
             _player_manager.movedRefresh( );
         }
@@ -630,7 +742,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
 			_player_manager.setEventStart( 1, false );
 			_player_manager.setEventFinish( 0, false );
 			_player_manager.setEventFinish( 1, false );
-			_phase_manager.changeMainGamePhase (MAIN_GAME_PHASE.GAME_PHASE_DICE, "DisePhase");
+			_phase_manager.changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_DICE, "DisePhase" );
 		}
 	}
 
@@ -645,7 +757,6 @@ public class ApplicationManager : Manager< ApplicationManager > {
 			int value = _file_manager.getMassValue( i )[ 0 ];
 			List< int > card_list = new List< int >( );
 			Debug.Log( "カード" + value + "ドロー" );
-
 			for ( int j = 0; j < value; j++ ) {
 				// デッキのカード数が０になったらリフレッシュ
 				if ( _card_manager.getDeckCardNum( ) <= 0 ) {
@@ -703,6 +814,20 @@ public class ApplicationManager : Manager< ApplicationManager > {
                 _player_manager.setEventType( id, EVENT_TYPE.EVENT_MOVE );
 			}
 			break;
+		case "selectDraw":
+			int cardType = _file_manager.getCardID( i );
+			_card_manager.getCardData( cardType );
+			break;
+		case "Buff":
+			int buffValue = _file_manager.getMassValue( i )[ 0 ];
+			Debug.Log( "プレイヤーのパラメーターを" + buffValue.ToString( ) + "上昇" );
+			break;
+		case "MoveSeal":
+			Debug.Log( "行動停止" );
+			_player_manager.setPlayerOnMove( id, false );
+			_player_manager.setEventFinish( id, true );
+			_player_manager.setEventType( id, EVENT_TYPE.EVENT_DRAW );
+			break;
 		}  
 	}
 
@@ -713,12 +838,13 @@ public class ApplicationManager : Manager< ApplicationManager > {
 		if ( Input.GetKeyDown( KeyCode.A ) ) {
 			_scene = SCENE.SCENE_FINISH;
 			_scene_text.text = "SCENEFINISH";
-			try {
-				_host_data.setSendScene( _scene );
-				_host_data.setSendChangeFieldScene( true );
-			}
-			catch {
-				Debug.Log( "通信に失敗しまいました" );
+			if ( _mode != PROGRAM_MODE.MODE_NO_CONNECT ) {
+				try {
+					_host_data.setSendScene( _scene );
+					_host_data.setSendChangeFieldScene( true );
+				} catch {
+					Debug.Log( "通信に失敗しまいました" );
+				}
 			}
 		}
 	}
@@ -733,15 +859,15 @@ public class ApplicationManager : Manager< ApplicationManager > {
 	/// ConnectSceneの描画
 	/// </summary>
 	private void drawConnectScene( ) {
-        
-		if( !_network_manager.isConnected( ) && _host_data.getServerState( ) != SERVER_STATE.STATE_HOST ) {
-			//_network_manager.noConnectDraw( );
-		}
+		if ( _mode != PROGRAM_MODE.MODE_NO_CONNECT ) {
+			if ( !_network_manager.isConnected( ) && _host_data.getServerState( ) != SERVER_STATE.STATE_HOST ) {
+				//_network_manager.noConnectDraw( );
+			}
 
-		if ( _host_data.getServerState( ) == SERVER_STATE.STATE_HOST ) {
-			_network_manager.hostStateDraw( );
+			if ( _host_data.getServerState( ) == SERVER_STATE.STATE_HOST ) {
+				_network_manager.hostStateDraw( );
+			}
 		}
-        
 	}
 
 	/// <summary>

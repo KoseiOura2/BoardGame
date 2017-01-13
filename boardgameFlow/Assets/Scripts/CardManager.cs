@@ -135,6 +135,9 @@ public class CardManager : Manager< CardManager > {
 	/// </summary>
 	public CARD_DATA getCardData( int id ) {
 		try {
+			if ( id == 5 ) {
+				Debug.Log( "特定種類のカードの取得に成功しました" );
+			}
 			return _card_datas[ id ];
 		} catch {
 			Debug.Log("カードデータ取得エラー");

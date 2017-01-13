@@ -150,6 +150,8 @@ public class FileManager : Manager< FileManager > {
 				data.mass[ i ].trapValue = int.Parse( values[ 6 ] );
                 // 環境情報取得
 				data.mass[ i ].environment = values[ 7 ];
+				// カードID情報取得
+				data.mass[ i ].cardId = int.Parse( values[ 8 ] );
             } 
         }
 
@@ -207,4 +209,8 @@ public class FileManager : Manager< FileManager > {
     public int getTrapValue( int i ) {
         return getFileData( ).mass[ i ].trapValue;
     }
+
+	public int getCardID( int i ) {
+		return getFileData( ).mass[ i ].cardId;
+	}
 }

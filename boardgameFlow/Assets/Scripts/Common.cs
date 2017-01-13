@@ -143,6 +143,7 @@ namespace Common {
 		public int nomalValue; //値１
 		public int trapValue; //値２
 		public string environment; //環境情報
+		public int cardId;
 	}
 
 	/// <summary>
@@ -164,6 +165,7 @@ namespace Common {
 		public int draw;
 		public int power;
         public EVENT_TYPE event_type;
+		public bool onMove;
 
 	}
 

@@ -90,6 +90,7 @@ public class PlayerManager : MonoBehaviour {
             _players[ i ].obj.transform.parent = transform;
             _players[ i ].obj.name = "Player" + i;
             _players[ i ].event_type = EVENT_TYPE.EVENT_NONE;
+			_players[ i ].onMove = true;
         }
     }
 
@@ -331,6 +332,10 @@ public class PlayerManager : MonoBehaviour {
 		return power;
 	}
 
+	public bool getPlayerOnMove( int playerID ) {
+		return _players[ playerID ].onMove;
+	}
+
 	//ターゲットとなるマスIDを取得
 	public int getTargetMassID( int length ) {
 		if( _advance_flag ) {
@@ -424,4 +429,8 @@ public class PlayerManager : MonoBehaviour {
     public void setEventType( int id, EVENT_TYPE event_type ) {
         _players[ id ].event_type = event_type;
     }
+
+	public void setPlayerOnMove( int i, bool onMove ) {
+		_players[ i ].onMove = onMove;
+	}
 }
