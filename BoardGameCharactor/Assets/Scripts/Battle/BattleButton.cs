@@ -25,11 +25,8 @@ public class BattleButton : MonoBehaviour {
 		Text judghText = GetComponentInChildren< Text >( );
 		//テキストがYESであるかどうか
 		if ( judghText.text == Yes_Text ) {
-			//シーンがドローフェイズであるなら
-			if ( _battle_Phase_Manager.GetMainGamePhase( ) == MAIN_GAME_PHASE.GAME_PHASE_DRAW_CARD ) {
 				//ドローカードを使用することを選択したことを送信
 				_battle_Phase_Manager.DrowCardUse( true );
-			}
 		} else {
 			//テキストがYESでないならNOである
 			//シーンがドローフェイズであるなら

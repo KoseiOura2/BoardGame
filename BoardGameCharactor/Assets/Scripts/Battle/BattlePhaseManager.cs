@@ -32,14 +32,25 @@ public class BattlePhaseManager : MonoBehaviour {
 	private Vector3 discard_SelecAreaPosition = new Vector3 ( -125, -16, 0 );	//ディスカードフェイズでのエリアの座標
 	private Vector3 discard_SelectButtonPosition = new Vector3 ( -140, -7, 0);	//ディスカードフェイズでの選択ボタンの座標
 
-	private List < OBJECT_ID > _battlePhaseObjects;	//バトルフェイズオブジェクトをまとめる
+	private List < OBJECT_DATA > _battlePhaseObjects;	//バトルフェイズオブジェクトをまとめる
 	public GameObject _canvas_Root;					//キャンバスを取得
 
 	//オブジェクト管理用の構造体
-	struct OBJECT_ID {
+	struct OBJECT_DATA {
 		public GameObject obj;
 		public int id;
 	};
+
+	/// <summary>
+	/// オブジェクトのリスト
+	/// </summary>
+	private enum OBJECT_LIST{
+		TEXT_WINDOW,
+		YES_BUTTON,
+		NO_BUTTON,
+
+
+	}
 
 
 	// Use this for initialization
@@ -51,7 +62,7 @@ public class BattlePhaseManager : MonoBehaviour {
 		}
 
 		//リストの初期化
-		_battlePhaseObjects = new List<  OBJECT_ID >( );
+		_battlePhaseObjects = new List<  OBJECT_DATA >( );
 	}
 
 	void drowPhase( CARD_DATA drowCard ){
@@ -59,10 +70,10 @@ public class BattlePhaseManager : MonoBehaviour {
 		if( !_initial_setting ) {
 			Debug.Log( "ドローフェイズです" );
 			//エネミーのテキストを設定
-			_player_Manager.SetEnemyObject( );
+			_player_manager.setEnemyObject( );
 
 			//プレイヤーによって変わる部分を変更
-			_player_Manager.setPlayerObject( );
+			_player_manager.setPlayerObject( );
 
 			//初期設定完了フラグ
 			_initial_setting = true;
@@ -70,20 +81,19 @@ public class BattlePhaseManager : MonoBehaviour {
 			//ドローカードタイプがあればドローカードを使うかどうかを選択させる
 			if( !_generate_Complate ) {
 
-				//オブジェクトをリストに追加
-				OBJECT_ID _yes_Button = objectLoad( ( GameObject )Resources.Load( "Prefab/Button" ), 
+				//ボタンオブジェクトをリストに追加
+				OBJECT_DATA _yes_Button = objectLoad( ( GameObject )Resources.Load( "Prefab/Button" ), 
 				                                    new Vector3( -_setButton_Position.x, _setButton_Position.y, _setButton_Position.z ) );
 
-				//テキストウィンドウセット　YESかNOのボタンセット
-				OBJECT_ID _no_Button = objectLoad( ( GameObject )Resources.Load( "Prefab/Button" ),
+				OBJECT_DATA _no_Button = objectLoad( ( GameObject )Resources.Load( "Prefab/Button" ),
 				                                   new Vector3( -_setButton_Position.x, _setButton_Position.y, _setButton_Position.z ) );
 
 				//テキストを設定
-				textSet( _yes_Button.obj, "YES" );
-				textSet( _no_Button.obj, "NO" );
+				textSet( _yes_Button.id, "YES" );
+				textSet( _no_Button.id, "NO" );
 
 				//ドローカードを使用するかのテキストを表示
-				OBJECT_ID _textWindow = objectLoad( ( GameObject )Resources.Load( "Prefab/TextWindow" ), Vector3.zero );
+				OBJECT_DATA _textWindow = objectLoad( ( GameObject )Resources.Load( "Prefab/TextWindow" ), Vector3.zero );
 				textSet( _textWindow.obj, "ドローをしますか？" );
 
 				//生成フラグを立てる
@@ -112,7 +122,7 @@ public class BattlePhaseManager : MonoBehaviour {
 		if ( !_initial_setting ) {
 			Debug.Log( "カード選択フェイズです" );
 
-			OBJECT_ID _textWindow = objectLoad( ( GameObject )Resources.Load( "Prefab/TextWindow" ), Vector3.zero );
+			OBJECT_DATA _textWindow = objectLoad( ( GameObject )Resources.Load( "Prefab/TextWindow" ), Vector3.zero );
 			textSet( _textWindow.obj, "戦闘開始" );
 
 			//初期設定完了フラグ
@@ -135,9 +145,9 @@ public class BattlePhaseManager : MonoBehaviour {
 				}
 			} else if ( _nowTime > _battleTime || _Select_Push ) {
 				//セレクトエリアにセットされたカードを処理
-				_player_Manager.SetSelectAreaCard( );
+				_player_manager.SetSelectAreaCard( );
 				//テキストウィンドウを表示
-				_textWindow = canvasSet( ( GameObject )Resources.Load( "Prefab/TextWindow" ), Vector3.zero );
+				canvasSet( ( GameObject )Resources.Load( "Prefab/TextWindow" ), Vector3.zero );
 				textSet( _textWindow, PLAYER_WAIT_MESSAGE );
 				//確定フラグ
 
@@ -219,7 +229,7 @@ public class BattlePhaseManager : MonoBehaviour {
 			}
 
 			//初期設定完了フラグ
-			initial_setting = true;
+			_initial_setting = true;
 		} else {
 			_nowTime += Time.deltaTime;
 			if (_nowTime >= _intervalTime ) {
@@ -234,10 +244,10 @@ public class BattlePhaseManager : MonoBehaviour {
 	void phaseChange( ){
 		//フェイズチェンジを行いますブラックアウトがチカチカして気になるのでTrueで表示続行　falseで非表示に
 		//初期設定フラグをoffに
-		initial_setting = false;
+		_initial_setting = false;
 	}
 
-	GameObject canvasSet( GameObject _setPrefab, Vector3 _setPosition ){
+	canvasSet( GameObject _setPrefab, Vector3 _setPosition ){
 		//セットされたプレハブの生成、座標の修正、キャンパスの中に生成します
 		GameObject _Setobj = ( GameObject )Instantiate( _setPrefab );
 		_Setobj.transform.SetParent ( _canvas_Root.transform );
@@ -249,7 +259,7 @@ public class BattlePhaseManager : MonoBehaviour {
 
 	OBJECT_ID objectLoad( GameObject _loadObject, Vector3 _setPos ){
 		//オブジェクト構造体
-		OBJECT_ID obj;
+		OBJECT_DATA obj;
 
 		//オブジェクトとIDを設定
 		obj.obj = _loadObject;
@@ -258,14 +268,14 @@ public class BattlePhaseManager : MonoBehaviour {
 		//リストに追加
 		_battlePhaseObjects.Add (obj);
 
-		return _battlePhaseObjects[obj.id];
+		return obj.id;
 		
 	}
 
-	void textSet( GameObject _textWindow, string _Message ){
+	void textSet( int _object_Id, string _Message ){
 		//テキストを指定したメッセージに変更します
-		Text _windowText = _textWindow.GetComponentInChildren< Text >( );
-		_windowText.text = _Message;
+		Text _Text = _battlePhaseObjects[_object_Id].obj.GetComponentInChildren< Text >( );
+		_Text.text = _Message;
 	}
 
 	public bool getCardSelectStart( ){
