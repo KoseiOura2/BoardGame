@@ -717,12 +717,10 @@ public class ApplicationManager : Manager< ApplicationManager > {
 				}
 			}
 		}
-        /////////////////////////////////////////////////////
         if ( _player_manager.getPlayerID( ) > -1 ) {
             _player_manager.movePhaseUpdate(getResideCount( ), _stage_manager.getTargetMass( _player_manager.getTargetMassID( _stage_manager.getMassCount( ) ) ) );
 
         }
-        ///////////////////////////////////////////////////
         // ゴールまでの残りマスを表示
 		resideCount( );
 
@@ -756,11 +754,9 @@ public class ApplicationManager : Manager< ApplicationManager > {
             }
 
 		}
-        ///////////////////////////////////////////
         if (_player_manager.getPlayerID() > -1) {
             _player_manager.movePhaseUpdate( getResideCount( ), _stage_manager.getTargetMass( _player_manager.getTargetMassID( _stage_manager.getMassCount( ) ) ) );
         }
-        ////////////////////////////////////////////
 
 		if ( _player_manager.isEventFinish( 0 ) == true && _player_manager.isEventFinish( 1 ) == true && _goal_flag == false) {
 			_player_manager.setEventStart( 0, false );

@@ -122,7 +122,6 @@ public class PlayerManager : MonoBehaviour {
 	
 	}
     
-    /// //////////////////////////////
     // MovePhaseの更新
     public void movePhaseUpdate(int[] count, GameObject target_pos) {
         dicisionTopAndLowestPlayer(ref count);
@@ -145,7 +144,6 @@ public class PlayerManager : MonoBehaviour {
 			_target = null;
 		}
 	}
-    ///////////////////////////////////
 
 	/// <summary>
 	/// ターゲットの設定
