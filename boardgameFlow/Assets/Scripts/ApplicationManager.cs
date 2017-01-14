@@ -190,8 +190,21 @@ public class ApplicationManager : Manager< ApplicationManager > {
 				_scene_text.text = "SCENE_TITLE";
 				_network_gui_controll.setShowGUI( false );
 			}
-		} else {
-			if ( _network_manager.isConnected( ) ||  Input.GetKeyDown( KeyCode.A ) ) {
+		} else if ( _mode == PROGRAM_MODE.MODE_ONE_CONNECT ) {
+			if ( _network_manager.getPlayerNum( ) >= 1 ) {
+				_scene = SCENE.SCENE_TITLE;
+				_scene_text.text = "SCENE_TITLE";
+				_network_gui_controll.setShowGUI( false );
+				try {
+					_host_data.setSendScene( _scene );
+	            	_host_data.setSendChangeFieldScene( true );
+				}
+				catch {
+					Debug.Log( "通信に失敗しまいました" );
+				}
+			}
+		} else if ( _mode == PROGRAM_MODE.MODE_TWO_CONNECT ) {
+			if ( _network_manager.getPlayerNum( ) >= 2 ) {
 				_scene = SCENE.SCENE_TITLE;
 				_scene_text.text = "SCENE_TITLE";
 				_network_gui_controll.setShowGUI( false );
@@ -633,8 +646,8 @@ public class ApplicationManager : Manager< ApplicationManager > {
                 } else if ( _client_data[ 0 ].getRecvData( ).mass_adjust == MASS_ADJUST.NO_ADJUST &&
                      _player_manager.isPlayerMoveStart( 0 ) == false ) {
                     // 1Pを動かさない
-		            _player_manager.setMoveFinish( 0, true );
-					_player_manager.setMoveStart( 0, true );
+                    _player_manager.setMoveStart( 0, true );
+                    _player_manager.setMoveFinish( 0, true );
                 } else if ( _client_data[ 0 ].getRecvData( ).mass_adjust == MASS_ADJUST.ADVANCE &&
 					_player_manager.isPlayerMoveStart( 1 ) == false && _player_manager.isPlayerMoveFinish( 0 ) == true ) {
                     // 2Pを前に動かす
@@ -652,8 +665,8 @@ public class ApplicationManager : Manager< ApplicationManager > {
                 } else if ( _client_data[ 0 ].getRecvData( ).mass_adjust == MASS_ADJUST.NO_ADJUST &&
 					_player_manager.isPlayerMoveStart( 1 ) == false && _player_manager.isPlayerMoveFinish( 0 ) == true ) {
                     // 2Pを動かさない
-		            _player_manager.setMoveFinish( 1, true );
-					_player_manager.setMoveStart( 1, true );
+                    _player_manager.setMoveStart( 1, true );
+                    //_player_manager.setMoveFinish( 1, true );
                 }
             }
 		} else if ( _mode == PROGRAM_MODE.MODE_NO_CONNECT ) {
@@ -704,9 +717,13 @@ public class ApplicationManager : Manager< ApplicationManager > {
 				}
 			}
 		}
+        /////////////////////////////////////////////////////
+        if ( _player_manager.getPlayerID( ) > -1 ) {
+            _player_manager.movePhaseUpdate(getResideCount( ), _stage_manager.getTargetMass( _player_manager.getTargetMassID( _stage_manager.getMassCount( ) ) ) );
 
-		_player_manager.movePhaseUpdate( getResideCount( ), _stage_manager.getTargetMass( _player_manager.getTargetMassID( _stage_manager.getMassCount( ) ) ) );
-		// ゴールまでの残りマスを表示
+        }
+        ///////////////////////////////////////////////////
+        // ゴールまでの残りマスを表示
 		resideCount( );
 
         // 両方の移動が終わったら次のフェイズへ
@@ -739,13 +756,21 @@ public class ApplicationManager : Manager< ApplicationManager > {
             }
 
 		}
-		_player_manager.movePhaseUpdate( getResideCount( ), _stage_manager.getTargetMass( _player_manager.getTargetMassID( _stage_manager.getMassCount( ) ) ) );
+        ///////////////////////////////////////////
+        if (_player_manager.getPlayerID() > -1) {
+            _player_manager.movePhaseUpdate( getResideCount( ), _stage_manager.getTargetMass( _player_manager.getTargetMassID( _stage_manager.getMassCount( ) ) ) );
+        }
+        ////////////////////////////////////////////
 
 		if ( _player_manager.isEventFinish( 0 ) == true && _player_manager.isEventFinish( 1 ) == true && _goal_flag == false) {
 			_player_manager.setEventStart( 0, false );
 			_player_manager.setEventStart( 1, false );
 			_player_manager.setEventFinish( 0, false );
 			_player_manager.setEventFinish( 1, false );
+            if ( _mode != PROGRAM_MODE.MODE_NO_CONNECT ) {
+                _host_data.refreshCardList( 0 );
+                _host_data.refreshCardList( 1 );
+            }
 			_phase_manager.changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_DICE, "DisePhase" );
 		}
 	}

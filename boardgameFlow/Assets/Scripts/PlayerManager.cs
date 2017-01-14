@@ -121,27 +121,31 @@ public class PlayerManager : MonoBehaviour {
 	void Update( ) {
 	
 	}
-
+    
+    /// //////////////////////////////
     // MovePhaseの更新
-	public void movePhaseUpdate( int[ ] count, GameObject target_pos ) {
-		dicisionTopAndLowestPlayer ( ref count );
-		if ( _limit_value > 0 ) {
-			if ( _player_id > -1 ) {
-				if (!_move_flag) {
-					setTargetPos (ref target_pos);
-				} else {
-					playerMove ();
-				}
-			}
-		} else if ( _limit_value == 0 ) {
-            Debug.Log( "aaa" );
-			_move_finish[ _player_id ] = true;
-			_limit_value--;
-		} else {
-			//_player_id = -1;
+    public void movePhaseUpdate(int[] count, GameObject target_pos) {
+        dicisionTopAndLowestPlayer(ref count);
+        if ( _player_id > -1 ) {
+            _move_start[ _player_id ] = true;
+            if ( _limit_value > 0 ) {
+                if ( !_move_flag ) {
+                    setTargetPos( ref target_pos );
+                } else {
+                    playerMove( );
+                }
+            } else if ( _limit_value == 0 ) {
+                Debug.Log("aaa");
+                _move_finish[ _player_id ] = true;
+                _limit_value--;
+                _player_id = -1;
+            }
+        } else {
+			_player_id = -1;
 			_target = null;
 		}
 	}
+    ///////////////////////////////////
 
 	/// <summary>
 	/// ターゲットの設定
@@ -163,7 +167,6 @@ public class PlayerManager : MonoBehaviour {
         _end_position = _target.transform.localPosition;
         _end_position.y += 0.3f;
         _move_flag = true;
-        _move_start[ _player_id ] = true;
     }
 
 	/// <summary>
