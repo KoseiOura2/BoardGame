@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using Common;
 
 public class ApplicationManager : Manager< ApplicationManager > {
-
+	//
     enum PROGRAM_MODE {
 		MODE_NO_CONNECT,
         MODE_ONE_CONNECT,
