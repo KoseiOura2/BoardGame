@@ -172,8 +172,7 @@ public class FileManager : Manager< FileManager > {
 		return data;
 	}
 
-    public Vector3 getMassCoordinate( int i )
-    {
+    public Vector3 getMassCoordinate( int i ) {
 		Vector3 massCoordinate = new Vector3( getFileData( ).mass[ i ].x, getFileData( ).mass[ i ].y, getFileData( ).mass[ i ].z );
         return massCoordinate;
     }
