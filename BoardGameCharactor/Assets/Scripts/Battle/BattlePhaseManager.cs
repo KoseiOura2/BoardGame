@@ -4,12 +4,13 @@ using System.Collections;
 using System.Collections.Generic;
 using System;
 using Common;
+using PlayerComon;
 
 public class BattlePhaseManager : MonoBehaviour {
 
-	public const string DICE_PHASE_MESSAGE  = "ダイスを振ります\n(今回はダイスのアニメーションはありません)";		//ダイスフェイズのメッセージ
-	public const string FIELD_NAVI_MESSAGE  = "上画面に注目してください";									//フィールド画面に誘導するメッセージ
-	public const string PLAYER_WAIT_MESSAGE = "対戦相手を待っています";										//対戦相手を待つ際のメッセージ
+	public const string DICE_PHASE_MESSAGE  = "ダイスを振ります\n(今回はダイスのアニメーションはありません)";	//ダイスフェイズのメッセージ
+	public const string FIELD_NAVI_MESSAGE  = "上画面に注目してください";									    //フィールド画面に誘導するメッセージ
+	public const string PLAYER_WAIT_MESSAGE = "対戦相手を待っています";										    //対戦相手を待つ際のメッセージ
 
 	private FadeManager _fade_anager;						//フェードマネージャーを取得
 	private PlayerNetWorkManager _player_netWork_manager;	//プレイヤーのネットワークマネージャーを取得
@@ -33,42 +34,24 @@ public class BattlePhaseManager : MonoBehaviour {
 	private Vector3 discard_SelectButtonPosition = new Vector3 ( -140, -7, 0);	//ディスカードフェイズでの選択ボタンの座標
 
 	private List < OBJECT_DATA > _battlePhaseObjects;	//バトルフェイズオブジェクトをまとめる
-	public GameObject _canvas_Root;					//キャンバスを取得
-
-	//オブジェクト管理用の構造体
-	struct OBJECT_DATA {
-		public GameObject obj;
-		public int id;
-		public OBJECT_LIST type;
-	};
-
-	/// <summary>
-	/// オブジェクトのリスト
-	/// </summary>
-	private enum OBJECT_LIST{
-		BLACKOUT_PANEL,
-		TEXT_WINDOW,
-		YES_BUTTON,
-		NO_BUTTON,
-		DISCARD_AREA,
-		DISCARD_BUTTON
-	}
+	public GameObject _canvas_Root;					    //キャンバスを取得
 
 
 	// Use this for initialization
 	void Awake( ) {
 
+		//プレイヤーマネージャーを取得
 		if ( _player_manager == null ){
-			GameObject _Player_Manager_Obj = GameObject.Find( "PlayerManager" );
-			_player_manager = _Player_Manager_Obj.GetComponent< PlayerManager >( );
+			GameObject _player_manager_obj = GameObject.Find( "PlayerManager" );
+			_player_manager = _player_manager_obj.GetComponent<PlayerManager> ( );
 		}
 
 		//リストの初期化
 		_battlePhaseObjects = new List<  OBJECT_DATA >( );
 
 		//各種オブジェクトのロード
-		objectLoad( ( GameObject )Resources.Load( "Prefab/Button" ), OBJECT_LIST.YES_BUTTON );
-		objectLoad( ( GameObject )Resources.Load( "Prefab/Button" ), OBJECT_LIST.NO_BUTTON );
+		objectLoad( PLAYER_OBJECT_LIST.YES_BUTTON, ( GameObject )Resources.Load( "Prefab/Button" ) );
+		objectLoad( PLAYER_OBJECT_LIST.NO_BUTTON, ( GameObject )Resources.Load( "Prefab/Button" ) );
 	}
 
 	void drowPhase( CARD_DATA drowCard ){
@@ -88,13 +71,13 @@ public class BattlePhaseManager : MonoBehaviour {
 			if( !_generate_Complate ) {
 
 				//ボタンオブジェクトをリストに追加
-				objectLoad( ( GameObject )Resources.Load( "Prefab/Button" ), OBJECT_LIST.YES_BUTTON );
+				ObjectDrow( PLAYER_OBJECT_LIST.YES_BUTTON, Vector3.zero );
 
-			 	objectLoad( ( GameObject )Resources.Load( "Prefab/Button" ), OBJECT_LIST.NO_BUTTON );
+				ObjectDrow( PLAYER_OBJECT_LIST.NO_BUTTON, Vector3.zero );
 
 				//テキストを設定
-				textSet( _yes_Button.id, "YES" );
-				textSet( _no_Button.id, "NO" );
+				textSet ( PLAYER_OBJECT_LIST.YES_BUTTON, "YES" );
+				textSet ( PLAYER_OBJECT_LIST.NO_BUTTON, "NO" );
 
 				//ドローカードを使用するかのテキストを表示
 				OBJECT_DATA _textWindow = objectLoad( ( GameObject )Resources.Load( "Prefab/TextWindow" ), Vector3.zero );
@@ -114,7 +97,7 @@ public class BattlePhaseManager : MonoBehaviour {
 
 				//選択の結果ドローカードを使ったかどうか
 				if( _drowCard_Use ) {
-					
+
 				}
 			}
 		}
@@ -159,7 +142,7 @@ public class BattlePhaseManager : MonoBehaviour {
 				_nowTime += Time.deltaTime;
 				float CountDawn = _battleTime - _nowTime;
 				//タイムテキストを取得
-				.text = "残り時間 " + CountDawn.ToString( "00" );
+					.text = "残り時間 " + CountDawn.ToString( "00" );
 			}
 		}
 	}
@@ -189,7 +172,7 @@ public class BattlePhaseManager : MonoBehaviour {
 			textSet (_textWindow, "捨てるカードを選んでください");
 
 			//初期設定完了フラグ
-			initial_setting = true;
+			_initial_setting = true;
 		} else {
 			//確定ボタンが押されたら
 			if (_discard_Ok) {
@@ -251,36 +234,53 @@ public class BattlePhaseManager : MonoBehaviour {
 		_initial_setting = false;
 	}
 
-	void canvasSet( GameObject _setPrefab, Vector3 _setPosition ){
+	//オブジェクトリストのオブジェクトを描画
+	void ObjectDrow( OBJECT_LIST objType , Vector3 _setPos ){
+		OBJECT_DATA obj_Data = new OBJECT_DATA( );
 		//セットされたプレハブの生成、座標の修正、キャンパスの中に生成します
-		GameObject _Setobj = ( GameObject )Instantiate( _setPrefab );
-		_Setobj.transform.SetParent ( _canvas_Root.transform );
-		_Setobj.GetComponent< RectTransform >( ).anchoredPosition3D = _setPosition;
-		_Setobj.GetComponent< RectTransform >( ).localScale = Vector3.one;
+		//オブジェクトのサーチ
+		for ( int i = 0; i < _battlePhaseObjects.Count; i++ ) {
+			if ( objType == _battlePhaseObjects[i].type ) {
+				//データを保存
+				obj_Data = _battlePhaseObjects[i];
+				//オブジェクトにインスタンスを生成
+				obj_Data.obj = ( GameObject )Instantiate ( _battlePhaseObjects[i].resource );
+				//オブジェクトをキャンバスに座標を設定、サイズの修正
+				obj_Data.obj.transform.SetParent ( _canvas_Root.transform, false );
+				//           obj_Data.obj.GetComponent<RectTransform> ( ).anchoredPosition3D = _setPos;
+				//           obj_Data.obj.GetComponent<RectTransform> ( ).localScale = Vector3.one;
 
-		return _Setobj;
+				//対象の現データを削除
+				_battlePhaseObjects.RemoveAt( i );
+				//新たに追記したコピーデータを書き込み
+				_battlePhaseObjects.Add ( obj_Data );
+			}
+		}
 	}
 
-	OBJECT_ID objectLoad( GameObject _load_Object, OBJECT_LIST _set_Type ){
+	void objectLoad(  PLAYER_OBJECT_LIST _set_Type, GameObject _load_Resouce ) {
 		//オブジェクト構造体
-		OBJECT_DATA obj;
+		OBJECT_DATA obj = new OBJECT_DATA( );
 
 		//オブジェクトとIDを設定
-		obj.obj = _load_Object;
+		obj.resource = _load_Resouce;
 		obj.id = _battlePhaseObjects.Count;
 		obj.type = _set_Type;
 
 		//リストに追加
-		_battlePhaseObjects.Add (obj);
+		_battlePhaseObjects.Add ( obj );
 
-		return obj.id;
-		
 	}
 
-	void textSet( int _object_Id, string _Message ){
-		//テキストを指定したメッセージに変更します
-		Text _Text = _battlePhaseObjects[_object_Id].obj.GetComponentInChildren< Text >( );
-		_Text.text = _Message;
+	void textSet( PLAYER_OBJECT_LIST objType, string _Message ) {
+		//オブジェクトのサーチ
+		for ( int i = 0; i < _battlePhaseObjects.Count; i++ ) {
+			if ( objType == _battlePhaseObjects[i].type ) {
+				//テキストを指定したメッセージに変更します
+				Text _Text = _battlePhaseObjects[i].obj.GetComponentInChildren<Text> ( );
+				_Text.text = _Message;
+			}
+		}
 	}
 
 	public bool getCardSelectStart( ){
@@ -295,7 +295,7 @@ public class BattlePhaseManager : MonoBehaviour {
 		_select_Confirm = true;
 		return _select_Confirm;
 	}
-		
+
 	public void select_Push( ){
 		//カード選択フェイズで押されると反応をします
 		if ( _card_Select_Start ) {
