@@ -81,6 +81,7 @@ public class NetworkMNG : NetworkManager  {
     //サーバーに接続したときクライアント上で呼び出されます。
     public override void OnServerConnect( NetworkConnection conn ) {
         if ( _host_obj != null ) {
+            _player_num++;
             _host_obj.GetComponent< HostData >( ).increasePlayerNum( );
         }
     }
@@ -89,14 +90,10 @@ public class NetworkMNG : NetworkManager  {
     /// サーバー時新しいクライアント接続で呼ばれる
     /// </summary>
     void OnPlayerConnected( ) {
-        _player_num++;
         foreach( GameObject obj in GameObject.FindGameObjectsWithTag( "ClientObj" ) ) {
             if ( !_client_obj.Contains( obj ) ) {
                 _client_obj.Add( obj );
             }
-        }
-        if ( _player_num >= 1 ) {
-            _connected = true;
         }
     }
 
@@ -156,6 +153,10 @@ public class NetworkMNG : NetworkManager  {
 
 		return _client_obj[ num ];
 	}
+
+    public int getPlayerNum( ) {
+        return _player_num;
+    }
 
 }
 
