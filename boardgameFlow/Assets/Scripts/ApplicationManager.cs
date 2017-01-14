@@ -763,18 +763,10 @@ public class ApplicationManager : Manager< ApplicationManager > {
 			_player_manager.setEventStart( 1, false );
 			_player_manager.setEventFinish( 0, false );
 			_player_manager.setEventFinish( 1, false );
-<<<<<<< HEAD
-			if ( _mode != PROGRAM_MODE.MODE_NO_CONNECT ) {
-				_host_data.refreshCardList( 0 );
-				_host_data.refreshCardList( 1 );
-			}
-
-=======
             if ( _mode != PROGRAM_MODE.MODE_NO_CONNECT ) {
                 _host_data.refreshCardList( 0 );
                 _host_data.refreshCardList( 1 );
             }
->>>>>>> NetworkTest
 			_phase_manager.changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_DICE, "DisePhase" );
 		}
 	}
