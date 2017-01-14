@@ -47,6 +47,11 @@ namespace Common {
 		CARD_TYPE_UNAVAILABLE,
 	};
 
+	public enum GAME_STAGE {
+		NORMAL,
+		BONUS
+	}
+
 	/// <summary>
 	/// 現在のプレイヤーの行動順
 	/// </summary>
@@ -166,7 +171,7 @@ namespace Common {
 		public int power;
         public EVENT_TYPE event_type;
 		public bool onMove;
-
+		public GAME_STAGE stage;
 	}
 
 	/// <summary>

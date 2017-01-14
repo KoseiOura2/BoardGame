@@ -116,12 +116,19 @@ public class PlayerManager : MonoBehaviour {
 	void Start( ) {
 	
 	}
-
-	// Update is called once per frame
+	#if UNITY_EDITOR
+	/// <summary>
+	/// Unityエディタ上でのみデバッグ機能を有効
+	/// </summary>
 	void Update( ) {
-	
+		if ( Input.GetKeyDown( KeyCode.P ) ) {
+			startBonusMode( 1, GAME_STAGE.BONUS );
+		}
+		if ( Input.GetKeyDown( KeyCode.Q ) ) {
+			endBonusMode( 1, GAME_STAGE.NORMAL );
+		}
 	}
-    
+    #endif
     // MovePhaseの更新
     public void movePhaseUpdate(int[] count, GameObject target_pos) {
         dicisionTopAndLowestPlayer(ref count);
@@ -433,5 +440,25 @@ public class PlayerManager : MonoBehaviour {
 
 	public void setPlayerOnMove( int i, bool onMove ) {
 		_players[ i ].onMove = onMove;
+	}
+	/// <summary>
+	/// 特定のプレイヤーをボーナスマップへ移動させる
+	/// プレイヤーID ボーナス適応中かどうか　
+	/// </summary>
+	/// <param name="id">Identifier.</param>
+	/// <param name="pos">Position.</param>
+	/// <param name="bonus">If set to <c>true</c> bonus.</param>
+	public void startBonusMode( int id, GAME_STAGE stage ) {
+		_players[ id ].obj.transform.position = new Vector3( 7, 1, 3 );
+		_players[ id ].stage = stage;
+	}
+	/// <summary>
+	/// 
+	/// </summary>
+	/// <param name="id">Identifier.</param>
+	/// <param name="bonus">If set to <c>true</c> bonus.</param>
+	public void endBonusMode( int id, GAME_STAGE stage ) {
+		_players[ id ].obj.transform.position = new Vector3( 25, 0, 0);
+		_players[ id ].stage = stage;
 	}
 }
