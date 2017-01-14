@@ -17,9 +17,9 @@ public class Map2d : MonoBehaviour {
 	//壁の橋とマスの間
 	private float _mass_While = -16;
 
-	public FileManager _file_manager;
-	public GameObject _mass_Prefab;
-	public GameObject _mini_Mass_Prefab;
+	private FileManager _file_manager;
+	private GameObject _mass_Prefab;
+	private GameObject _mini_Mass_Prefab;
 
 	public Transform _Contect;
 
@@ -35,9 +35,14 @@ public class Map2d : MonoBehaviour {
 		if ( !_mini_Mass_Prefab ) {
 			_mini_Mass_Prefab = (GameObject)Resources.Load ("Prefab/masu_mini");
 		}
-		if ( isError( ) ) {
+        if( !_file_manager ) {
+            _file_manager = GameObject.Find ( "FileManager" ).GetComponent<FileManager> ( );
+        }
+
+        if ( isError( ) ) {
 			return;
 		}
+
 		//マスの生成
 		for (int i = 0; i < _file_manager.getMassCount (); i++) {
 			massCreate (_create_mass_count );
@@ -48,8 +53,10 @@ public class Map2d : MonoBehaviour {
 		for (int i = 0; i < _file_manager.getMassCount () - 1 ; i++) {
 			miniMassCreate (i);
 		}
-
+        //最大マスを取得
 		int max_Mass = _file_manager.getMassCount ();
+
+        //最後のマスのポジションを取得
 		end_Position = new Vector2( ( -_mass_While_X - _mass_While ) * (float)max_Mass , _start_Mass_Y ) ;
 	}
 	
@@ -76,6 +83,7 @@ public class Map2d : MonoBehaviour {
 	void massCreate( int count ){
 		//マスのプレハブを生成
 		GameObject obj = ( GameObject )Instantiate( _mass_Prefab );
+        Debug.Log ( _Contect );
 		obj.transform.SetParent (_Contect);
 		obj.GetComponent<RectTransform> ().anchoredPosition3D
 		= new Vector3 ( _start_Mass_X + (count * _mass_While_X), _start_Mass_Y, 0 );

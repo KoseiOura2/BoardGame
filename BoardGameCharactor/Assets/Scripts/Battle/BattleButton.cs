@@ -5,18 +5,15 @@ using Common;
 
 public class BattleButton : MonoBehaviour {
 
-	private BattlePhaseManager _battle_Phase_Manager;
+	private BattlePhaseManager _battle_phase_manager;
 
-	private string Yes_Text = "YES";
+	private string yes_text = "YES";
 
 	// Use this for initialization
 	void Awake( ) {
-		//バトルマネージャーの取得、存在しなければ取得しない
-		if ( _battle_Phase_Manager == null ) {
-			GameObject _battle_Manager_obj = GameObject.Find ("BattlePhaseManager");
-			if ( _battle_Manager_obj != null ) {
-				_battle_Phase_Manager = _battle_Manager_obj.GetComponent< BattlePhaseManager >( );
-			}
+		//バトルマネージャーの取得
+		if ( _battle_phase_manager == null ) {
+			_battle_phase_manager = GameObject.Find ( "BattlePhaseManager" ).GetComponent< BattlePhaseManager > ( );
 		}
 	}
 
@@ -24,17 +21,17 @@ public class BattleButton : MonoBehaviour {
 		//自身がYESかNOかによってシーンで返答を変える
 		Text judghText = GetComponentInChildren< Text >( );
 		//テキストがYESであるかどうか
-		if ( judghText.text == Yes_Text ) {
-				//ドローカードを使用することを選択したことを送信
-				_battle_Phase_Manager.DrowCardUse( true );
+		if ( judghText.text == yes_text ) {
+			//ドローカードを使用することを選択したことを送信
+			_battle_phase_manager.drowCardUse ( true );
 		} else {
-			//テキストがYESでないならNOである
-			//シーンがドローフェイズであるなら
-			if ( _battle_Phase_Manager.GetMainGamePhase( ) == MAIN_GAME_PHASE.GAME_PHASE_DRAW_CARD ) {
-				//ドローカードを使用しないことを選択したことを送信
-				_battle_Phase_Manager.DrowCardUse( false );
-			}
+			//テキストがYESでないならNO
+			_battle_phase_manager.drowCardUse ( false );
 		}
 	}
+
+    public void cardSelectButton ( ) {
+        _battle_phase_manager.select_push ( );
+    }
 
 }

@@ -6,16 +6,13 @@ using Common;
 public class Card : MonoBehaviour {
 
     //初期位置座標
-    private Vector2 initCardPosition;
+    private Vector3 initCardPosition;
 
     // マウス位置座標
     private Vector3 Mouseposition;
 
     // ビューポイント座標をキャンバスの座標に変換した位置座標
-    private Vector3 ScreenPosition;
-
-    //マウス位置座標をキャンバスの座標に変換した位置座標
-    private Vector3 ViewportPosition;
+    private Vector3 _world_position;
 
     //RectTransfromの取得
     private RectTransform uI_Element;
@@ -32,11 +29,8 @@ public class Card : MonoBehaviour {
     //自身のカードデータを取得
     private CARD_DATA ownCardData;
 
-    //自身のイメージを取得
-    private Image _cardImage;
-
     //カードの画像を取得
-    private Sprite _cardSprite;
+    private Material _material;
 
     //自身がセレクトエリアに入っているか
     private bool InSelectArea = false;
@@ -46,11 +40,6 @@ public class Card : MonoBehaviour {
 
     // Use this for initialization
     void Awake() {
-        //キャンバスのRectTransformの取得
-        GameObject canvasObj = GameObject.Find("Canvas");
-        CanvasRect = canvasObj.GetComponent<RectTransform>();
-        //自身のRectTransfromの取得
-        uI_Element = GetComponent<RectTransform>();
 
         //バトルマネージャーの取得
         if (_battle_Phase_Manager == null) {
@@ -63,28 +52,30 @@ public class Card : MonoBehaviour {
         if (_player_Manager == null) {
             GameObject _player_Manager_Obj = GameObject.Find("PlayerManager");
             _player_Manager = _player_Manager_Obj.GetComponent<PlayerManager>();
-        }
-        //自身のImageを読み込む
-        _cardImage = GetComponent<Image>();
+        };
 
     }
 
     void Start() {
         //初期位置を取得
-        initCardPosition = uI_Element.anchoredPosition;
+        initCardPosition = transform.position;
     }
 
     // Update is called once per frame
     void Update() {
-        // Vector3でマウス位置座標を取得する
-        Mouseposition = Input.mousePosition;
-        // マウス位置座標をスクリーン座標からワールド座標に変換する
-        ViewportPosition = Camera.main.ScreenToViewportPoint(Mouseposition);
-        //　ビューポイント座標をキャンバス座標に変換を行う
-        ScreenPosition = new Vector2(
-            ((ViewportPosition.x * CanvasRect.sizeDelta.x) - (CanvasRect.sizeDelta.x * 0.5f)),
-            ((ViewportPosition.y * CanvasRect.sizeDelta.y) - (CanvasRect.sizeDelta.y * 0.5f)));
+        Vector3 objectPointInScreen
+                    = Camera.main.WorldToScreenPoint ( this.transform.position );
 
+        Vector3 mousePointInScreen
+            = new Vector3 ( Input.mousePosition.x,
+                          Input.mousePosition.y,
+                          objectPointInScreen.z );
+
+        _world_position = Camera.main.ScreenToWorldPoint ( mousePointInScreen );
+        _world_position.z = this.transform.position.z;
+
+        //マウスの位置へカードが移動
+        this.transform.position = _world_position;
     }
 
     //カードデータを設定する関数
@@ -92,22 +83,23 @@ public class Card : MonoBehaviour {
         //カードタイプを見て画像を設定
 		switch (setData.enchant_type) {
 		case "enhance":
-                _cardSprite = Resources.Load<Sprite>("Graphec/Sprite/Cards/card_dagger");
+                _material = Resources.Load<Material>( "Materials/Cards/card_dagger" );
                 break;
 		case "drow":
-                _cardSprite = Resources.Load<Sprite>("Graphec/Sprite/Cards/card_drug");
+                _material = Resources.Load<Material> ( "Materials/Cards/card_drug" );
                 break;
 		case "turn":
-                _cardSprite = Resources.Load<Sprite>("Graphec/Sprite/Cards/card_hat");
+                _material = Resources.Load<Material> ( "Materials/Cards/card_hat" );
                 break;
         case "UNAVAILABLE":
-                _cardSprite = Resources.Load<Sprite>("Graphec/Sprite/Cards/card_sword");
+                _material = Resources.Load<Material> ( "Materials/Cards/card_sword" );
                 break;
         case "CARD_TYPE_INSURANCE":
-                _cardSprite = Resources.Load<Sprite>("Graphec/Sprite/Cards/card_Boots");
+                _material = Resources.Load<Material> ( "Materials/Cards/card_boots" );
                 break;
         }
-        _cardImage.sprite = _cardSprite;
+        this.GetComponent<Renderer> ( ).material = _material;
+
         //カードデータを設定
         ownCardData = setData;
     }
@@ -116,8 +108,7 @@ public class Card : MonoBehaviour {
         //バトルフェイズマネージャーでカードセレクトが始まっているなら動くように、存在しなければ動かさない
         if (_battle_Phase_Manager != null) {
             if (_battle_Phase_Manager.getCardSelectStart()) {
-                //マウスの位置へカードが移動
-                uI_Element.anchoredPosition = ScreenPosition;
+
             }
         }
     }
