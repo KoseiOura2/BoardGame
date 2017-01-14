@@ -353,8 +353,8 @@ public class ApplicationManager : Manager< ApplicationManager > {
 				int[ ] dice_value = new int[ ( int )PLAYER_ORDER.MAX_PLAYER_NUM ];
 				for ( int i = 0; i < ( int )PLAYER_ORDER.MAX_PLAYER_NUM; i++ ) {
 					dice_value[ i ] = ( int )Random.Range( 1.0f, 4.0f );
+                    _dice_value[ i ] = dice_value[ i ];
 				}
-				_dice_value[ 0 ] = dice_value[ 0 ];
 				// キャラクター移動フェイズへの移行
 				_phase_manager.changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_MOVE_CHARACTER, "MovePhase" );
 			}
@@ -562,9 +562,13 @@ public class ApplicationManager : Manager< ApplicationManager > {
 	/// ResultPhaseの更新
 	/// </summary>
 	private void updateResultPhase( ) {
-        // 戦闘結果を送信
-		if ( _host_data.getRecvData( ).send_result == false ) {
-            _host_data.setSendBattleResult( _player_manager.getPlayerResult( 0 ), _player_manager.getPlayerResult( 1 ), true );
+        if (_mode != PROGRAM_MODE.MODE_NO_CONNECT)
+        {
+            // 戦闘結果を送信
+            if (_host_data.getRecvData().send_result == false)
+            {
+                _host_data.setSendBattleResult(_player_manager.getPlayerResult(0), _player_manager.getPlayerResult(1), true);
+            }
         }
 
 		if ( _mode == PROGRAM_MODE.MODE_TWO_CONNECT ) {
@@ -764,7 +768,9 @@ public class ApplicationManager : Manager< ApplicationManager > {
 				}
 				card_list.Add( _card_manager.distributeCard( ).id );
 			}
-			_host_data.setSendCardlist( id, card_list );
+            if ( _mode != PROGRAM_MODE.MODE_NO_CONNECT ) {
+			    _host_data.setSendCardlist( id, card_list );
+            }
 			// カードリストを初期化
 			card_list.Clear( );
 			_player_manager.setEventFinish( id, true );
