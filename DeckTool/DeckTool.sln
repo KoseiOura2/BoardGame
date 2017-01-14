@@ -1,0 +1,23 @@
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2008
+
+Project("{677F03F3-2906-DDAE-0236-19E4571592BB}") = "DeckTool", "Assembly-CSharp.csproj", "{7F3FB13F-9F5C-B012-61AA-45388804CE15}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{7F3FB13F-9F5C-B012-61AA-45388804CE15}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7F3FB13F-9F5C-B012-61AA-45388804CE15}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7F3FB13F-9F5C-B012-61AA-45388804CE15}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7F3FB13F-9F5C-B012-61AA-45388804CE15}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(MonoDevelopProperties) = preSolution
+		StartupItem = Assembly-CSharp.csproj
+	EndGlobalSection
+EndGlobal
