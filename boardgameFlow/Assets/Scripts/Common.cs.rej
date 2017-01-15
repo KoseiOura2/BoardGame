@@ -1,0 +1,17 @@
+diff a/boardgameFlow/Assets/Scripts/Common.cs b/boardgameFlow/Assets/Scripts/Common.cs	(rejected hunks)
+@@ -49,10 +49,13 @@
+ 
+     public enum GAME_STAGE {
+         NORMAL,
+-        BONUS
+     }
+ 
+-
++    
++	public enum GAME_STAGE {
++		NORMAL,
++		BONUS
++	}
+ 
+ 	/// <summary>
+ 	/// ç¾åœ¨ã®ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ã®è¡Œå‹•é †

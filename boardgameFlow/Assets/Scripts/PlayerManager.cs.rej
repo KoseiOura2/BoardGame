@@ -1,0 +1,9 @@
+diff a/boardgameFlow/Assets/Scripts/PlayerManager.cs b/boardgameFlow/Assets/Scripts/PlayerManager.cs	(rejected hunks)
+@@ -157,7 +157,6 @@
+ 	}
+     #endif
+ 
+-    
+     // MovePhaseã®æ›´æ–°
+     public void movePhaseUpdate( int[ ] count, GameObject target_pos ) {
+         dicisionTopAndLowestPlayer( ref count );
