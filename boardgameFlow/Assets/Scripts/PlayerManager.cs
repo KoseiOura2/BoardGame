@@ -328,6 +328,8 @@ public class PlayerManager : MonoBehaviour {
             _first_speed = _speed;
             rate = ( _speed * ( diff - 0.2f ) * 10 ) / dis;
         }
+
+        _players[ _player_id ].obj.transform.position = Vector3.Lerp( _start_position, _end_position, rate );
     }
     
 	/// <summary>
