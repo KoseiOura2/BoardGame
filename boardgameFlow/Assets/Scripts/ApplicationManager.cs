@@ -432,7 +432,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
 		resideCount( );
 
         // 両方の移動が終わったら次のフェイズへ
-        if ( _player_manager.isPlayerMoveFinish( 0 ) == true && _player_manager.isPlayerMoveFinish( 1 ) == true ) {
+        if ( _player_manager.isPlayerMoveFinish( 0 ) == true && _player_manager.isPlayerMoveFinish( 1 ) == true && _player_manager.isAdjsutmentStart( ) == false ) {
             _player_manager.movedRefresh( );
             _phase_manager.changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_DRAW_CARD, "DrawPhase" );
         } 
@@ -727,7 +727,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
 		resideCount( );
 
         // 両方の移動が終わったら次のフェイズへ
-        if ( _player_manager.isPlayerMoveFinish( 0 ) == true && _player_manager.isPlayerMoveFinish( 1 ) == true ) {
+        if ( _player_manager.isPlayerMoveFinish( 0 ) == true && _player_manager.isPlayerMoveFinish( 1 ) == true && _player_manager.isAdjsutmentStart( ) == false ) {
 			if ( _mode != PROGRAM_MODE.MODE_NO_CONNECT ) {
 				_host_data.setSendBattleResult( BATTLE_RESULT.BATTLE_RESULT_NONE, BATTLE_RESULT.BATTLE_RESULT_NONE, false );
 			}
@@ -749,7 +749,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
 		// マス移動終了時にイベントフラグをfalseにしてもう一度イベントが発生するようにする
 		for ( int i = 0; i < ( int )PLAYER_ORDER.MAX_PLAYER_NUM; i++ ) {
             if( _player_manager.getEventType( i ) == EVENT_TYPE.EVENT_MOVE ){
-			    if ( _player_manager.isPlayerMoveFinish( i ) == true ) {
+			    if ( _player_manager.isPlayerMoveFinish( i ) == true && _player_manager.isAdjsutmentStart( ) == false ) {
 				    _player_manager.setEventStart( i, false );
 				    _player_manager.movedRefresh( );
 			    }

@@ -13,12 +13,12 @@ public class PlayerManager : MonoBehaviour {
     private PLAYER_ORDER _player_order;     // どのプレイヤーが行動中か
 	private PLAYER_DATA[ ] _players = new PLAYER_DATA[ ( int )PLAYER_ORDER.MAX_PLAYER_NUM ];
     
-    private Vector3 _start_position;        //現在位置を設定
+    private Vector3[ ] _start_position = new Vector3[ 2 ];        //現在位置を設定
     [ SerializeField ]
-    private Vector3 _end_position;          //到達位置を設定
+    private Vector3[ ] _end_position = new Vector3[ 2 ];          //到達位置を設定
 	private GameObject[ ] _player_pref = new GameObject[ ( int )PLAYER_ORDER.MAX_PLAYER_NUM ];    //プレイヤーのモデルをロード
     [ SerializeField ]
-    private GameObject _target;             //進む先のターゲットを設定
+    private GameObject[ ] _target = new GameObject[ 2 ];             //進む先のターゲットを設定
 	private GameObject _firstest_player;
 	private GameObject _latest_player;
 	private GameObject _winner_player;
@@ -27,6 +27,8 @@ public class PlayerManager : MonoBehaviour {
     private int _player_id     = -1;    //動かすプレイヤーID設定
     [ SerializeField ]
 	private int _limit_value;    //進むマス数設定
+    [ SerializeField ]
+	private int _limit_value_adjustment;    //進むマス数設定
 	[ SerializeField ]
 	private int _defalut_draw = 0;
 	[ SerializeField ]
@@ -148,7 +150,7 @@ public class PlayerManager : MonoBehaviour {
         if ( _player_id > -1 ) {
             _move_start[ _player_id ] = true;
             //if( _target != null )
-              //  adjustmentUpdate( );
+                adjustmentUpdate( target_pos );
             if ( _limit_value > 0 ) {
                 if ( !_move_flag ) {
                     setTargetPos( 0, _player_id, ref target_pos );
@@ -156,38 +158,34 @@ public class PlayerManager : MonoBehaviour {
                     playerMove( 0, _player_id );
                 }
             } else if ( _limit_value == 0 ) {
-                //playerPostionAdjustment( ref target_pos );
-                //playerAdjustment( );
-                Debug.Log("aaa");
-                if( _adjustment_flag == false ) {
-                    _move_finish[ _player_id ] = true;
-                    _limit_value--;
-                    
-                }
+                _move_finish[ _player_id ] = true;
+                _limit_value--;
+                _limit_value_adjustment--;
+                _adjustment_flag = false;
             } else {
                  _move_finish[ _player_id ] = true;
                 _player_id = -1;
             }
         } else {
 			_player_id = -1;
-			_target = null;
+			_target[ 0 ] = null;
 		}
 	}
 
-    /*private void adjustmentUpdate( ) {
-        if ( _limit_value[ 1 ] == 0 ) {
-            _limit_value[ 1 ]--;
+    private void adjustmentUpdate( GameObject target_pos ) {
+        if ( _limit_value_adjustment == 0 ) {
+            _limit_value_adjustment--;
             _adjustment_flag = false;
         } else {
-            if( _limit_value[ 1 ] < 0 ) {
+            if( _limit_value_adjustment < 0 ) {
                 if ( !_adjustment_flag ) {
-                    playerPostionAdjustment( );
+                    playerPostionAdjustment( target_pos );
                 }
-            } else if( _limit_value[ 1 ] > 0 ) {
+            } else if( _limit_value_adjustment > 0 ) {
                 playerAdjustment( );
             }
         }
-    }*/
+    }
 
 	/// <summary>
 	/// ターゲットの設定
@@ -197,115 +195,130 @@ public class PlayerManager : MonoBehaviour {
 	/// <param name="back_pos">Back position.</param>
 	private void setTargetPos( int i, int id, ref GameObject target_pos ) {
         if ( _time <= 0 ) {
-			_players[ id ].obj.transform.position = _end_position;
+			_players[ id ].obj.transform.position = _end_position[ i ];
 			_player_id = -1;
-            _target = null;
+            _target[ 0 ] = null;
             return;
         }
 
         _startTime[ i ] = Time.timeSinceLevelLoad;
-		_start_position = _players[ id ].obj.transform.position;
-		_target = target_pos;
-        _end_position = _target.transform.localPosition;
-        _end_position.y += 0.3f;
+		_start_position[ i ] = _players[ id ].obj.transform.position;
+		_target[ i ] = target_pos;
+        _end_position[ i ] = _target[ i ].transform.localPosition;
+        _end_position[ i ].y += 0.3f;
         _move_flag = true;
     }
 
-    /*private void setAdjustmentTargetPos( int i, int id ) {
+    private void setAdjustmentTargetPos( int i, int id, ref GameObject target_pos ) {
         _startTime[ i ] = Time.timeSinceLevelLoad;
 		_start_position[ i ] = _players[ id ].obj.transform.position;
-        _end_position[ i ] = _target.transform.localPosition;
+        _target[ i ] = target_pos;
+        _end_position[ i ] = _target[ i ].transform.localPosition;
         _end_position[ i ].y += 0.3f;
-    }*/
+    }
 
-    /*private void playerPostionAdjustment( ) {
-        _adjustment_flag = true;
-        setLimitValue( 1, 1 );
+    private void playerPostionAdjustment( GameObject target_pos ) {
         if( _players[ 0 ].advance_count + 1 == _players[ 1 ].advance_count
-            && getPlayerID( ) == 0 && _limit_value[ 0 ] > 1 ) {
-            setAdjustmentTargetPos( 1, 0 );
-            _end_position[ 1 ].z += ADJUST_FIRST_PLAYER_Z_POS;
-        } else if( _players[ 1 ].advance_count + 1 == _players[ 0 ].advance_count
-            && getPlayerID( ) == 1 && _limit_value[ 0 ] > 1 ) {
-            setAdjustmentTargetPos( 1, 1 );
-            _end_position[ 1 ].z += ADJUST_FIRST_PLAYER_Z_POS;
-        } else if( _players[ 1 ].advance_count - 1 == _players[ 0 ].advance_count || _players[ 0 ].advance_count - 1 == _players[ 1 ].advance_count ) {
-            if( _limit_value[ 0 ] == 1 && _players[ 1 ].advance_count > 0 && _players[ 0 ].advance_count > 0 ) {
-                switch( _player_id ) {
-                    case 0:
-                        setAdjustmentTargetPos( 1, 1 );
-                        _end_position[ 0 ].z += ADJUST_FIRST_PLAYER_Z_POS;
-                        _end_position[ 1 ].z -= ADJUST_FIRST_PLAYER_Z_POS;
-                        break;
-                    case 1:
-                        setAdjustmentTargetPos( 1, 0 );
-                        _end_position[ 0 ].z += ADJUST_FIRST_PLAYER_Z_POS;
-                        _end_position[ 1 ].z -= ADJUST_FIRST_PLAYER_Z_POS;
-                        break;
-                }
+            && getPlayerID( ) == 0 && _limit_value > 1 ) {
+            if( _advance_flag ) {
+                _adjustment_flag = true;
+                _limit_value_adjustment = 1;
+                setAdjustmentTargetPos( 1, 0, ref target_pos );
+                _end_position[ 1 ].z += ADJUST_FIRST_PLAYER_Z_POS;
             }
+        } else if( _players[ 1 ].advance_count + 1 == _players[ 0 ].advance_count
+            && getPlayerID( ) == 1 && _limit_value > 1 ) {
+            if( _advance_flag ) {
+                _adjustment_flag = true;
+                _limit_value_adjustment = 1;
+                setAdjustmentTargetPos( 1, 1, ref target_pos );
+                _end_position[ 1 ].z += ADJUST_FIRST_PLAYER_Z_POS;
+            }
+        } else if(  _players[ 1 ].advance_count - 1 == _players[ 0 ].advance_count || _players[ 1 ].advance_count == _players[ 0 ].advance_count - 1 ) {
+            if( _limit_value == 1 && _players[ 1 ].advance_count > 0 && _players[ 0 ].advance_count > 0 ) {
+                _adjustment_flag = true;
+                _limit_value_adjustment = 1;
+                if ( _advance_flag ) {
+                    if( _player_id == 0 )
+                        setAdjustmentTargetPos( 1, 1, ref target_pos );
+                    else
+                        setAdjustmentTargetPos( 1, 0, ref target_pos );
+                }
+                _end_position[ 0 ].z += ADJUST_FIRST_PLAYER_Z_POS;
+                _end_position[ 1 ].z -= ADJUST_FIRST_PLAYER_Z_POS;
+            } 
         } else {
             _adjustment_flag = false;
-            setLimitValue( 1, 0 );
+            _limit_value_adjustment = 0;
         }
     }
 
     private void playerAdjustment( ) {
-        if( _players[ 0 ].advance_count + 1 == _players[ 1 ].advance_count
-            && getPlayerID( ) == 0 && _limit_value[ 0 ] > 0 ) {
-             playerAdjustmentMove( 1, 1 );
-        } else if( _players[ 1 ].advance_count + 1 == _players[ 0 ].advance_count
-            && getPlayerID( ) == 1 && _limit_value[ 0 ] > 0 ) {
-             playerAdjustmentMove( 1, 0 );
-        } else if( _players[ 1 ].advance_count == _players[ 0 ].advance_count
-            && _limit_value[ 0 ] == 0 ) {
-            switch( _player_id ) {
-                    case 0:
-                        playerAdjustmentMove( 1, 1 );
-                        break;
-                    case 1:
-                        playerAdjustmentMove( 1, 0 );
-                        break;
+        if( _players[ 0 ].advance_count + 1 == _players[ 1 ].advance_count ) {
+            if( _advance_flag ) {
+                if( getPlayerID( ) == 0 && _limit_value > 1 ) {
+                    playerAdjustmentMove( 1, 1 );
+                } else if( _limit_value == 1 && _players[ 1 ].advance_count > 0 && _players[ 0 ].advance_count > 0 ) {
+                    playerAdjustmentMove( 1, 0 );
                 }
-        } else {
-            _adjustment_flag = false;
-            setLimitValue( 1, 0 );
-        }
+            }
+        } else if( _players[ 1 ].advance_count + 1 == _players[ 0 ].advance_count ) {
+            if( _advance_flag ) {
+                if( getPlayerID( ) == 1 && _limit_value > 1 ) {
+                    playerAdjustmentMove( 1, 0 );
+                } else if( _limit_value == 1 && _players[ 1 ].advance_count > 0 && _players[ 0 ].advance_count > 0 ) {
+                    playerAdjustmentMove( 1, 1 );
+                }
+            }
+        } /*else if(  _players[ 1 ].advance_count - 1 == _players[ 0 ].advance_count ) {
+            if( _limit_value == 1 && _players[ 1 ].advance_count > 0 && _players[ 0 ].advance_count > 0 ) {
+                if( _advance_flag ) {
+                    if( _player_id == 0 ) {
+                        playerAdjustmentMove( 1, 1 );
+                    }
+                } else {
+                    if( _players[ 1 ].advance_count == _players[ 0 ].advance_count - 1 ) {
+                        if( _player_id == 1 ) {
+                            playerAdjustmentMove( 1, 0 );
+                        }
+                    }
+                }
+            }
+        }*/
     }
 
     public void playerAdjustmentMove( int i, int id ) {
         var diff = Time.timeSinceLevelLoad - _startTime[ i ];
 		if ( diff > _time ) {
 			_players[ id ].obj.transform.position = _end_position[ i ];
-            _limit_value[ i ]--;
+            _limit_value_adjustment--;
         }
 
 		var rate = diff / _time;
 
 		_players[ id ].obj.transform.position = Vector3.Lerp ( _start_position[ i ], _end_position[ i ], rate );
-    }*/
+    }
 
 	/// <summary>
 	/// プレイヤーを動かす処理
 	/// </summary>
     private void playerMove( int i, int id ) {
         var diff = Time.timeSinceLevelLoad - _startTime[ i ];
-        float distance = Vector3.Distance( _players[ _player_id ].obj.transform.position, _end_position );
+        float distance = Vector3.Distance( _players[ id ].obj.transform.position, _end_position[ i ] );
 		if ( diff > _time || distance < 0.1f ) {
-			_players[ _player_id ].obj.transform.position = _end_position;
+			_players[ id ].obj.transform.position = _end_position[ i ];
             _accel_init = false;
             _limit_value--;
 			if ( _advance_flag ) {
-				_players[ _player_id ].advance_count++;
+				_players[ id ].advance_count++;
 			} else {
-				_players[ _player_id ].advance_count--;
+				_players[ id ].advance_count--;
 			}
             _move_flag = false;
-            _target    = null;
             return;
         }
 
-        float dis = Vector3.Distance( _start_position, _end_position );
+        float dis = Vector3.Distance( _start_position[ i ], _end_position[ i ] );
 		float rate = 0.0f;
         if ( !_accel_init ) {
             _accel = 0.0f;
@@ -328,6 +341,8 @@ public class PlayerManager : MonoBehaviour {
             _first_speed = _speed;
             rate = ( _speed * ( diff - 0.2f ) * 10 ) / dis;
         }
+
+        _players[ id ].obj.transform.position = Vector3.Lerp ( _start_position[ i ], _end_position[ i ], rate );
     }
     
 	/// <summary>
@@ -517,6 +532,10 @@ public class PlayerManager : MonoBehaviour {
     
     public bool isPlayerMoveStart( int i ) {
         return _move_start[ i ];
+    }
+
+    public bool isAdjsutmentStart( ) {
+        return _adjustment_flag;
     }
 
     public BATTLE_RESULT getPlayerResult( int id ) {

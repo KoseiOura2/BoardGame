@@ -40,6 +40,7 @@ public class StageManager : MonoBehaviour {
                 break;
             case "draw":
             case "advance":
+            case "selectDraw":
 				_mass_prefab = ( GameObject )Resources.Load( "Prefabs/masu_blue" );
                 break;
 			case "trap1":
