@@ -127,14 +127,13 @@ public class CardManager : MonoBehaviour {
         try {
             //よみこみ
             _name = "data";
-            _csv_file = Resources.Load ( "CSV/" + _name ) as TextAsset; // Resouces/CSV下のCSV読み込み 
+            _csv_file = Resources.Load ( "CSV/" + _name ) as TextAsset; // Resouces/CSV下のCSV読み込み
             StringReader reader = new StringReader ( _csv_file.text );
             while ( reader.Peek ( ) > -1 ) {
                 string line = reader.ReadLine ( );
                 _csv_datas.Add ( line.Split ( ',' ) );
                 _height++;
             }
-
             {
                 //変換
                 try {

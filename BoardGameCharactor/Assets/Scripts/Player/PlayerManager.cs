@@ -14,12 +14,12 @@ public class PlayerManager : Manager<PlayerManager> {
     private GameObject _canvas_Root;            //キャンバスを取得
     private GameObject _content_Root;           //コンテンツを取得
 
-	private GameObject _hand_Area;              //手札エリアを取得
+    private GameObject _hand_Area;              //手札エリアを取得
 
-	public FileManager _file_manager;           //ファイルマネージャー
+    public FileManager _file_manager;           //ファイルマネージャー
 
     private PLAYER_ORDER _is_player;            //プレイヤーが1Pか2Pかを取得
-	private BATTLE_RESULT _is_result;           //プレイヤーが勝っているか負けているかを取得
+    private BATTLE_RESULT _is_result;           //プレイヤーが勝っているか負けているかを取得
 
     private int _player_here;                   //プレイヤーの現在地
     private int _enemy_here;                    //敵プレイヤーの現在地
@@ -35,71 +35,75 @@ public class PlayerManager : Manager<PlayerManager> {
     private float _select_area_width = 139;     //セレクトエリアの横幅
     private float _select_area_height = 45;     //セレクトエリアの高さ
 
-	//手札データ　選んだカードのリスト、手札のリスト、オブジェクト情報といった形で整理をしています
-	private struct HAND_DATA
-	{
-		public List< CARD_DATA > select_List;
-		public List< CARD_DATA > hand_List;
-		public List < GameObject > hand_Obj_List;
-		public List < GameObject > select_Obj_List;
-		public List < Vector3 > Select_Position;
-	}
+    //手札データ　選んだカードのリスト、手札のリスト、オブジェクト情報といった形で整理をしています
+    private struct HAND_DATA {
+        public List<CARD_DATA> select_List;
+        public List<CARD_DATA> hand_List;
+        public List<GameObject> hand_Obj_List;
+        public List<GameObject> select_Obj_List;
+        public List<Vector3> Select_Position;
+    }
 
-	private struct PLAYER_FLAGS
-	{
-		public List < bool > select_Position_Use;
-	}
+    private struct PLAYER_FLAGS {
+        public List<bool> select_Position_Use;
+    }
 
-	private FILE_DATA _file_Data = new FILE_DATA ();    //マップデータを設定
+    private FILE_DATA _file_Data = new FILE_DATA ( );    //マップデータを設定
 
-    private HAND_DATA _hand_Data = new HAND_DATA( );    //プレイヤーの手札を設定
+    private HAND_DATA _hand_Data = new HAND_DATA ( );    //プレイヤーの手札を設定
 
-    private PLAYER_FLAGS _player_Flags = new PLAYER_FLAGS( );    //プレイヤーのフラグを管理
+    private PLAYER_FLAGS _player_Flags = new PLAYER_FLAGS ( );    //プレイヤーのフラグを管理
 
-    private List<OBJECT_DATA> _playerManager_Objects;	//プレイヤーフェイズオブジェクトをまとめる
+    private List<OBJECT_DATA> _playerManager_Objects;   //プレイヤーフェイズオブジェクトをまとめる
+
+    private PLAYER_DATA _player_data;
 
     // Awake関数の代わり
-    protected override void initialize( ) {
-		PlayerInitialize( );
-	}
+    protected override void initialize ( ) {
+        PlayerInitialize ( );
+    }
 
-	void PlayerInitialize(){
-		//各種リストを初期化
-		_hand_Data.hand_List = new List< CARD_DATA >( );
-		_hand_Data.select_List = new List< CARD_DATA >( );
-		_hand_Data.hand_Obj_List = new List< GameObject >( );
-		_hand_Data.select_Obj_List = new List < GameObject >( );
-		_hand_Data.Select_Position = new List < Vector3 > ( );
-		_player_Flags.select_Position_Use = new List < bool > ();
-	}
+    void PlayerInitialize ( ) {
+        //各種リストを初期化
+        _hand_Data.hand_List = new List<CARD_DATA> ( );
+        _hand_Data.select_List = new List<CARD_DATA> ( );
+        _hand_Data.hand_Obj_List = new List<GameObject> ( );
+        _hand_Data.select_Obj_List = new List<GameObject> ( );
+        _hand_Data.Select_Position = new List<Vector3> ( );
+        _player_Flags.select_Position_Use = new List<bool> ( );
+    }
 
-    void Start( ) {
+    void Start ( ) {
 
-		//ゴールエリアを取得
+        //ゴールエリアを取得
         //自身がmapのどの場所にいるかを設定（初期はスタート地点にいるのでStartを探します）
-        for ( int i = 0; i < _file_manager.getMassCount( ); i++ ) {
-			_file_Data = _file_manager.getMapData( );
-			if ( _file_Data.mass[ i ].type == "start" ) {
+        for ( int i = 0; i < _file_manager.getMassCount ( ); i++ ) {
+            _file_Data = _file_manager.getMapData ( );
+            if ( _file_Data.mass[ i ].type == "start" ) {
                 _player_here = i;
+                _enemy_here = i;
             }
-			if (_file_Data.mass [i].type == "goal") {
-				_goal_point = i;
-			}
+            if ( _file_Data.mass[ i ].type == "goal" ) {
+                _goal_point = i;
+            }
         }
 
-		//セレクトエリアのポジションとフラグを設定
-		for (int i = 0; i < _select_area_max; i++) {
-			//セレクトエリアのフラグをセレクトエリアの数分作成
-			_player_Flags.select_Position_Use.Add (false);
+        //セレクトエリアのポジションとフラグを設定
+        for ( int i = 0; i < _select_area_max; i++ ) {
+            //セレクトエリアのフラグをセレクトエリアの数分作成
+            _player_Flags.select_Position_Use.Add ( false );
 
-			//セレクトエリアのポジションを設定
-			Vector3 _position = new Vector3 ( _select_area_start_x + _select_area_width * i, _select_area_height, 0 );
+            //セレクトエリアのポジションを設定
+            Vector3 _position = new Vector3 ( _select_area_start_x + _select_area_width * i, _select_area_height, 0 );
 
-			//セレクトエリアのポジションをセレクトエリアの数分作成
-			_hand_Data.Select_Position.Add( _position );
-		}
+            //セレクトエリアのポジションをセレクトエリアの数分作成
+            _hand_Data.Select_Position.Add ( _position );
+        }
 
-        _enemy_here = 0;
+
+        for ( int i = 0; i < 6; i++ ) {
+            deckCardList ( i );
+        }
     }
 
 	//プレイヤーの現在地を取得する関数の生成
@@ -170,60 +174,47 @@ public class PlayerManager : Manager<PlayerManager> {
 		}
 	}
 
-	//最新のカードを生成を行う(ドロー関数)
-	public void setHandLatestCardCreate( CARD_DATA setCard ){
+    //最新のカードを生成を行う(ドロー関数)
+    public void setHandLatestCardCreate ( CARD_DATA setCard ) {
 
-		//キャンバスを取得
-		if (_canvas_Root == null) {
-			_canvas_Root = GameObject.Find("Canvas");
-		}
+        //キャンバスを取得
+        if ( _canvas_Root == null ) {
+            _canvas_Root = GameObject.Find ( "Canvas" );
+        }
 
-		//ハンドエリアを取得
-		if (_hand_Area == null) {
-			_hand_Area = GameObject.Find ("HandArea");
-		}
+        //ハンドエリアを取得
+        if ( _hand_Area == null ) {
+            _hand_Area = GameObject.Find ( "HandArea" );
+        }
 
-		//カードを手札に追加
-		_hand_Data.hand_List.Add( setCard );
+        //カードを手札に追加
+        _hand_Data.hand_List.Add ( setCard );
 
-		//手札の最大値6よりも大きいなら
-		if (_hand_max < _hand_Data.hand_List.Count) {
-			_hand_max = _hand_Data.hand_List.Count;
-		} else {
-			_hand_max = 6;
-		}
+        //手札の最大値6よりも大きいなら
+        if ( _hand_max < _hand_Data.hand_List.Count ) {
+            _hand_max = _hand_Data.hand_List.Count;
+        } else {
+            _hand_max = 6;
+        }
 
-		//プレハブを生成してリストのオブジェクトに入れる
-		_hand_Data.hand_Obj_List.Add ((GameObject)Instantiate (_card_Template_Prefab));
-
-		//最新の手札の配列値を取得
-		int HandDataLatest =_hand_Data.hand_List.Count - 1;
-
-		//カードデータ設定
-		_hand_Data.hand_Obj_List [HandDataLatest].GetComponent<Card> ().SetCardData ( _hand_Data.hand_List[HandDataLatest]);
-
-		//キャンバスの直下に入れる
-		_hand_Data.hand_Obj_List [HandDataLatest].transform.SetParent(_canvas_Root.transform, false);
-
+        //プレハブを生成してリストのオブジェクトに入れる
+        _hand_Data.hand_Obj_List.Add ( ( GameObject )Instantiate ( _card_Template_Prefab ) );
+        //最新の手札の配列値を取得
+        int HandDataLatest = _hand_Data.hand_List.Count - 1;
+        //カードデータ設定
+        _hand_Data.hand_Obj_List[ HandDataLatest ].GetComponent< Card > ( ).SetCardData ( _hand_Data.hand_List[ HandDataLatest ] );
         //ハンドエリアの大きさを取得
-        float handArea_Width_Size = _hand_Area.GetComponent<RectTransform>().sizeDelta.x;
-
-        //ハンドエリアの座標を取得
-        float handArea_Postion_Size = _hand_Area.GetComponent<RectTransform>().anchoredPosition.y;
-
-        //カードの横幅を取得
-        float handCard_Width_Size = _hand_Data.hand_Obj_List[HandDataLatest].GetComponent<RectTransform>().sizeDelta.x;
-
-        //スタート地点に
-        float start_Card_Point = (handArea_Width_Size / 2) - (handCard_Width_Size / 2);
-
+        float handArea_Width_Size = _hand_Area.GetComponent< Transform > ( ).localScale.x;
+        //ハンドエリアの高さを取得
+        float handArea_postion_y = _hand_Area.GetComponent< Transform > ( ).position.y;
+        //スタート地点を取得
+        float start_Card_Point = (handArea_Width_Size / 2) - _hand_Data.hand_Obj_List[ HandDataLatest ].transform.localScale.x;
         //手札エリアの大きさ/手札限界数で割った後に現在の生成中の手札の順番を掛ける
-        float card_X = (start_Card_Point / _hand_Data.hand_List.Count) * HandDataLatest + 1;
-
+        float card_X = 0.8f * HandDataLatest;
         //位置を設定する
-        _hand_Data.hand_Obj_List[HandDataLatest].GetComponent<RectTransform> ().anchoredPosition3D = new Vector3 ( card_X, handArea_Postion_Size, 0 ) ;
+        _hand_Data.hand_Obj_List[ HandDataLatest ].GetComponent< Transform > ( ).position = new Vector3 ( -start_Card_Point + card_X, handArea_postion_y, 3 );
 
-	}
+    }
 
     //対応したプレイヤーによってオブジェクトを変更
 	public void setPlayerObject( ){
@@ -310,27 +301,29 @@ public class PlayerManager : Manager<PlayerManager> {
 		}
 
         //セットバックがtrueならここを実行しない
-        if (!setback) {
+        if ( !setback ) {
             //プレイヤー1とプレイヤー2の吹き出しを設定
-            GameObject player_Baloon_Obj = (GameObject)Instantiate(_player_Baloon_Prefab);
-            GameObject enemy_Baloon_Obj = (GameObject)Instantiate(_enemy_Baloon_Prefab);
+            GameObject player_Baloon_Obj = ( GameObject )Instantiate ( _player_Baloon_Prefab );
+            GameObject enemy_Baloon_Obj = ( GameObject )Instantiate ( _enemy_Baloon_Prefab );
 
             //キャンバスのContentに入れる
-            player_Baloon_Obj.transform.SetParent(_content_Root.transform, false);
-            enemy_Baloon_Obj.transform.SetParent(_content_Root.transform, false);
+            player_Baloon_Obj.transform.SetParent ( _content_Root.transform, false );
+            enemy_Baloon_Obj.transform.SetParent ( _content_Root.transform, false );
 
             //プレイヤーオブジェクトを対応したマスのところに移動(数値分Xをずらす)
-            player_Baloon_Obj.GetComponent< RectTransform > ( ).anchoredPosition3D = new Vector3 ( _baloon_width + ( _player_here * _mass_while_x ), player_baloon_height, 0 );
-            enemy_Baloon_Obj.GetComponent< RectTransform > ( ).anchoredPosition3D = new Vector3 ( _baloon_width + ( _enemy_here * _mass_while_x ), enemy_baloon_height, 0 );
+            player_Baloon_Obj.GetComponent< RectTransform > ( ).anchoredPosition3D = 
+                new Vector3 ( _baloon_width + ( _player_here * _mass_while_x ), player_baloon_height, 0 );
+            enemy_Baloon_Obj.GetComponent< RectTransform > ( ).anchoredPosition3D = 
+                new Vector3 ( _baloon_width + ( _enemy_here * _mass_while_x ), enemy_baloon_height, 0 );
 
             //フィールドの最大値から現在の値を
-            int FiledPos = _file_manager.getMassCount( ) - _player_here;
+            int FiledPos = _file_manager.getMassCount ( ) - _player_here;
 
             //ゴールナビオブジェクトの取得
-            GameObject GoalNavi = GameObject.FindWithTag( "GoalNavi" );
+            GameObject GoalNavi = GameObject.FindWithTag ( "GoalNavi" );
 
             //子のゴールテキストの取得
-            Text GoalText = GoalNavi.GetComponentInChildren<Text>();
+            Text GoalText = GoalNavi.GetComponentInChildren< Text > ( );
 
             //テキストの設定
             GoalText.text = "宝まで " + FiledPos + "マス";
@@ -352,7 +345,7 @@ public class PlayerManager : Manager<PlayerManager> {
 	}
 
     //セレクトエリアにカードをドロップした際にセレクトエリアの空いてる場所に入れるようにする
-    public bool SetSelectAreaPosition(CARD_DATA setCard) {
+    public bool setSelectAreaPosition(CARD_DATA setCard) {
 
         //セレクトエリアのポジションに開いてる順番に入れるようにします
         for (int i = 0; i < _hand_Data.hand_List.Count; i++) {
@@ -365,45 +358,45 @@ public class PlayerManager : Manager<PlayerManager> {
 
 				//-1で振り分けなしで対応したユーザーIDで使われていないなら設定をする。使われていてもその場所の使用IDを持っていたら通る
 				if (UseSelectAreaID == -1 && !_player_Flags.select_Position_Use [0] ) {
-					//0ポイントを設定
-					SetSelectAreaPoint (i, 0);
+                    //0ポイントを設定
+                    setSelectAreaPoint ( i, 0);
 					return true;
 				} else if (UseSelectAreaID == 0) {
-					//0ポイントを設定
-					SetSelectAreaPoint (i, 0);
+                    //0ポイントを設定
+                    setSelectAreaPoint ( i, 0);
 					return true;
 				}
 
 				//-1で振り分けなしか対応したユーザーIDなら設定をする
 				if (UseSelectAreaID == -1 && !_player_Flags.select_Position_Use [1] ) {
-					//1ポイントを設定
-					SetSelectAreaPoint (i, 1);
+                    //1ポイントを設定
+                    setSelectAreaPoint ( i, 1);
                     return true;
 				} else if (UseSelectAreaID == 1) {
-					//1ポイントを設定
-					SetSelectAreaPoint (i, 1);
+                    //1ポイントを設定
+                    setSelectAreaPoint ( i, 1);
 					return true;
 				}
 
 				//-1で振り分けなしか対応したユーザーIDなら設定をする
 				if (UseSelectAreaID == -1 && !_player_Flags.select_Position_Use [2] ) {
-					//2ポイントを設定
-					SetSelectAreaPoint (i, 2);
+                    //2ポイントを設定
+                    setSelectAreaPoint ( i, 2);
 					return true;
 				} else if (UseSelectAreaID == 2) {
-					//2ポイントを設定
-					SetSelectAreaPoint (i, 2);
+                    //2ポイントを設定
+                    setSelectAreaPoint ( i, 2);
 					return true;
 				}
 
 				//-1で振り分けなしか対応したユーザーIDなら設定をする
 				if (UseSelectAreaID == -1 && !_player_Flags.select_Position_Use [3] ) {
-					//3ポイントを設定
-					SetSelectAreaPoint (i, 3);
+                    //3ポイントを設定
+                    setSelectAreaPoint ( i, 3);
 					return true;
 				} else if (UseSelectAreaID == 3) {
-					//3ポイントを設定
-					SetSelectAreaPoint (i, 3);
+                    //3ポイントを設定
+                    setSelectAreaPoint ( i, 3);
 					return true;
 				}
 			}
@@ -411,7 +404,7 @@ public class PlayerManager : Manager<PlayerManager> {
 		return false;
 	}
 
-	void SetSelectAreaPoint( int setID, int setFlagPoint ){
+	void setSelectAreaPoint( int setID, int setFlagPoint ){
 		//カードのポジションを変更
 		_hand_Data.hand_Obj_List [setID].GetComponent<RectTransform>().anchoredPosition3D = _hand_Data.Select_Position[setFlagPoint];
 		//カードにどこの選択エリアを使用しているかをセット
@@ -421,18 +414,18 @@ public class PlayerManager : Manager<PlayerManager> {
 	}
 
     //選択カード以外にドロップされた
-	public void SetSelectAreaOut( CARD_DATA setCard ){
+	public void setSelectAreaOut( CARD_DATA setCard ){
 		//選択カードから手札に戻す場合にフラグをアウトにする
 		for (int i = 0; i < _hand_Data.hand_List.Count; i++) {
 			if (_hand_Data.hand_List[i].id == setCard.id) {
                 //セレクトエリアに入っているか確認
-                bool SelectAreaCheck = _hand_Data.hand_Obj_List[i].GetComponent<Card>().getInSelectArea();
-                if (SelectAreaCheck) {
+                bool _select_area_check = _hand_Data.hand_Obj_List[i].GetComponent<Card>().getInSelectArea();
+                if ( _select_area_check ) {
                     //そのカードがどこの選択エリアを使っているのか取得
                     //カードにどこの選択エリアを使用しているかをセット
-                    int SelectAreaID = _hand_Data.hand_Obj_List[i].GetComponent<Card>().getSelectUseId();
+                    int _selectarea_id = _hand_Data.hand_Obj_List[i].GetComponent<Card>().getSelectUseId();
                     //その場所のフラグをoffにする
-                    _player_Flags.select_Position_Use[SelectAreaID] = false;
+                    _player_Flags.select_Position_Use[ _selectarea_id ] = false;
 					//選択エリアの使用情報をリセット
 					_hand_Data.hand_Obj_List[i].GetComponent<Card>().setSelectAreaUseId(-1);
                 }
@@ -445,6 +438,7 @@ public class PlayerManager : Manager<PlayerManager> {
         CARD_DATA card;
         CardManager card_manager = GameObject.Find ( "CardManager" ).GetComponent< CardManager > ( );
 
+        //IDのカードデータを取得
         card = card_manager.getCardData ( get_card_id );
 
         //最新のカードを生成
@@ -486,24 +480,24 @@ public class PlayerManager : Manager<PlayerManager> {
 	}
 
 	//設定したカードが手札にあれば削除を行う
-	public bool CardDelete( CARD_DATA Card ){
+	public bool cardDelete( int _card_id ){
 		//現在の手札をサーチして選んだカードタイプのカードデータを取得
 		for (int i = 0; i < _hand_Data.hand_List.Count; i++) {
-			//手札に同一のカードID
-			if ( _hand_Data.hand_List [i].id == Card.id ) {
-				//設定した手札を削除
-				Destroy (_hand_Data.hand_Obj_List [i]);
-				//手札リストとオブジェクトリストから削除
-				_hand_Data.hand_List.RemoveAt (i);
-				_hand_Data.hand_Obj_List.RemoveAt (i);
-				return true;
-			}
+            //手札に同一のカードID
+            if ( _hand_Data.hand_List[ i ].id == _card_id ) {
+                //設定した手札を削除
+                Destroy ( _hand_Data.hand_Obj_List[ i ] );
+                //手札リストとオブジェクトリストから削除
+                _hand_Data.hand_List.RemoveAt ( i );
+                _hand_Data.hand_Obj_List.RemoveAt ( i );
+                return true;
+            }
 		}
 		return false;
 	}
 
 	//セレクトエリアのカードを全て削除する
-	public void SelectAreaDelete(){
+	public void selectAreaDelete(){
 		for (int i = _hand_Data.select_List.Count - 1; i >= 0; i--) {
 			//セレクトリストとセレクトオブジェクトリストから削除
 			_hand_Data.hand_List.RemoveAt (i);
@@ -513,7 +507,7 @@ public class PlayerManager : Manager<PlayerManager> {
 	}
 
 	//セレクトエリアのカードを全て戻す
-	public void SelectAreaReturn(){
+	public void selectAreaReturn(){
 		for (int i = _hand_Data.select_List.Count - 1; i >= 0; i--) {
 			//セレクトリストとセレクトオブジェクトリストから削除
 			_hand_Data.select_List.RemoveAt (i);

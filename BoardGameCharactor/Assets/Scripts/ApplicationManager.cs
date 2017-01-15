@@ -5,7 +5,12 @@ using Common;
 
 public class ApplicationManager : MonoBehaviour {
 
-	[ SerializeField ]
+    enum PROGRAM_MODE {
+        MODE_NO_CONNECT,
+        MODE_CONNECT,
+    };
+
+    [ SerializeField ]
 	private SCENE _scene = SCENE.SCENE_CONNECT;
 	[ SerializeField ]
 	private NetworkMNG _network_manager;
@@ -26,8 +31,10 @@ public class ApplicationManager : MonoBehaviour {
     [ SerializeField ]
     private ClientData _client_data;
 
-    [ SerializeField ]
-    private int _player_num = 0;
+    [SerializeField]
+    private PLAYER_ORDER _player_num = PLAYER_ORDER.NO_PLAYER;
+    [SerializeField]
+    private PROGRAM_MODE _mode = PROGRAM_MODE.MODE_NO_CONNECT;
 
 	public Text _scene_text;
 
@@ -89,26 +96,34 @@ public class ApplicationManager : MonoBehaviour {
 	
 	// Update is called once per frame
 	void FixedUpdate( ) {
-		if ( _host_data == null && _network_manager.getHostObj( ) != null ) {
-            _host_data = _network_manager.getHostObj( ).GetComponent< HostData >( );
-		}
-
-        if ( _client_data == null && _network_manager.getClientObj( ) != null ) {
-            _client_data = _network_manager.getClientObj( ).GetComponent< ClientData >( );
-        }
-        
-        if ( _host_data != null && _client_data != null ) {
-            // シーンの切り替え
-            sceneChange( );
-            // 切り替え完了を送る
-            if ( _client_data.getRecvData( ).changed_scene == true && _host_data.getRecvData( ).change_scene == false ) {
-                _client_data.CmdSetSendChangedScene( false );
-                _client_data.setChangedScene( false );
+        if ( _mode == PROGRAM_MODE.MODE_CONNECT ) {
+            if ( _host_data == null && _network_manager.getHostObj ( ) != null ) {
+                _host_data = _network_manager.getHostObj ( ).GetComponent<HostData> ( );
             }
+
+            if ( _client_data == null && _network_manager.getClientObj ( ) != null ) {
+                _client_data = _network_manager.getClientObj ( ).GetComponent<ClientData> ( );
+            }
+
+            if ( _host_data != null && _client_data != null ) {
+                if ( _player_num == PLAYER_ORDER.NO_PLAYER ) {
+                    _player_num = ( PLAYER_ORDER )_host_data.getRecvData ( ).player_num;
+                }
+
+                // シーンの切り替え
+                sceneChange ( );
+                // 切り替え完了を送る
+                if ( _client_data.getRecvData ( ).changed_scene == true && _host_data.getRecvData ( ).change_scene == false ) {
+                    _client_data.CmdSetSendChangedScene ( false );
+                    _client_data.setChangedScene ( false );
+                }
+            }
+        } else {
+            _player_num = PLAYER_ORDER.PLAYER_ONE;
         }
 
-		//フェード中なら動かさない
-		if ( _fade_manager.fadeCheck( ) == false ) {
+        //フェード中なら動かさない
+        if ( _fade_manager.fadeCheck( ) == false ) {
 			switch( _scene ) {
 			case SCENE.SCENE_CONNECT:
 				updateConnectScene( );
@@ -220,17 +235,19 @@ public class ApplicationManager : MonoBehaviour {
             _battle_phase_manager.phaseReset ( );
         }
 
-        if ( _host_data != null && _client_data != null ) {
-            // フェイズの切り替え
-            phaseChange( );
+        if ( _mode == PROGRAM_MODE.MODE_CONNECT ) {
+            if ( _host_data != null && _client_data != null ) {
+                // フェイズの切り替え
+                phaseChange ( );
 
-            // 切り替え完了を送る
-            if ( _client_data.getRecvData( ).changed_phase == true && _host_data.getRecvData( ).change_phase == false ) {
-                _client_data.CmdSetSendChangedPhase( false );
-                _client_data.setChangedPhase( false );
+                // 切り替え完了を送る
+                if ( _client_data.getRecvData ( ).changed_phase == true && _host_data.getRecvData ( ).change_phase == false ) {
+                    _client_data.CmdSetSendChangedPhase ( false );
+                    _client_data.setChangedPhase ( false );
+                }
             }
         }
-	}
+    }
 
     /// <summary>
     /// フェイズの切り替え
@@ -270,7 +287,7 @@ public class ApplicationManager : MonoBehaviour {
 
         //賽の目に1以上のダイス目が入ったら
         if( value > 1 ) {
-            if ( _client_data != null ) {
+            if ( _mode == PROGRAM_MODE.MODE_CONNECT ) {
                 _client_data.CmdSetSendDiceValue ( value );
                 _client_data.setDiceValue ( value );
             }
@@ -289,14 +306,14 @@ public class ApplicationManager : MonoBehaviour {
 	private void updateMovePhase( ) {
         //上画面に誘導をするメッセージの処理
         _player_phase_manager.inductionPhase ( );
-        if ( _client_data != null ) {
+        if ( _mode == PROGRAM_MODE.MODE_CONNECT ) {
             if ( _client_data.getRecvData ( ).dice_value > 0 ) {
                 // さいの目を―1に初期化
                 _client_data.CmdSetSendDiceValue ( -1 );
                 _client_data.setDiceValue ( -1 );
             }
         }
-	}
+    }
     
 	/// <summary>
 	/// DrawPhaseの更新
@@ -306,19 +323,24 @@ public class ApplicationManager : MonoBehaviour {
         _player_phase_manager.objectDelete ( );
 
         _battle_phase_manager.drawPhase ( );
-        if ( _player_num == 0 ) {
-            if ( _client_data != null ) {
-                if ( _host_data.getRecvData ( ).card_list_one.Length > 0 ) {
+        if ( _player_num == PLAYER_ORDER.PLAYER_ONE ) {
+            if ( _mode == PROGRAM_MODE.MODE_CONNECT ) {
+                if ( _client_data != null ) {
+                    if ( _host_data.getRecvData ( ).card_list_one.Length > 0 ) {
+                        // 手札にカードを加える処理
+                        //_battle_phase_manager.getCardId ( );
+                    }
+                }
+            }
+        } else if ( _player_num == PLAYER_ORDER.PLAYER_TWO ) {
+            if ( _mode == PROGRAM_MODE.MODE_CONNECT ) {
+                if ( _host_data.getRecvData ( ).card_list_two.Length > 0 ) {
                     // 手札にカードを加える処理
                     //_battle_phase_manager.getCardId ( );
                 }
             }
-        } else if ( _player_num == 1 ) {
-		    if ( _host_data.getRecvData( ).card_list_two.Length > 0 ) {
-                // 手札にカードを加える処理
-                //_battle_phase_manager.getCardId ( );
-            }
         }
+
         //ドローが終了したかどうかを取得
         //_battle_phase_manager.drawEnd ( true );
 
@@ -336,7 +358,7 @@ public class ApplicationManager : MonoBehaviour {
         //battleフェイズがプレイヤー待機状態になったか否か
         bool _battle_phase_wait = _battle_phase_manager.getPhaseWait ( );
 
-        if ( _client_data != null ) {
+        if ( _mode == PROGRAM_MODE.MODE_CONNECT ) {
             if ( _client_data.getRecvData ( ).ready == true ) {
                 // 準備完了を初期化
                 _client_data.CmdSetSendReady ( false );
@@ -349,7 +371,7 @@ public class ApplicationManager : MonoBehaviour {
             int player_status = 10;
             int[ ] card_list = new int[ ] { 0, 1, 2 };
 
-            if ( _client_data != null ) {
+            if ( _mode == PROGRAM_MODE.MODE_CONNECT ) {
                 _client_data.CmdSetSendBattleData ( true, player_status, card_list );
                 _client_data.setBattleData ( true, player_status, card_list );
             }
@@ -371,9 +393,9 @@ public class ApplicationManager : MonoBehaviour {
 	private void updateResultPhase( ) {
         //battleフェイズがプレイヤー待機状態になったか否か
         bool _battle_phase_wait = _battle_phase_manager.getPhaseWait ( );
-
-        if ( _player_num == 0 ) {
-            if ( _host_data != null ) {
+        
+        if ( _player_num == PLAYER_ORDER.PLAYER_ONE ) {
+            if ( _mode == PROGRAM_MODE.MODE_CONNECT ) {
                 if ( _host_data.getBattleResultOne ( ) == ( int )BATTLE_RESULT.WIN ||
                      _host_data.getBattleResultOne ( ) == ( int )BATTLE_RESULT.DRAW ) {
                 }
@@ -389,12 +411,13 @@ public class ApplicationManager : MonoBehaviour {
                 //切り替えフラグを見たらプレイヤーフェイズのマス調整フェイズに向かう
                 _player_phase_manager.movePhase ( BATTLE_RESULT.WIN );
             }
-            if ( _client_data != null ) {
-            _client_data.CmdSetSendMassAdjust ( true, adjust );
-            _client_data.setMassAdjust ( true, adjust );
+            if ( _player_num == PLAYER_ORDER.PLAYER_ONE ) {
+                _client_data.CmdSetSendMassAdjust ( true, adjust );
+                _client_data.setMassAdjust ( true, adjust );
             }
         }
-        if ( _host_data != null ) {
+
+        if ( _player_num == PLAYER_ORDER.PLAYER_ONE ) {
             if ( _host_data.getBattleResultOne ( ) == ( int )BATTLE_RESULT.LOSE ) {
                 // マス調整の処理
                 MASS_ADJUST adjust = MASS_ADJUST.NO_ADJUST;
@@ -410,7 +433,7 @@ public class ApplicationManager : MonoBehaviour {
                 _battle_phase_manager.resultPhase ( BATTLE_RESULT.LOSE );
                 _client_data.CmdSetSendMassAdjust ( true, adjust );
                 _client_data.setMassAdjust ( true, adjust );
-            } else if ( _player_num == 1 ) {
+            } else if ( _player_num == PLAYER_ORDER.PLAYER_TWO ) {
                 if ( _host_data.getBattleResultTwo ( ) == ( int )BATTLE_RESULT.WIN ||
                      _host_data.getBattleResultTwo ( ) == ( int )BATTLE_RESULT.DRAW ) {
                     // マス調整の処理
@@ -427,18 +450,20 @@ public class ApplicationManager : MonoBehaviour {
                 }
             }
         }
-	}
+    }
     
 	/// <summary>
 	/// EventPhaseの更新
 	/// </summary>
 	private void updateEventPhase( ) {
-		if ( _client_data.getRecvData( ).ready == true ) {
-            // 準備完了を初期化
-            _client_data.CmdSetSendMassAdjust( false, MASS_ADJUST.NO_ADJUST );
-            _client_data.setMassAdjust( true, MASS_ADJUST.NO_ADJUST );
+        if ( _player_num == PLAYER_ORDER.PLAYER_ONE ) {
+            if ( _client_data.getRecvData ( ).ready == true ) {
+                // 準備完了を初期化
+                _client_data.CmdSetSendMassAdjust ( false, MASS_ADJUST.NO_ADJUST );
+                _client_data.setMassAdjust ( true, MASS_ADJUST.NO_ADJUST );
+            }
         }
-	}
+    }
 
 	/// <summary>
 	/// FinishPhaseの更新
