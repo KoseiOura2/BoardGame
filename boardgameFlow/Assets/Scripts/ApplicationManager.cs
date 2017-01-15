@@ -365,7 +365,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
 				// 送られてきた賽の目の数
 				int[ ] dice_value = new int[ ( int )PLAYER_ORDER.MAX_PLAYER_NUM ];
 				for ( int i = 0; i < ( int )PLAYER_ORDER.MAX_PLAYER_NUM; i++ ) {
-					dice_value[ i ] = ( int )Random.Range( 1.0f, 4.0f );
+					dice_value[ i ] = 2;//( int )Random.Range( 1.0f, 4.0f );
                     _dice_value[ i ] = dice_value[ i ];
 				}
 				// キャラクター移動フェイズへの移行
@@ -424,15 +424,18 @@ public class ApplicationManager : Manager< ApplicationManager > {
             }
 		}
 		
-		_player_manager.movePhaseUpdate( getResideCount( ), _stage_manager.getTargetMass( _player_manager.getTargetMassID( _stage_manager.getMassCount( ) ) ) );
-		// ゴールまでの残りマスを表示
+		_player_manager.movePhaseUpdate( getResideCount( ),
+            _stage_manager.getTargetMass( _player_manager.getTargetMassID( _stage_manager.getMassCount( ) ) ) );
+        
+       
+        // ゴールまでの残りマスを表示
 		resideCount( );
 
         // 両方の移動が終わったら次のフェイズへ
         if ( _player_manager.isPlayerMoveFinish( 0 ) == true && _player_manager.isPlayerMoveFinish( 1 ) == true ) {
             _player_manager.movedRefresh( );
             _phase_manager.changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_DRAW_CARD, "DrawPhase" );
-        }
+        } 
 	}
 
 	/// <summary>
@@ -719,7 +722,6 @@ public class ApplicationManager : Manager< ApplicationManager > {
 		}
         if ( _player_manager.getPlayerID( ) > -1 ) {
             _player_manager.movePhaseUpdate(getResideCount( ), _stage_manager.getTargetMass( _player_manager.getTargetMassID( _stage_manager.getMassCount( ) ) ) );
-
         }
         // ゴールまでの残りマスを表示
 		resideCount( );
