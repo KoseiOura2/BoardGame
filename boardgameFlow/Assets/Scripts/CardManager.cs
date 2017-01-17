@@ -7,17 +7,6 @@ using System.Linq;
 using Common;
 
 public class CardManager : Manager< CardManager > {
-	/*
-	public enum GET_CARD_DATA {
-		CARD_NAME,
-		ENCHANT_TYPE,
-		ENCHANT_VALUE,
-		SPESIAL_VALUE,
-		RARITY,
-		NO_DATA
-	}
-	public GET_CARD_DATA _get_data_type;
-	*/
     /// <summary>
 	/// デッキクラス
 	/// </summary>
