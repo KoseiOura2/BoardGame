@@ -58,7 +58,7 @@ public class Card : MonoBehaviour {
     }
 
     //カードデータを設定する関数
-    public void SetCardData(CARD_DATA setData) {
+    public void setCardData(CARD_DATA setData) {
         //カードタイプを見て画像を設定
 		switch (setData.enchant_type) {
 		case "enhance":

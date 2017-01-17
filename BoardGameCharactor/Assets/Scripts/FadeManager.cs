@@ -33,15 +33,15 @@ public class FadeManager : Manager< FadeManager > {
 	void  fadeInit ( ){
 		_fade_in_flag     = false;
 		_fade_in_check    = false;
-		_red   = _fade_prefab.GetComponent <Image > ( ).color.r;
+		_red   = _fade_prefab.GetComponent< Image > ( ).color.r;
 		_green = _fade_prefab.GetComponent< Image > ( ).color.g;
 		_blue  = _fade_prefab.GetComponent< Image > ( ).color.b;
 	}
 
     //フェードを開始させる。セットシーンにシーンを移動
-	public void fadeStart( string _SetScene ){
+	public void fadeStart( string setscene ){
 		_alfa      = _alfa_min;
-		_onScene   = _SetScene;
+		_onScene   = setscene;
 		_fade_in_flag = true;
 	}
 

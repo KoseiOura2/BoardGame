@@ -17,7 +17,7 @@ public class BattleButton : MonoBehaviour {
 		}
 	}
 
-	public void PushButton( ) {
+	public void pushButton( ) {
 		//自身がYESかNOかによってシーンで返答を変える
 		Text judghText = GetComponentInChildren< Text >( );
 		//テキストがYESであるかどうか

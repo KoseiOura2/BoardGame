@@ -23,16 +23,16 @@ public class PlayerManager : Manager<PlayerManager> {
     private int _player_here;                   //プレイヤーの現在地
     private int _enemy_here;                    //敵プレイヤーの現在地
     private int _goal_point;                    //ゴールを取得
-    private int _hand_max        = 6;           //手札限界数
-    private int _select_area_max = 4;           //セレクトエリアの最大数
+    private int _hand_max               = 6;    //手札限界数
+    private int _select_area_max        = 4;    //セレクトエリアの最大数
 
-    private float _mass_while_x        = 186;   //マス間の間
-    private float _baloon_width        = -276;  //吹き出しの横幅
+    private float _mass_while_x         = 186;  //マス間の間
+    private float _baloon_width         = -276; //吹き出しの横幅
     private float _player_baloon_height = 50;   //プレイヤーの吹き出しの高さ
     private float _enemy_baloon_height  = -49;  //相手プレイヤーの吹き出しの高さ
-    private float _select_area_start_x = -81;   //セレクトエリアの開始位置
-    private float _select_area_width   = 139;   //セレクトエリアの横幅
-    private float _select_area_height  = 45;    //セレクトエリアの高さ
+    private float _select_area_start_x  = -81;  //セレクトエリアの開始位置
+    private float _select_area_width    = 139;  //セレクトエリアの横幅
+    private float _select_area_height   = 45;   //セレクトエリアの高さ
 
     //手札データ　選んだカードのリスト、手札のリスト、オブジェクト情報といった形で整理をしています
 	[SerializeField]
@@ -96,7 +96,7 @@ public class PlayerManager : Manager<PlayerManager> {
         }
 		
         //カードを生成（デバッグ用）
-        for ( int i = 0; i < 8; i++ ) {
+        for ( int i = 0; i < 6; i++ ) {
             deckCardList( i );
         }
 
@@ -155,7 +155,7 @@ public class PlayerManager : Manager<PlayerManager> {
 			//プレハブを生成してリストのオブジェクトに入れる
 			_hand_Data.hand_obj_list.Add( ( GameObject )Instantiate( _card_Template_Prefab ) );
 			//カードデータ設定
-			_hand_Data.hand_obj_list[ i ].GetComponent< Card >( ).SetCardData( _hand_Data.hand_list[ i ] );
+			_hand_Data.hand_obj_list[ i ].GetComponent< Card >( ).setCardData( _hand_Data.hand_list[ i ] );
 			//ハンドエリアの大きさを取得
 			float handArea_Width_Size = _hand_Area.GetComponent< Transform >( ).localScale.x;
 			//ハンドエリアの高さを取得
@@ -163,12 +163,8 @@ public class PlayerManager : Manager<PlayerManager> {
 			//スタート地点を取得
 			float start_Card_Point = ( handArea_Width_Size / 2 ) - _hand_Data.hand_obj_list[ i ].transform.localScale.x;
 			//手札が6枚以下なら
-			if( _hand_max <= 6 ) {
-		        //カード間に現在の生成中の手札の順番を掛ける
-			    card_X = -start_Card_Point + ( handArea_Width_Size / _hand_Data.hand_list.Count ) * i;
-			} else {
-				card_X = -start_Card_Point + ( handArea_Width_Size / _hand_Data.hand_list.Count ) * i;
-			}
+		    //カード間に現在の生成中の手札の順番を掛ける
+			card_X = -start_Card_Point + ( handArea_Width_Size / _hand_Data.hand_list.Count ) * i;
 			//位置を設定する
 			_hand_Data.hand_obj_list[ i ].GetComponent< Transform >( ).position = new Vector3( card_X, handArea_postion_y, 3 );
 		}
@@ -202,20 +198,15 @@ public class PlayerManager : Manager<PlayerManager> {
         //最新の手札の配列値を取得
         int HandDataLatest = _hand_Data.hand_list.Count - 1;
         //カードデータ設定
-        _hand_Data.hand_obj_list[ HandDataLatest ].GetComponent< Card >( ).SetCardData( _hand_Data.hand_list[ HandDataLatest ] );
+        _hand_Data.hand_obj_list[ HandDataLatest ].GetComponent< Card >( ).setCardData( _hand_Data.hand_list[ HandDataLatest ] );
         //ハンドエリアの大きさを取得
         float handArea_Width_Size = _hand_Area.GetComponent< Transform >( ).localScale.x;
         //ハンドエリアの高さを取得
         float handArea_postion_y  = _hand_Area.GetComponent< Transform >( ).position.y;
         //スタート地点を取得
         float start_Card_Point    = ( handArea_Width_Size / 2 ) - _hand_Data.hand_obj_list[ HandDataLatest ].transform.localScale.x;
-		//手札が6枚以下なら
-		if( _hand_max <= 6 ) {
-			//カード間に現在の生成中の手札の順番を掛ける
-			card_X = -start_Card_Point + ( handArea_Width_Size / _hand_Data.hand_list.Count ) * HandDataLatest;
-		} else {
-			card_X = -start_Card_Point + ( handArea_Width_Size / _hand_Data.hand_list.Count ) * HandDataLatest;
-		}
+        //カード間に現在の生成中の手札の順番を掛ける
+        card_X = -start_Card_Point + ( handArea_Width_Size / _hand_Data.hand_list.Count ) * HandDataLatest;
 
         //位置を設定する
         _hand_Data.hand_obj_list[ HandDataLatest ].GetComponent< Transform >( ).position = new Vector3( card_X, handArea_postion_y, 3 );
