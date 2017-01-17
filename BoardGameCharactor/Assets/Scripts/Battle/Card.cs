@@ -21,7 +21,7 @@ public class Card : MonoBehaviour {
 
 
 	private bool _drag_flag 		= false;				//ドラッグ状態か否か
-	private bool _return_flag		= true;				//戻るか否か
+	private bool _return_flag		= true;				    //戻るか否か
 	private bool _in_select_area 	= false;    			//自身がセレクトエリアに入っているか
 	private int _select_area_use_iD = -1;   				//セレクトエリアのどこを使用しているか -1はどこも使用してない
 
@@ -65,33 +65,33 @@ public class Card : MonoBehaviour {
                 _material = Resources.Load<Material>( "Materials/Cards/card_dagger" );
                 break;
 		case "drow":
-                _material = Resources.Load<Material> ( "Materials/Cards/card_drug" );
+                _material = Resources.Load<Material>( "Materials/Cards/card_drug" );
                 break;
 		case "turn":
-                _material = Resources.Load<Material> ( "Materials/Cards/card_hat" );
+                _material = Resources.Load<Material>( "Materials/Cards/card_hat" );
                 break;
         case "UNAVAILABLE":
-                _material = Resources.Load<Material> ( "Materials/Cards/card_sword" );
+                _material = Resources.Load<Material>( "Materials/Cards/card_sword" );
                 break;
         case "CARD_TYPE_INSURANCE":
-                _material = Resources.Load<Material> ( "Materials/Cards/card_boots" );
+                _material = Resources.Load<Material>( "Materials/Cards/card_boots" );
                 break;
 		default:
 			_material = Resources.Load<Material>( "Materials/Cards/card_dagger" );
 			break;
         }
         //前面のマテリアルを変更
-        _card_front.GetComponent<Renderer> ( ).material = _material;
+        _card_front.GetComponent< Renderer > ( ).material = _material;
         //カードデータを設定
         _own_card_data = setData;
     }
 
     void getMousePos ( ) {
-        Vector3 objectPointInScreen = Camera.main.WorldToScreenPoint ( this.transform.position );
+        Vector3 objectPointInScreen = Camera.main.WorldToScreenPoint( this.transform.position );
 
-        Vector3 mousePointInScreen = new Vector3 ( Input.mousePosition.x, Input.mousePosition.y, objectPointInScreen.z );
+        Vector3 mousePointInScreen = new Vector3( Input.mousePosition.x, Input.mousePosition.y, objectPointInScreen.z );
 
-        _world_position = Camera.main.ScreenToWorldPoint ( mousePointInScreen );
+        _world_position = Camera.main.ScreenToWorldPoint( mousePointInScreen );
         _world_position.z = this.transform.position.z;
     }
 
@@ -182,11 +182,11 @@ public class Card : MonoBehaviour {
     }
 
 	//自身がどのセレクトエリアを使用しているのか取得
-    public int getSelectUseId() {
+    public int getSelectUseId( ) {
         return _select_area_use_iD;
     }
 
-    void cardReturn() {
+    void cardReturn( ) {
         //初期位置へ
 		this.transform.position = _init_card_position;
 		_drag_flag = false;

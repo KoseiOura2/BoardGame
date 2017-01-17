@@ -7,9 +7,9 @@ using PlayerData;
 
 public class PlayerPhaseManager : MonoBehaviour {
 
-	public const string DICE_PHASE_MESSAGE  = "ダイスを振ります\n(今回はダイスのアニメーションはありません)";		//ダイスフェイズのメッセージ
-	public const string FIELD_NAVI_MESSAGE  = "上画面に注目してください";									//フィールド画面に誘導するメッセージ
-	public const string PLAYER_WAIT_MESSAGE = "対戦相手を待っています";										//対戦相手を待つ際のメッセージ
+	public const string DICE_PHASE_MESSAGE  = "ダイスを振ります\n(今回はダイスのアニメーションはありません)";	//ダイスフェイズのメッセージ
+	public const string FIELD_NAVI_MESSAGE  = "上画面に注目してください";									    //フィールド画面に誘導するメッセージ
+	public const string PLAYER_WAIT_MESSAGE = "対戦相手を待っています";										    //対戦相手を待つ際のメッセージ
 
 	private PlayerManager _player_manager;	    //プレイヤーマネージャーを取得
 
@@ -256,27 +256,25 @@ public class PlayerPhaseManager : MonoBehaviour {
 
     //オブジェクトリストのオブジェクトを描画
     void objectDraw( PLAYER_OBJECT_LIST _obj_type, Vector3 _set_pos ) {
-        OBJECT_DATA obj_Data   = new OBJECT_DATA( );
+        OBJECT_DATA obj_data   = new OBJECT_DATA( );
         GameObject canvas_root = GameObject.Find( "Canvas" );
 
         //オブジェクトのサーチ
         for ( int i = 0; i < _player_phase_objects.Count; i++ ) {
             if ( _obj_type == _player_phase_objects[ i ].type ) {
                 //データを保存
-                obj_Data = _player_phase_objects[ i ];
+                obj_data = _player_phase_objects[ i ];
                 //オブジェクトにインスタンスを生成
-                obj_Data.obj = ( GameObject )Instantiate( _player_phase_objects[ i ].resource );
+                obj_data.obj = ( GameObject )Instantiate( _player_phase_objects[ i ].resource );
                 //オブジェクトをキャンバスに座標を設定、サイズの修正
-                obj_Data.obj.transform.SetParent( canvas_root.transform, false );
-                //           obj_Data.obj.GetComponent<RectTransform> ( ).anchoredPosition3D = _setPos;
-                //           obj_Data.obj.GetComponent<RectTransform> ( ).localScale = Vector3.one;
+                obj_data.obj.transform.SetParent( canvas_root.transform, false );
 
                 //対象の現データを削除
                 _player_phase_objects.RemoveAt( i );
             }
         }
         //新たに追記したコピーデータを書き込み
-        _player_phase_objects.Add( obj_Data );
+        _player_phase_objects.Add( obj_data );
     }
 
 	//オブジェクトリストにプレハブとオブジェクトの種類を保存
@@ -306,6 +304,7 @@ public class PlayerPhaseManager : MonoBehaviour {
         }
     }
 
+    //フェイズ切り替え時の待機状態と初期設定をリセット
     public void phaseReset( ) {
 
         _wait_phase = false;
@@ -350,14 +349,14 @@ public class PlayerPhaseManager : MonoBehaviour {
     }
 
 	//クリックされたマスからプレイヤーはどのマスにいるのか取得
-	public void SetClick( int massID ) {
+	public void setClick( int masuID ) {
 
 		//OKならその場所は今プレイヤーから見て前か後ろか同じか？
 		//プレイヤーの現在地を取得
 		int playerMass = _player_manager.getPlayerHere( );
 
 		//現在地 - 移動先のマスで計算
-		_player_trout_result = massID - playerMass;
+		_player_trout_result = masuID - playerMass;
 
 		//クリックされました
 		_is_click= true;

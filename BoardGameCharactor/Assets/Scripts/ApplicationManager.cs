@@ -450,6 +450,16 @@ public class ApplicationManager : MonoBehaviour {
             if ( Input.GetKeyDown( KeyCode.A ) ) {
                 _phase_manager.setPhase( MAIN_GAME_PHASE.GAME_PHASE_EVENT );
             }
+
+             if ( !_battle_phase_wait ) {
+                    //一定秒数表示したら読み込みを変える
+                    _battle_phase_manager.resultPhase( BATTLE_RESULT.WIN );
+                } else {
+                    //バトルフェイズのオブジェクトを削除
+                    _battle_phase_manager.objectDelete( );
+                    //切り替えフラグを見たらプレイヤーフェイズのマス調整フェイズに向かう
+                    _player_phase_manager.movePhase( BATTLE_RESULT.WIN );
+             }
         }
     }
     

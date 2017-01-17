@@ -10,15 +10,15 @@ IPointerExitHandler,
 IPointerClickHandler
 {
 	// マウスオーバー時に呼び出すイベント
-	public UnityEvent onMouseOver = new UnityEvent ();
+	public UnityEvent _on_mouse_over = new UnityEvent ( );
 
 	//マウスオーバー終了時に呼び出すイベント
-	public UnityEvent onMouseOverExit = new UnityEvent();
+	public UnityEvent _on_mouse_over_exit = new UnityEvent( );
 
-	public UnityEvent onClick = new UnityEvent ();
+	public UnityEvent _on_click = new UnityEvent ( );
 
 	// マウスオーバー状態
-	public bool isMouseOver
+	public bool _is_mouse_over
 	{
 		get;
 		private set;
@@ -32,37 +32,37 @@ IPointerClickHandler
 	}
 
 	void Update(){
-		if ((scroll ?? (scroll = FindObjectOfType<LongPressScroll> ())).CheckPressedStill (this)) {
-			EndMouseOver ();
+		if ( ( scroll ?? ( scroll = FindObjectOfType< LongPressScroll > ( ) ) ).CheckPressedStill ( this ) ) {
+			endMouseOver ( );
 		}
 	}
 
 	//マウスカーソルが入った場合
-	public void OnPointerEnter (PointerEventData eventData)
+	public void OnPointerEnter ( PointerEventData eventData )
 	{
-		if ((scroll ?? (scroll = FindObjectOfType<LongPressScroll> ())).CheckPressedStill (this)) {
+		if ( ( scroll ?? ( scroll = FindObjectOfType< LongPressScroll > ( ) ) ).CheckPressedStill ( this ) ) {
 			return;
 		} else {
-			onMouseOver.Invoke ();
-			isMouseOver = true;
+			_on_mouse_over.Invoke ( );
+			_is_mouse_over = true;
 		}
 	}
 
 	//マウスカーソルが出た場合
-	public void OnPointerExit (PointerEventData eventData)
+	public void OnPointerExit ( PointerEventData eventData )
 	{
-		EndMouseOver ();
+		endMouseOver ( );
 	}
 
 	//クリックされた場合
-	public void OnPointerClick(PointerEventData eventData){
-		onClick.Invoke ();
+	public void OnPointerClick( PointerEventData eventData ){
+		_on_click.Invoke ( );
 	}
 		
 	/// マウスオーバー状態終了時に呼ぶメソッド
-	public void EndMouseOver(){
-		onMouseOverExit.Invoke ();
-		isMouseOver = false;
+	public void endMouseOver( ){
+		_on_mouse_over_exit.Invoke ( );
+		_is_mouse_over = false;
 	}
 
 }

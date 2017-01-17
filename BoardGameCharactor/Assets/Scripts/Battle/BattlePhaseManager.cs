@@ -12,7 +12,7 @@ public class BattlePhaseManager : MonoBehaviour {
 	public const string FIELD_NAVI_MESSAGE  = "上画面に注目してください";									        //フィールド画面に誘導するメッセージ
 	public const string PLAYER_WAIT_MESSAGE = "対戦相手を待っています";										        //対戦相手を待つ際のメッセージ
 
-	public GameObject _canvas_Root;				    //キャンバスを取得
+	public GameObject _canvas_root;				    //キャンバスを取得
 
 	private PlayerManager _player_manager;          //プレイヤーマネージャーを取得
     private Text _battle_timer_text;                //制限時間のテキストを取得
@@ -319,7 +319,7 @@ public class BattlePhaseManager : MonoBehaviour {
                 //オブジェクトにインスタンスを生成
                 obj_data.obj = ( GameObject )Instantiate( _battle_phase_objects[ i ].resource );
                 //オブジェクトをキャンバスに移動
-                obj_data.obj.transform.SetParent( _canvas_Root.transform, false );
+                obj_data.obj.transform.SetParent( _canvas_root.transform, false );
                 //オブジェクトに座標を設定
                 obj_data.obj.GetComponent< RectTransform >( ).anchoredPosition3D = _set_pos;
 
