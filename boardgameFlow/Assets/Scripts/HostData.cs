@@ -36,6 +36,8 @@ public class HostData : NetworkBehaviour {
     public int DISTRIBUT_CARD_NUM = 3;
 
     void Awake( ) {
+        DontDestroyOnLoad( this.gameObject );
+
         _network_player_num = -1;
         _network_scene_data = 0;
         _network_phase_data = 0;

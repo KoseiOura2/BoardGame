@@ -302,6 +302,9 @@ public class ApplicationManager : Manager< ApplicationManager > {
 
 		// 通信データのセット
 		if ( _phase_manager.isPhaseChanged( ) && _mode != PROGRAM_MODE.MODE_NO_CONNECT ) {
+            if ( _phase_manager.getMainGamePhase( ) == MAIN_GAME_PHASE.GAME_PHASE_EVENT ) {
+                Debug.Log( ( ( int )_phase_manager.getMainGamePhase( ) ).ToString( ) );
+            }
 			_host_data.setSendGamePhase( _phase_manager.getMainGamePhase( ) );
 			_host_data.setSendChangeFieldPhase( true );
 		}
@@ -578,12 +581,10 @@ public class ApplicationManager : Manager< ApplicationManager > {
 	/// ResultPhaseの更新
 	/// </summary>
 	private void updateResultPhase( ) {
-        if (_mode != PROGRAM_MODE.MODE_NO_CONNECT)
-        {
+        if ( _mode != PROGRAM_MODE.MODE_NO_CONNECT ) {
             // 戦闘結果を送信
-            if (_host_data.getRecvData().send_result == false)
-            {
-                _host_data.setSendBattleResult(_player_manager.getPlayerResult(0), _player_manager.getPlayerResult(1), true);
+            if ( _host_data.getRecvData( ).send_result == false ) {
+                _host_data.setSendBattleResult( _player_manager.getPlayerResult( 0 ), _player_manager.getPlayerResult( 1 ), true );
             }
         }
 

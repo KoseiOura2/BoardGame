@@ -1,7 +1,7 @@
 30,x,y,z,type,nomalvalue,trapvalue,environment,cardType
 0,0,0,0,start,0,0,shallows,0
-1,1,0,0,selectDraw,1,0,,3
-2,2,0,0,draw,1,0,,5
+1,1,0,0,draw,1,0,,0
+2,2,0,0,draw,1,0,,0
 3,3,0,0,draw,1,0,,0
 4,4,0,0,trap1,1,2,,0
 5,4,0,1,draw,1,0,,0
