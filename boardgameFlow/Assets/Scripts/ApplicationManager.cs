@@ -43,6 +43,8 @@ public class ApplicationManager : Manager< ApplicationManager > {
     private int[ ] _dice_value = new int[ ( int )PLAYER_ORDER.MAX_PLAYER_NUM ];
     private bool _game_playing = false;
     private bool _goal_flag = false;
+    private int _connect_wait_time = 0;
+    private const int CONNECT_WAIT_TIME = 120;
 
 	public Text _scene_text;
 	public Text[ ] _reside_text = new Text[ ( int )PLAYER_ORDER.MAX_PLAYER_NUM ];    //残りマス用テキスト
@@ -727,8 +729,12 @@ public class ApplicationManager : Manager< ApplicationManager > {
         // ゴールまでの残りマスを表示
 		resideCount( );
 
+        _connect_wait_time++;
+
         // 両方の移動が終わったら次のフェイズへ
-        if ( _player_manager.isPlayerMoveFinish( 0 ) == true && _player_manager.isPlayerMoveFinish( 1 ) == true ) {
+        if ( _player_manager.isPlayerMoveFinish( 0 ) == true && _player_manager.isPlayerMoveFinish( 1 ) == true &&
+             _connect_wait_time >= CONNECT_WAIT_TIME ) {
+            _connect_wait_time = 0;
 			if ( _mode != PROGRAM_MODE.MODE_NO_CONNECT ) {
 				_host_data.setSendBattleResult( BATTLE_RESULT.BATTLE_RESULT_NONE, BATTLE_RESULT.BATTLE_RESULT_NONE, false );
 			}
@@ -741,6 +747,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
 	/// EventPhaseの更新
 	/// </summary>
 	private void updateEventPhase( ) {
+        _connect_wait_time++;
 		if ( _player_manager.isEventStart( 0 ) == false ) {
 			massEvent( _player_manager.getPlayerCount( 0, _stage_manager.getMassCount( ) ), 0 );
 		} else if ( _player_manager.isEventFinish( 0 ) == true && _player_manager.isEventStart( 1 ) == false ) {
@@ -761,7 +768,10 @@ public class ApplicationManager : Manager< ApplicationManager > {
             _player_manager.movePhaseUpdate( getResideCount( ), _stage_manager.getTargetMass( _player_manager.getTargetMassID( _stage_manager.getMassCount( ) ) ) );
         }
 
-		if ( _player_manager.isEventFinish( 0 ) == true && _player_manager.isEventFinish( 1 ) == true && _goal_flag == false) {
+		if ( _player_manager.isEventFinish( 0 ) == true && _player_manager.isEventFinish( 1 ) == true && _goal_flag == false &&
+             _connect_wait_time >= CONNECT_WAIT_TIME ) {
+            _connect_wait_time = 0;
+
 			_player_manager.setEventStart( 0, false );
 			_player_manager.setEventStart( 1, false );
 			_player_manager.setEventFinish( 0, false );
