@@ -36,10 +36,11 @@ public class PlayerManager : Manager<PlayerManager> {
     private float _select_area_height  = 45;    //セレクトエリアの高さ
 
     //手札データ　選んだカードのリスト、手札のリスト、オブジェクト情報といった形で整理をしています
+	[SerializeField]
     private struct HAND_DATA {
         public List< CARD_DATA > select_List;
         public List< CARD_DATA > hand_List;
-        public List< GameObject > hand_Obj_List;
+		public List< GameObject > hand_Obj_List;
         public List< GameObject > select_Obj_List;
         public List< Vector3 > Select_Position;
     }
@@ -95,9 +96,8 @@ public class PlayerManager : Manager<PlayerManager> {
             //セレクトエリアのポジションをセレクトエリアの数分作成
             _hand_Data.Select_Position.Add( _position );
         }
-
-
-        for ( int i = 0; i < 6; i++ ) {
+			
+        for ( int i = 0; i < 7; i++ ) {
             deckCardList( i );
         }
     }
@@ -122,8 +122,8 @@ public class PlayerManager : Manager<PlayerManager> {
 		_is_result = setResult;
 	}
 
-	//現在のIDの手札の生成を行う
-	public void AllHandCreate( ) {
+	//現在のの手札の生成を行う
+	public void AllHandCreate( CARD_DATA setCard ) {
 		//キャンバスを取得
 		if ( _canvas_Root == null ) {
 			_canvas_Root = GameObject.Find( "Canvas" );
@@ -132,6 +132,16 @@ public class PlayerManager : Manager<PlayerManager> {
 		if ( _hand_Area == null ) {
 			_hand_Area = GameObject.Find( "HandArea" );
 		}
+
+		//カードを手札に追加
+		_hand_Data.hand_List.Add( setCard );
+
+		//現在のカードを削除
+		for ( int i = _hand_Data.hand_Obj_List.Count - 1; i >= 0; i-- ) {
+			Destroy( _hand_Data.hand_Obj_List[ i ] );
+			_hand_Data.hand_Obj_List.RemoveAt( i );
+		}
+
         //手札の最大値6よりも大きいなら手札の最大値を更新
         if ( _hand_max < _hand_Data.hand_List.Count ) {
             _hand_max = _hand_Data.hand_List.Count;
@@ -140,37 +150,34 @@ public class PlayerManager : Manager<PlayerManager> {
         }
 
         for ( int i = 0; i < _hand_Data.hand_List.Count; i++ ) {
-			//プレハブを生成してリストのオブジェクトに入れる
-			_hand_Data.hand_Obj_List[ i ] = ( ( GameObject )Instantiate( _card_Template_Prefab ) );
+			float card_X;
 
+			//プレハブを生成してリストのオブジェクトに入れる
+			_hand_Data.hand_Obj_List.Add( ( GameObject )Instantiate( _card_Template_Prefab ) );
 			//カードデータ設定
 			_hand_Data.hand_Obj_List[ i ].GetComponent< Card >( ).SetCardData( _hand_Data.hand_List[ i ] );
-
-			//キャンバスの直下に入れる
-			_hand_Data.hand_Obj_List[ i ].transform.SetParent( _canvas_Root.transform, false );
-
 			//ハンドエリアの大きさを取得
-			float handArea_Width_Size = _hand_Area.GetComponent< RectTransform >( ).sizeDelta.x;
-
-            //ハンドエリアの座標を取得
-			float handArea_Postion_Size = _hand_Area.GetComponent< RectTransform >( ).anchoredPosition.y;
-
-            //カードの横幅を取得
-			float handCard_Width_Size = _hand_Data.hand_Obj_List[ i ].GetComponent< RectTransform >( ).sizeDelta.x;
-
-			//スタート地点に
-			float start_Card_Point = ( handArea_Width_Size / 2 ) - ( handCard_Width_Size / 2 );
-
-			//手札エリアの大きさ/手札限界数で割った後に現在の生成中の手札の順番を掛ける
-			float card_X = ( start_Card_Point / _hand_Data.hand_List.Count ) * i + 1;
-
+			float handArea_Width_Size = _hand_Area.GetComponent< Transform >( ).localScale.x;
+			//ハンドエリアの高さを取得
+			float handArea_postion_y  = _hand_Area.GetComponent< Transform >( ).position.y;
+			//スタート地点を取得
+			float start_Card_Point = ( handArea_Width_Size / 2 ) - _hand_Data.hand_Obj_List[ i ].transform.localScale.x;
+			//手札が6枚以下なら
+			if( _hand_max <= 6 ) {
+				//手札エリアの大きさ/手札限界数で割った後に現在の生成中の手札の順番を掛ける
+				card_X = ( start_Card_Point / _hand_Data.hand_List.Count ) * i + 1;
+			} else {
+				card_X = -start_Card_Point + ( handArea_Width_Size / _hand_Data.hand_List.Count ) * i;
+			}
 			//位置を設定する
-			_hand_Data.hand_Obj_List[ i ].GetComponent< RectTransform >( ).anchoredPosition3D = new Vector3( card_X, handArea_Postion_Size, 0 );
+			_hand_Data.hand_Obj_List[ i ].GetComponent< Transform >( ).position = new Vector3( card_X, handArea_postion_y, 3 );
 		}
 	}
 
     //最新のカードを生成を行う(ドロー関数)
     public void setHandLatestCardCreate( CARD_DATA setCard ) {
+		float card_X;
+
         //キャンバスを取得
         if ( _canvas_Root == null ) {
             _canvas_Root = GameObject.Find( "Canvas" );
@@ -202,10 +209,16 @@ public class PlayerManager : Manager<PlayerManager> {
         float handArea_postion_y  = _hand_Area.GetComponent< Transform >( ).position.y;
         //スタート地点を取得
         float start_Card_Point    = ( handArea_Width_Size / 2 ) - _hand_Data.hand_Obj_List[ HandDataLatest ].transform.localScale.x;
-        //手札エリアの大きさ/手札限界数で割った後に現在の生成中の手札の順番を掛ける
-        float card_X = 0.8f * HandDataLatest;
+		//手札が6枚以下なら
+		if( _hand_max <= 6 ) {
+			//カード間に現在の生成中の手札の順番を掛ける
+			card_X = -start_Card_Point + ( handArea_Width_Size / _hand_Data.hand_List.Count ) * HandDataLatest;
+		} else {
+			card_X = -start_Card_Point + ( handArea_Width_Size / _hand_Data.hand_List.Count ) * HandDataLatest;
+		}
+
         //位置を設定する
-        _hand_Data.hand_Obj_List[ HandDataLatest ].GetComponent< Transform >( ).position = new Vector3( -start_Card_Point + card_X, handArea_postion_y, 3 );
+        _hand_Data.hand_Obj_List[ HandDataLatest ].GetComponent< Transform >( ).position = new Vector3( card_X, handArea_postion_y, 3 );
 
     }
 
@@ -435,7 +448,7 @@ public class PlayerManager : Manager<PlayerManager> {
         card = card_manager.getCardData( get_card_id );
 
         //最新のカードを生成
-        setHandLatestCardCreate( card );
+		AllHandCreate( card );
 	}
 
 	//現在の手札枚数を取得する

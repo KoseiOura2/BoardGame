@@ -221,11 +221,11 @@ public class BattlePhaseManager : MonoBehaviour {
 
 	void inductionPhase( ) {
 		//初期設定が済んでなければ行う
-		if ( !_initial_setting ) {
-            phaseInit( );
+		if( !_initial_setting ) {
+			phaseInit( );
 
-            //フィールド画面に誘導するテキストを表示
-            objectDraw( PLAYER_OBJECT_LIST.TEXT_WINDOW, Vector3.zero );
+			//フィールド画面に誘導するテキストを表示
+			objectDraw( PLAYER_OBJECT_LIST.TEXT_WINDOW, Vector3.zero );
 			textSet( PLAYER_OBJECT_LIST.TEXT_WINDOW, FIELD_NAVI_MESSAGE );
 
 			//初期設定完了フラグ
@@ -235,62 +235,62 @@ public class BattlePhaseManager : MonoBehaviour {
 
 
     public void resultPhase ( BATTLE_RESULT _Result ) {
-        if ( !_wait_phase ) {
-            //初期設定が済んでなければ行う
-            if ( !_initial_setting ) {
-                phaseInit( );
+		if( !_wait_phase ) {
+			//初期設定が済んでなければ行う
+			if( !_initial_setting ) {
+				phaseInit( );
 
-                //キャンバスにテキストウィンドウを作成
-                objectDraw( PLAYER_OBJECT_LIST.TEXT_WINDOW, Vector3.zero );
-                //リザルト結果によってテキスト変更
-                switch ( _Result ) {
-                    case BATTLE_RESULT.WIN:
-                        textSet( PLAYER_OBJECT_LIST.TEXT_WINDOW, BATTLE_RESULT.WIN.ToString( ) );
-                        break;
+				//キャンバスにテキストウィンドウを作成
+				objectDraw( PLAYER_OBJECT_LIST.TEXT_WINDOW, Vector3.zero );
+				//リザルト結果によってテキスト変更
+				switch (_Result) {
+				case BATTLE_RESULT.WIN:
+					textSet( PLAYER_OBJECT_LIST.TEXT_WINDOW, BATTLE_RESULT.WIN.ToString( ) );
+					break;
 
-                    case BATTLE_RESULT.DRAW:
-                        textSet( PLAYER_OBJECT_LIST.TEXT_WINDOW, BATTLE_RESULT.DRAW.ToString( ) );
-                        break;
+				case BATTLE_RESULT.DRAW:
+					textSet( PLAYER_OBJECT_LIST.TEXT_WINDOW, BATTLE_RESULT.DRAW.ToString( ) );
+					break;
 
-                    case BATTLE_RESULT.LOSE:
-                        textSet( PLAYER_OBJECT_LIST.TEXT_WINDOW, BATTLE_RESULT.DRAW.ToString( ) );
-                        break;
-                }
+				case BATTLE_RESULT.LOSE:
+					textSet( PLAYER_OBJECT_LIST.TEXT_WINDOW, BATTLE_RESULT.DRAW.ToString( ) );
+					break;
+				}
 
-                //初期設定完了フラグ
-                _initial_setting = true;
-            } else {
-                //経過時間を加算
-                _now_time += Time.deltaTime;
-                //表示時間を経過時間が超えたら
-                if ( _now_time >= _interval_time ) {
-                    //オブジェクトを削除
-                    objectDelete( );
-                    //経過時間をバトルタイマーにセット
-                    _now_time = 0;
-                    //テキストを設定
-                    textSet( PLAYER_OBJECT_LIST.TEXT_WINDOW, PLAYER_WAIT_MESSAGE );
-                    //フェイズを待機状態に
-                    _wait_phase = true;
-                }
-            }
-        }
-    }
+				//初期設定完了フラグ
+				_initial_setting = true;
+			} else {
+				//経過時間を加算
+				_now_time += Time.deltaTime;
+				//表示時間を経過時間が超えたら
+				if( _now_time >= _interval_time ) {
+					//オブジェクトを削除
+					objectDelete( );
+					//経過時間をバトルタイマーにセット
+					_now_time = 0;
+					//テキストを設定
+					textSet( PLAYER_OBJECT_LIST.TEXT_WINDOW, PLAYER_WAIT_MESSAGE );
+					//フェイズを待機状態に
+					_wait_phase = true;
+				}
+			}
+		}
+	}
 
     //フェイズ開始に実行
     void phaseInit( ) {
-        //各種フラグや数値を初期化
-        _initial_setting   = false;     //フェイズ毎の初期設定フラグ
-        _draw_card_use     = false;     //ドローカードを使用したか
-        _select_confirm    = false;     //ボタンを押したか
-        _generate_complate = false;     //生成が終了したかどうか
-        _card_select_start = false;     //カードセレクトが始まるかどうか
-        _select_push       = false;     //確定を押したかどうか
-        _wait_phase        = false;     //フェイズチェンジの待機フラグ
+		//各種フラグや数値を初期化
+		_initial_setting 	= false;     //フェイズ毎の初期設定フラグ
+		_draw_card_use 		= false;     //ドローカードを使用したか
+		_select_confirm 	= false;     //ボタンを押したか
+		_generate_complate 	= false;     //生成が終了したかどうか
+		_card_select_start 	= false;     //カードセレクトが始まるかどうか
+		_select_push 		= false;     //確定を押したかどうか
+		_wait_phase 		= false;     //フェイズチェンジの待機フラグ
 
-        //生成したオブジェクトを非表示に
-        objectDelete( PLAYER_OBJECT_LIST.BATTLE_SELECT_AREA  );
-    }
+		//生成したオブジェクトを非表示に
+		objectDelete( PLAYER_OBJECT_LIST.BATTLE_SELECT_AREA );
+	}
 
     public void phaseReset( ) {
         _wait_phase      = false;
