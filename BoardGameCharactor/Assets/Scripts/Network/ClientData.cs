@@ -93,15 +93,27 @@ public class ClientData : NetworkBehaviour {
 	[ Command ]
     public void CmdSetSendReady( bool flag ) { 
 		_player_data.ready = flag;
-
     }
     
 	[ Client ]
     public void setReady( bool flag ) { 
 		_player_data.ready = flag;
-
     }
     
+    /// <summary>
+    /// 準備完了を送信
+    /// </summary>
+    /// <param name="flag"></param>
+	[ Command ]
+    public void CmdSetSendBattleReady( bool flag ) { 
+		_player_data.battle_ready = flag;
+    }
+    
+	[ Client ]
+    public void setBattleReady( bool flag ) { 
+		_player_data.battle_ready = flag;
+    }
+
     /// <summary>
     /// 戦闘結果を送信
     /// </summary>

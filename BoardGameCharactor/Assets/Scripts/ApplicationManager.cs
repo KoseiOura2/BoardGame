@@ -58,10 +58,10 @@ public class ApplicationManager : MonoBehaviour {
 				_fade_manager = GameObject.Find( "FadeManager" ).GetComponent< FadeManager >( );
 			}
             if ( _battle_phase_manager == null ) {
-                _battle_phase_manager = GameObject.Find ( "BattlePhaseManager" ).GetComponent<BattlePhaseManager> ( );
+                _battle_phase_manager = GameObject.Find ( "BattlePhaseManager" ).GetComponent<BattlePhaseManager>( );
             }
             if ( _player_phase_manager == null ) {
-                _player_phase_manager = GameObject.Find ( "PlayerPhaseManager" ).GetComponent<PlayerPhaseManager> ( );
+                _player_phase_manager = GameObject.Find ( "PlayerPhaseManager" ).GetComponent<PlayerPhaseManager>( );
                 _player_phase_manager.awake ( );
             }
             //_network_gui_controll = GameObject.Find( "NetworkManager" ).GetComponent< NetworkGUIControll >( );
@@ -97,25 +97,25 @@ public class ApplicationManager : MonoBehaviour {
 	// Update is called once per frame
 	void FixedUpdate( ) {
         if ( _mode == PROGRAM_MODE.MODE_CONNECT ) {
-            if ( _host_data == null && _network_manager.getHostObj ( ) != null ) {
+            if ( _host_data == null && _network_manager.getHostObj( ) != null ) {
                 _host_data = _network_manager.getHostObj ( ).GetComponent<HostData> ( );
             }
 
-            if ( _client_data == null && _network_manager.getClientObj ( ) != null ) {
-                _client_data = _network_manager.getClientObj ( ).GetComponent<ClientData> ( );
+            if ( _client_data == null && _network_manager.getClientObj( ) != null ) {
+                _client_data = _network_manager.getClientObj( ).GetComponent< ClientData >( );
             }
 
             if ( _host_data != null && _client_data != null ) {
                 if ( _player_num == PLAYER_ORDER.NO_PLAYER ) {
-                    _player_num = ( PLAYER_ORDER )_host_data.getRecvData ( ).player_num;
+                    _player_num = ( PLAYER_ORDER )_host_data.getRecvData( ).player_num;
                 }
 
                 // シーンの切り替え
                 sceneChange ( );
                 // 切り替え完了を送る
-                if ( _client_data.getRecvData ( ).changed_scene == true && _host_data.getRecvData ( ).change_scene == false ) {
-                    _client_data.CmdSetSendChangedScene ( false );
-                    _client_data.setChangedScene ( false );
+                if ( _client_data.getRecvData( ).changed_scene == true && _host_data.getRecvData( ).change_scene == false ) {
+                    _client_data.CmdSetSendChangedScene( false );
+                    _client_data.setChangedScene( false );
                 }
             }
         } else {
@@ -139,27 +139,29 @@ public class ApplicationManager : MonoBehaviour {
 				break;
 			}
 		}
-        //デバッグ用でキーを押したらフェイズを変える
-        if ( Input.GetKeyDown( KeyCode.F1 )) {
-            _phase_manager.setPhase ( MAIN_GAME_PHASE.GAME_PHASE_NO_PLAY );
-        }
-        if ( Input.GetKeyDown ( KeyCode.F2 ) ) {
-            _phase_manager.setPhase ( MAIN_GAME_PHASE.GAME_PHASE_DICE );
-        }
-        if ( Input.GetKeyDown ( KeyCode.F3 ) ) {
-            _phase_manager.setPhase ( MAIN_GAME_PHASE.GAME_PHASE_MOVE_CHARACTER );
-        }
-        if ( Input.GetKeyDown ( KeyCode.F4 ) ) {
-            _phase_manager.setPhase ( MAIN_GAME_PHASE.GAME_PHASE_DRAW_CARD );
-        }
-        if ( Input.GetKeyDown ( KeyCode.F5 ) ) {
-            _phase_manager.setPhase ( MAIN_GAME_PHASE.GAME_PHASE_BATTLE );
-        }
-        if ( Input.GetKeyDown ( KeyCode.F6 ) ) {
-            _phase_manager.setPhase ( MAIN_GAME_PHASE.GAME_PHASE_RESULT );
-        }
-        if ( Input.GetKeyDown ( KeyCode.F7 ) ) {
-            _phase_manager.setPhase ( MAIN_GAME_PHASE.GAME_PHASE_EVENT );
+        if ( _mode == PROGRAM_MODE.MODE_NO_CONNECT ) {
+            //デバッグ用でキーを押したらフェイズを変える
+            if ( Input.GetKeyDown( KeyCode.F1 ) ) {
+                _phase_manager.setPhase( MAIN_GAME_PHASE.GAME_PHASE_NO_PLAY );
+            }
+            if ( Input.GetKeyDown( KeyCode.F2 ) ) {
+                _phase_manager.setPhase( MAIN_GAME_PHASE.GAME_PHASE_DICE );
+            }
+            if ( Input.GetKeyDown( KeyCode.F3 ) ) {
+                _phase_manager.setPhase( MAIN_GAME_PHASE.GAME_PHASE_MOVE_CHARACTER );
+            }
+            if ( Input.GetKeyDown( KeyCode.F4 ) ) {
+                _phase_manager.setPhase( MAIN_GAME_PHASE.GAME_PHASE_DRAW_CARD );
+            }
+            if ( Input.GetKeyDown( KeyCode.F5 ) ) {
+                _phase_manager.setPhase( MAIN_GAME_PHASE.GAME_PHASE_BATTLE );
+            }
+            if ( Input.GetKeyDown( KeyCode.F6 ) ) {
+                _phase_manager.setPhase( MAIN_GAME_PHASE.GAME_PHASE_RESULT );
+            }
+            if ( Input.GetKeyDown( KeyCode.F7 ) ) {
+                _phase_manager.setPhase( MAIN_GAME_PHASE.GAME_PHASE_EVENT );
+            }
         }
     }
     
@@ -229,21 +231,20 @@ public class ApplicationManager : MonoBehaviour {
         }
 
         if ( Input.GetKeyDown ( KeyCode.P ) ) {
-            Debug.Log ( "test" );
             //切り替え時リセット
-            _player_phase_manager.phaseReset ( );
-            _battle_phase_manager.phaseReset ( );
+            _player_phase_manager.phaseReset( );
+            _battle_phase_manager.phaseReset( );
         }
 
         if ( _mode == PROGRAM_MODE.MODE_CONNECT ) {
             if ( _host_data != null && _client_data != null ) {
                 // フェイズの切り替え
-                phaseChange ( );
+                phaseChange( );
 
                 // 切り替え完了を送る
-                if ( _client_data.getRecvData ( ).changed_phase == true && _host_data.getRecvData ( ).change_phase == false ) {
-                    _client_data.CmdSetSendChangedPhase ( false );
-                    _client_data.setChangedPhase ( false );
+                if ( _client_data.getRecvData( ).changed_phase == true && _host_data.getRecvData( ).change_phase == false ) {
+                    _client_data.CmdSetSendChangedPhase( false );
+                    _client_data.setChangedPhase( false );
                 }
             }
         }
@@ -256,8 +257,8 @@ public class ApplicationManager : MonoBehaviour {
         if ( _host_data.isChangeFieldPhase( ) ) {
 
             //プレイヤー＆バトルフェイズ切り替え時リセット
-            _player_phase_manager.phaseReset ( );
-            _battle_phase_manager.phaseReset ( );
+            _player_phase_manager.phaseReset( );
+            _battle_phase_manager.phaseReset( );
 
             _phase_manager.setPhase( _host_data.getRecvData( ).main_game_phase );
             _client_data.CmdSetSendChangedPhase( true );
@@ -270,7 +271,7 @@ public class ApplicationManager : MonoBehaviour {
 	/// </summary>
 	private void updateNoPlayPhase( ) {
         //待機中に初期設定を行う
-        _player_phase_manager.waitPhase ( );
+        _player_phase_manager.waitPhase( );
     }
 
 	/// <summary>
@@ -280,16 +281,16 @@ public class ApplicationManager : MonoBehaviour {
         int value = 0;
 
         //ダイスフェイズの処理
-        _player_phase_manager.dicePhase ( );
+        _player_phase_manager.dicePhase( );
 
         //賽の目を入れる(無い場合は0）
-        value = _player_phase_manager.getDiceData ( );
+        value = _player_phase_manager.getDiceData( );
 
         //賽の目に1以上のダイス目が入ったら
-        if( value > 1 ) {
+        if( value >= 1 ) {
             if ( _mode == PROGRAM_MODE.MODE_CONNECT ) {
-                _client_data.CmdSetSendDiceValue ( value );
-                _client_data.setDiceValue ( value );
+                _client_data.CmdSetSendDiceValue( value );
+                _client_data.setDiceValue( value );
             }
         }
         /*
@@ -305,12 +306,12 @@ public class ApplicationManager : MonoBehaviour {
 	/// </summary>
 	private void updateMovePhase( ) {
         //上画面に誘導をするメッセージの処理
-        _player_phase_manager.inductionPhase ( );
+        _player_phase_manager.inductionPhase( );
         if ( _mode == PROGRAM_MODE.MODE_CONNECT ) {
-            if ( _client_data.getRecvData ( ).dice_value > 0 ) {
+            if ( _client_data.getRecvData( ).dice_value > 0 ) {
                 // さいの目を―1に初期化
                 _client_data.CmdSetSendDiceValue ( -1 );
-                _client_data.setDiceValue ( -1 );
+                _client_data.setDiceValue( -1 );
             }
         }
     }
@@ -320,13 +321,13 @@ public class ApplicationManager : MonoBehaviour {
 	/// </summary>
 	private void updateDrawPhase( ) {
         //前回のプレイヤーフェイズのオブジェクトを削除
-        _player_phase_manager.objectDelete ( );
+        _player_phase_manager.objectDelete( );
 
-        _battle_phase_manager.drawPhase ( );
+        _battle_phase_manager.drawPhase( );
         if ( _player_num == PLAYER_ORDER.PLAYER_ONE ) {
             if ( _mode == PROGRAM_MODE.MODE_CONNECT ) {
                 if ( _client_data != null ) {
-                    if ( _host_data.getRecvData ( ).card_list_one.Length > 0 ) {
+                    if ( _host_data.getRecvData( ).card_list_one.Length > 0 ) {
                         // 手札にカードを加える処理
                         //_battle_phase_manager.getCardId ( );
                     }
@@ -334,7 +335,7 @@ public class ApplicationManager : MonoBehaviour {
             }
         } else if ( _player_num == PLAYER_ORDER.PLAYER_TWO ) {
             if ( _mode == PROGRAM_MODE.MODE_CONNECT ) {
-                if ( _host_data.getRecvData ( ).card_list_two.Length > 0 ) {
+                if ( _host_data.getRecvData( ).card_list_two.Length > 0 ) {
                     // 手札にカードを加える処理
                     //_battle_phase_manager.getCardId ( );
                 }
@@ -356,31 +357,31 @@ public class ApplicationManager : MonoBehaviour {
 	/// </summary>
 	private void updateButtlePhase( ) {
         //battleフェイズがプレイヤー待機状態になったか否か
-        bool _battle_phase_wait = _battle_phase_manager.getPhaseWait ( );
+        bool _battle_phase_wait = _battle_phase_manager.getPhaseWait( );
 
         if ( _mode == PROGRAM_MODE.MODE_CONNECT ) {
-            if ( _client_data.getRecvData ( ).ready == true ) {
+            if ( _client_data.getRecvData( ).ready == true ) {
                 // 準備完了を初期化
-                _client_data.CmdSetSendReady ( false );
-                _client_data.setReady ( false );
+                _client_data.CmdSetSendReady( false );
+                _client_data.setReady( false );
             }
         }
         _battle_phase_manager.cardPhase( );
 
         if( _battle_phase_wait ) {
             int player_status = 10;
-            int[ ] card_list = new int[ ] { 0, 1, 2 };
+            int[ ] card_list = new int[ ]{ 0, 1, 2 };
 
             if ( _mode == PROGRAM_MODE.MODE_CONNECT ) {
-                _client_data.CmdSetSendBattleData ( true, player_status, card_list );
-                _client_data.setBattleData ( true, player_status, card_list );
+                _client_data.CmdSetSendBattleData( true, player_status, card_list );
+                _client_data.setBattleData( true, player_status, card_list );
             }
         }
 
         if ( Input.GetKeyDown( KeyCode.A ) ) {
             // 選択結果を送る
             int player_status = 10;
-            int[ ] card_list = new int[ ] { 0, 1, 2 };
+            int[ ] card_list = new int[ ]{ 0, 1, 2 };
 
             _client_data.CmdSetSendBattleData( true, player_status, card_list );
             _client_data.setBattleData( true, player_status, card_list );
@@ -391,63 +392,63 @@ public class ApplicationManager : MonoBehaviour {
 	/// ResultPhaseの更新
 	/// </summary>
 	private void updateResultPhase( ) {
-        //battleフェイズがプレイヤー待機状態になったか否か
-        bool _battle_phase_wait = _battle_phase_manager.getPhaseWait ( );
-        
-        if ( _player_num == PLAYER_ORDER.PLAYER_ONE ) {
-            if ( _mode == PROGRAM_MODE.MODE_CONNECT ) {
-                if ( _host_data.getBattleResultOne ( ) == ( int )BATTLE_RESULT.WIN ||
-                     _host_data.getBattleResultOne ( ) == ( int )BATTLE_RESULT.DRAW ) {
-                }
-            }
-            // マス調整の処理
-            MASS_ADJUST adjust = MASS_ADJUST.ADVANCE;
-            if ( !_battle_phase_wait ) {
-                //一定秒数表示したら読み込みを変える
-                _battle_phase_manager.resultPhase ( BATTLE_RESULT.WIN );
-            } else {
-                //バトルフェイズのオブジェクトを削除
-                _battle_phase_manager.objectDelete ( );
-                //切り替えフラグを見たらプレイヤーフェイズのマス調整フェイズに向かう
-                _player_phase_manager.movePhase ( BATTLE_RESULT.WIN );
-            }
-            if ( _player_num == PLAYER_ORDER.PLAYER_ONE ) {
-                _client_data.CmdSetSendMassAdjust ( true, adjust );
-                _client_data.setMassAdjust ( true, adjust );
+        if ( _mode == PROGRAM_MODE.MODE_CONNECT ) {
+            if ( _client_data.getRecvData( ).battle_ready == true ) {
+                // 準備完了を初期化
+                _client_data.CmdSetSendBattleReady( false );
+                _client_data.setBattleReady( false );
             }
         }
 
-        if ( _player_num == PLAYER_ORDER.PLAYER_ONE ) {
-            if ( _host_data.getBattleResultOne ( ) == ( int )BATTLE_RESULT.LOSE ) {
+        //battleフェイズがプレイヤー待機状態になったか否か
+        bool _battle_phase_wait = _battle_phase_manager.getPhaseWait( );
+        MASS_ADJUST adjust = MASS_ADJUST.NO_ADJUST;
+        
+        if ( _mode == PROGRAM_MODE.MODE_CONNECT ) {
+            int battle_result = 0;
+
+            if ( _player_num == PLAYER_ORDER.PLAYER_ONE ) {
+                battle_result = _host_data.getBattleResultOne( );
+            } else if ( _player_num == PLAYER_ORDER.PLAYER_TWO ) {
+                battle_result = _host_data.getBattleResultTwo( );
+            }
+            // 勝ちか引き分け時
+            if ( battle_result == ( int )BATTLE_RESULT.WIN ||
+                 battle_result == ( int )BATTLE_RESULT.DRAW ) {
                 // マス調整の処理
-                MASS_ADJUST adjust = MASS_ADJUST.NO_ADJUST;
+                adjust = MASS_ADJUST.ADVANCE;   // 一旦前方へ進ませる
+                // マス調整をする処理を加えてください
 
                 if ( !_battle_phase_wait ) {
-                    //一定秒数表示したらシーンを変える…ここでの操作はしてはいけない…
-                    _battle_phase_manager.resultPhase ( BATTLE_RESULT.LOSE );
+                    //一定秒数表示したら読み込みを変える
+                    _battle_phase_manager.resultPhase( ( BATTLE_RESULT )battle_result );
                 } else {
+                    //バトルフェイズのオブジェクトを削除
+                    _battle_phase_manager.objectDelete( );
                     //切り替えフラグを見たらプレイヤーフェイズのマス調整フェイズに向かう
-                    _player_phase_manager.movePhase ( BATTLE_RESULT.LOSE );
+                    _player_phase_manager.movePhase( ( BATTLE_RESULT )battle_result );
                 }
 
-                _battle_phase_manager.resultPhase ( BATTLE_RESULT.LOSE );
-                _client_data.CmdSetSendMassAdjust ( true, adjust );
-                _client_data.setMassAdjust ( true, adjust );
-            } else if ( _player_num == PLAYER_ORDER.PLAYER_TWO ) {
-                if ( _host_data.getBattleResultTwo ( ) == ( int )BATTLE_RESULT.WIN ||
-                     _host_data.getBattleResultTwo ( ) == ( int )BATTLE_RESULT.DRAW ) {
-                    // マス調整の処理
-                    MASS_ADJUST adjust = MASS_ADJUST.ADVANCE;
-
-                    _client_data.CmdSetSendMassAdjust ( true, adjust );
-                    _client_data.setMassAdjust ( true, adjust );
-                } else if ( _host_data.getBattleResultTwo ( ) == ( int )BATTLE_RESULT.LOSE ) {
-                    // マス調整の処理
-                    MASS_ADJUST adjust = MASS_ADJUST.NO_ADJUST;
-
-                    _client_data.CmdSetSendMassAdjust ( true, adjust );
-                    _client_data.setMassAdjust ( true, adjust );
+            } else if ( battle_result == ( int )BATTLE_RESULT.LOSE ) {
+                // 負けた場合マス調整不能
+                adjust = MASS_ADJUST.NO_ADJUST;
+                if ( !_battle_phase_wait ) {
+                    //一定秒数表示したら読み込みを変える
+                    _battle_phase_manager.resultPhase( ( BATTLE_RESULT )battle_result );
+                } else {
+                    //バトルフェイズのオブジェクトを削除
+                    _battle_phase_manager.objectDelete( );
+                    //切り替えフラグを見たらプレイヤーフェイズのマス調整フェイズに向かう
+                    _player_phase_manager.movePhase( ( BATTLE_RESULT )battle_result );
                 }
+            }
+            
+            // マスを進ませるかどうかを送信
+            _client_data.CmdSetSendMassAdjust( true, adjust );
+            _client_data.setMassAdjust( true, adjust );
+        } else if ( _mode == PROGRAM_MODE.MODE_NO_CONNECT ) {
+            if ( Input.GetKeyDown( KeyCode.A ) ) {
+                _phase_manager.setPhase( MAIN_GAME_PHASE.GAME_PHASE_EVENT );
             }
         }
     }
@@ -456,13 +457,19 @@ public class ApplicationManager : MonoBehaviour {
 	/// EventPhaseの更新
 	/// </summary>
 	private void updateEventPhase( ) {
-        if ( _player_num == PLAYER_ORDER.PLAYER_ONE ) {
-            if ( _client_data.getRecvData ( ).ready == true ) {
+        if ( _mode == PROGRAM_MODE.MODE_CONNECT ) {
+            if ( _client_data.getRecvData( ).ready == true ) {
                 // 準備完了を初期化
-                _client_data.CmdSetSendMassAdjust ( false, MASS_ADJUST.NO_ADJUST );
-                _client_data.setMassAdjust ( true, MASS_ADJUST.NO_ADJUST );
+                _client_data.CmdSetSendMassAdjust( false, MASS_ADJUST.NO_ADJUST );
+                _client_data.setMassAdjust( false, MASS_ADJUST.NO_ADJUST );
             }
-        }
+        } else if ( _mode == PROGRAM_MODE.MODE_NO_CONNECT ) {
+            if ( Input.GetKeyDown( KeyCode.A ) ) {
+                _phase_manager.setPhase( MAIN_GAME_PHASE.GAME_PHASE_DICE );
+            } else if ( Input.GetKeyDown( KeyCode.B ) ) {
+                _phase_manager.setPhase( MAIN_GAME_PHASE.GAME_PHASE_FINISH );
+            }
+        } 
     }
 
 	/// <summary>

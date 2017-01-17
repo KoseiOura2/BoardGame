@@ -87,20 +87,19 @@ public class Card : MonoBehaviour {
         _world_position.z = this.transform.position.z;
     }
 
-   void drag() {
+   void drag( ) {
         //カードセレクト中か
-        if ( _battle_phase_manager.getCardSelectStart ( ) ) {
+        if ( _battle_phase_manager.getCardSelectStart( ) ) {
 
             //左クリックされているなら
             if ( Input.GetMouseButton ( ( 0 ) ) ) {
                 //現在のマウスカーソルの場所を取得
                 Vector3 mousePos = Input.mousePosition;
-                Debug.Log ( mousePos );
                 //マウスカーソルの場所へ飛ばすRayの生成
-                Ray ray = Camera.main.ScreenPointToRay ( mousePos );
-                RaycastHit hit = new RaycastHit ( );
+                Ray ray = Camera.main.ScreenPointToRay( mousePos );
+                RaycastHit hit = new RaycastHit( );
                 //ヒットしたなら
-                if ( Physics.Raycast ( ray, out hit ) ) {
+                if ( Physics.Raycast( ray, out hit ) ) {
                     if ( hit.collider.tag == "Card" ) {
                         //マウスの位置へカードが移動
                         this.transform.position = _world_position;

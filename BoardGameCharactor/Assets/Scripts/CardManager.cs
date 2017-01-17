@@ -95,70 +95,71 @@ public class CardManager : MonoBehaviour {
         NO_DATA
     }
 
-    private List<CARD_DATA> _card_datas = new List<CARD_DATA> ( );
+    private List< CARD_DATA > _card_datas = new List< CARD_DATA >( );
 
     public GET_CARD_DATA _get_data_type;
-    [SerializeField]
+    [ SerializeField ]
     private int _enhance;       //合計の強化情報格納
     private PlayerManager _player_manager;
     private string _name;
     private TextAsset _csv_file;
-    private List<string[ ]> _csv_datas = new List<string[ ]> ( );
+    private List< string[ ] > _csv_datas = new List< string[ ] >( );
     private int _height = 0;
 
-    void Awake ( ) {
+    void Awake( ) {
         if ( _player_manager == null ) {
-            _player_manager = GameObject.Find ( "PlayerManager" ).GetComponent<PlayerManager> ( );
+            _player_manager = GameObject.Find ( "PlayerManager" ).GetComponent< PlayerManager >( );
         }
-        loadCardDataFile ( );
+        loadCardDataFile( );
     }
 
     // Use this for initialization
-    void Start ( ) {
+    void Start( ) {
 
     }
 
     // Update is called once per frame
-    void Update ( ) {
+    void Update( ) {
 
     }
 
-    public void loadCardDataFile ( ) {
+    public void loadCardDataFile( ) {
         try {
             //よみこみ
             _name = "data";
-            _csv_file = Resources.Load ( "CSV/" + _name ) as TextAsset; // Resouces/CSV下のCSV読み込み
-            StringReader reader = new StringReader ( _csv_file.text );
-            while ( reader.Peek ( ) > -1 ) {
-                string line = reader.ReadLine ( );
-                _csv_datas.Add ( line.Split ( ',' ) );
+            _csv_file = Resources.Load( "CSV/" + _name ) as TextAsset; // Resouces/CSV下のCSV読み込み
+            StringReader reader = new StringReader( _csv_file.text );
+            while ( reader.Peek( ) > -1 ) {
+                string line = reader.ReadLine( );
+                _csv_datas.Add ( line.Split( ',' ) );
                 _height++;
             }
             {
                 //変換
                 try {
                     for ( int i = 0; i < _csv_datas.Count; i++ ) {
-                        CARD_DATA data = new CARD_DATA ( int.Parse ( _csv_datas[ i ][ 0 ] ), _csv_datas[ i ][ 1 ], _csv_datas[ i ][ 2 ],
-                            int.Parse ( _csv_datas[ i ][ 3 ] ), int.Parse ( _csv_datas[ i ][ 4 ] ), int.Parse ( _csv_datas[ i ][ 5 ] ) );
-                        _card_datas.Add ( data );
+                        CARD_DATA data = new CARD_DATA( int.Parse ( _csv_datas[ i ][ 0 ] ), _csv_datas[ i ][ 1 ], _csv_datas[ i ][ 2 ],
+                                                        int.Parse ( _csv_datas[ i ][ 3 ] ), int.Parse ( _csv_datas[ i ][ 4 ] ),
+                                                        int.Parse ( _csv_datas[ i ][ 5 ] ) );
+                        _card_datas.Add( data );
                     }
                 } catch {
-                    Debug.Log ( "変換エラー" );
+                    Debug.Log( "変換エラー" );
                 }
             }
         } catch {
-            Debug.Log ( "カードデータロードエラー" );
+            Debug.Log( "カードデータロードエラー" );
         }
     }
 
     /// <summary>
     /// 第一引数ID　返り値カードデータ　失敗した場合ダミーデータ
     /// </summary>
-    public CARD_DATA getCardData ( int id ) {
+    public CARD_DATA getCardData( int id ) {
         try {
             return _card_datas[ id ];
         } catch {
-            Debug.Log ( "カードデータ取得エラー" );
+            Debug.Log( "カードデータ取得エラー" );
             return _card_datas[ 0 ];
         }
     }

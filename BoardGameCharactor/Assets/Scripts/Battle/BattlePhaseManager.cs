@@ -51,31 +51,29 @@ public class BattlePhaseManager : MonoBehaviour {
         _battle_phase_objects = new List< OBJECT_DATA > ( );
 
 		//各種オブジェクトのロード
-		objectLoad ( PLAYER_OBJECT_LIST.YES_BUTTON, ( GameObject )Resources.Load ( "Prefab/Button" ) );
-		objectLoad ( PLAYER_OBJECT_LIST.NO_BUTTON, ( GameObject )Resources.Load ( "Prefab/Button" ) );
-		objectLoad ( PLAYER_OBJECT_LIST.TEXT_WINDOW, ( GameObject )Resources.Load ( "Prefab/TextWindow" ) );
-		objectLoad ( PLAYER_OBJECT_LIST.BLACKOUT_PANEL, ( GameObject )Resources.Load ( "Prefab/blackBackGround" ) );
-		objectLoad ( PLAYER_OBJECT_LIST.DISCARD_AREA, ( GameObject )Resources.Load ( "Prefab/DisCardArea" ) );
-		objectLoad ( PLAYER_OBJECT_LIST.DISCARD_BUTTON, ( GameObject )Resources.Load ( "Prefab/disCardSelectButton" ) );
-        objectLoad ( PLAYER_OBJECT_LIST.BATTLE_SELECT_AREA, ( GameObject )Resources.Load ( "Prefab/BattlePhaseSelectArea" ) );
+		objectLoad( PLAYER_OBJECT_LIST.YES_BUTTON, ( GameObject )Resources.Load ( "Prefab/Button" ) );
+		objectLoad( PLAYER_OBJECT_LIST.NO_BUTTON, ( GameObject )Resources.Load ( "Prefab/Button" ) );
+		objectLoad( PLAYER_OBJECT_LIST.TEXT_WINDOW, ( GameObject )Resources.Load ( "Prefab/TextWindow" ) );
+		objectLoad( PLAYER_OBJECT_LIST.BLACKOUT_PANEL, ( GameObject )Resources.Load ( "Prefab/blackBackGround" ) );
+		objectLoad( PLAYER_OBJECT_LIST.DISCARD_AREA, ( GameObject )Resources.Load ( "Prefab/DisCardArea" ) );
+		objectLoad( PLAYER_OBJECT_LIST.DISCARD_BUTTON, ( GameObject )Resources.Load ( "Prefab/disCardSelectButton" ) );
+        objectLoad( PLAYER_OBJECT_LIST.BATTLE_SELECT_AREA, ( GameObject )Resources.Load ( "Prefab/BattlePhaseSelectArea" ) );
     }
 
-	public void drawPhase( ){
+	public void drawPhase( ) {
         if ( !_wait_phase ) {
             //初期設定が済んでなければ行う
             if ( !_initial_setting ) {
-                Debug.Log ( "ドローフェイズです" );
-
-                objectDraw ( PLAYER_OBJECT_LIST.BATTLE_SELECT_AREA, _set_select_area_position );
+                objectDraw( PLAYER_OBJECT_LIST.BATTLE_SELECT_AREA, _set_select_area_position );
 
                 //共通の初期設定
-                phaseInit (  );
+                phaseInit(  );
 
                 //エネミーのテキストを設定
-                _player_manager.setEnemyObject ( );
+                _player_manager.setEnemyObject( );
 
                 //プレイヤーによって変わる部分を変更
-                _player_manager.setPlayerObject ( );
+                _player_manager.setPlayerObject( );
 
                 //初期設定完了フラグ
                 _initial_setting = true;
@@ -86,17 +84,16 @@ public class BattlePhaseManager : MonoBehaviour {
                     if ( !_generate_complate ) {
 
                         //ボタンオブジェクトを描画
-                        objectDraw ( PLAYER_OBJECT_LIST.YES_BUTTON, _set_button_position );
-                        objectDraw ( PLAYER_OBJECT_LIST.NO_BUTTON,
-                            new Vector3 ( -_set_button_position.x, _set_button_position.y, _set_button_position.z ) );
+                        objectDraw( PLAYER_OBJECT_LIST.YES_BUTTON, _set_button_position );
+                        objectDraw( PLAYER_OBJECT_LIST.NO_BUTTON, new Vector3( -_set_button_position.x, _set_button_position.y, _set_button_position.z ) );
 
                         //テキストウィンドウを描画
                         objectDraw ( PLAYER_OBJECT_LIST.TEXT_WINDOW, Vector3.zero );
 
                         //テキストを設定
-                        textSet ( PLAYER_OBJECT_LIST.YES_BUTTON, "YES" );
-                        textSet ( PLAYER_OBJECT_LIST.NO_BUTTON, "NO" );
-                        textSet ( PLAYER_OBJECT_LIST.TEXT_WINDOW, "ドローをしますか？" );
+                        textSet( PLAYER_OBJECT_LIST.YES_BUTTON, "YES" );
+                        textSet( PLAYER_OBJECT_LIST.NO_BUTTON, "NO" );
+                        textSet( PLAYER_OBJECT_LIST.TEXT_WINDOW, "ドローをしますか？" );
 
                         //生成フラグを立てる
                         _generate_complate = true;
@@ -109,17 +106,17 @@ public class BattlePhaseManager : MonoBehaviour {
                     if ( _select_confirm ) {
 
                         //オブジェクトを削除
-                        objectDelete ( );
+                        objectDelete( );
 
                         //選択の結果ドローカードを使ったかどうか
                         if ( _draw_card_use ) {
 
                         } else {
                             //テキストウィンドウを描画
-                            objectDraw ( PLAYER_OBJECT_LIST.TEXT_WINDOW, Vector3.zero );
+                            objectDraw( PLAYER_OBJECT_LIST.TEXT_WINDOW, Vector3.zero );
 
                             //テキストを設定
-                            textSet ( PLAYER_OBJECT_LIST.TEXT_WINDOW, PLAYER_WAIT_MESSAGE );
+                            textSet( PLAYER_OBJECT_LIST.TEXT_WINDOW, PLAYER_WAIT_MESSAGE );
 
                             //初期設定フラグをOFF
                             _initial_setting = false;
@@ -137,24 +134,20 @@ public class BattlePhaseManager : MonoBehaviour {
         }
 	}
 
-	public void cardPhase( ){
+	public void cardPhase( ) {
         if ( !_wait_phase ) {
             //初期設定が済んでなければ行う
             if ( !_initial_setting ) {
-                Debug.Log ( "カード選択フェイズです" );
-
                 //共通の初期設定
-                phaseInit ( );
+                phaseInit( );
 
                 //テキストウィンドウを描画
-                objectDraw ( PLAYER_OBJECT_LIST.TEXT_WINDOW, Vector3.zero );
-
+                objectDraw( PLAYER_OBJECT_LIST.TEXT_WINDOW, Vector3.zero );
                 //テキストを設定
-                textSet ( PLAYER_OBJECT_LIST.TEXT_WINDOW, "戦闘開始" );
-
+                textSet( PLAYER_OBJECT_LIST.TEXT_WINDOW, "戦闘開始" );
                 //カード設定
-                _battle_timer_text = GameObject.Find( "Timer" ).GetComponentInChildren <Text>( );
-                Debug.Log ( _battle_timer_text );
+                _battle_timer_text = GameObject.Find( "Timer" ).GetComponentInChildren< Text >( );
+                Debug.Log( _battle_timer_text );
                 //初期設定完了フラグ
                 _initial_setting = true;
 
@@ -166,58 +159,48 @@ public class BattlePhaseManager : MonoBehaviour {
                     if ( _now_time >= _interval_time ) {
                         //経過時間をバトルタイマーにセット
                         _now_time = 0;
-
                         //カードセレクトを開始
                         _card_select_start = true;
-
                         //オブジェクトを削除
-                        objectDelete ( PLAYER_OBJECT_LIST.BATTLE_SELECT_AREA );
+                        objectDelete( PLAYER_OBJECT_LIST.BATTLE_SELECT_AREA );
                     }
                 } else if ( _now_time > _battle_time || _select_push ) {
                     //セレクトエリアにセットされたカードをセレクトエリアカードに
-                    _player_manager.SetSelectAreaCard ( );
+                    _player_manager.SetSelectAreaCard( );
                     //テキストウィンドウを描画
-                    objectDraw ( PLAYER_OBJECT_LIST.TEXT_WINDOW, Vector3.zero );
-
+                    objectDraw( PLAYER_OBJECT_LIST.TEXT_WINDOW, Vector3.zero );
                     //テキストを設定
-                    textSet ( PLAYER_OBJECT_LIST.TEXT_WINDOW, PLAYER_WAIT_MESSAGE );
-
+                    textSet( PLAYER_OBJECT_LIST.TEXT_WINDOW, PLAYER_WAIT_MESSAGE );
                     //確定フラグ
                     _wait_phase = true;
 
                 } else {
-
                     //時間を加算
                     _now_time += Time.deltaTime;
-
                     //制限時間から経過時間を引いた数を取得
                     float _count_dawn = _battle_time - _now_time;
 
                     //テキストを設定
-                    _battle_timer_text.text = "残り時間 " + _count_dawn.ToString ( "00" );
+                    _battle_timer_text.text = "残り時間 " + _count_dawn.ToString( "00" );
                 }
             }
         }
 	}
 
-	void disCardPhase( ){
+	void disCardPhase( ) {
 		//初期設定が済んでなければ行う
 		if ( !_initial_setting ) {
-			Debug.Log ( "カードを捨てるフェイズです" );
-
-            phaseInit ( );
+            phaseInit( );
 
             //黒背景にする
-            objectDraw ( PLAYER_OBJECT_LIST.BLACKOUT_PANEL, Vector3.zero );
-
+            objectDraw( PLAYER_OBJECT_LIST.BLACKOUT_PANEL, Vector3.zero );
 			//確定ボタン
-			objectDraw ( PLAYER_OBJECT_LIST.DISCARD_BUTTON, discard_select_button_position );
-
+			objectDraw( PLAYER_OBJECT_LIST.DISCARD_BUTTON, discard_select_button_position );
 			//セレクトエリア
-			objectDraw ( PLAYER_OBJECT_LIST.DISCARD_AREA, discard_selec_area_position );
+			objectDraw( PLAYER_OBJECT_LIST.DISCARD_AREA, discard_selec_area_position );
 
 			//セレクトカードを手札のカード数-6にして生成
-			int _select_area_number = _player_manager.getHandListNumber ( ) - 6;
+			int _select_area_number = _player_manager.getHandListNumber( ) - 6;
 
             for ( int i = 0; i < _select_area_number; i++ ) {
                 //セレクトカードはサイズ/さっきの数字の場所で作る
@@ -225,8 +208,8 @@ public class BattlePhaseManager : MonoBehaviour {
             }
 
 			//テキストウィンドウ
-			objectDraw ( PLAYER_OBJECT_LIST.TEXT_WINDOW, discard_text_position );
-			textSet ( PLAYER_OBJECT_LIST.TEXT_WINDOW, "捨てるカードを選んでください" );
+			objectDraw( PLAYER_OBJECT_LIST.TEXT_WINDOW, discard_text_position );
+			textSet( PLAYER_OBJECT_LIST.TEXT_WINDOW, "捨てるカードを選んでください" );
 
 			//初期設定完了フラグ
 			_initial_setting = true;
@@ -239,13 +222,11 @@ public class BattlePhaseManager : MonoBehaviour {
 	void inductionPhase( ) {
 		//初期設定が済んでなければ行う
 		if ( !_initial_setting ) {
-			Debug.Log ( "上画面に誘導をするフェイズです" );
-
-            phaseInit ( );
+            phaseInit( );
 
             //フィールド画面に誘導するテキストを表示
-            objectDraw ( PLAYER_OBJECT_LIST.TEXT_WINDOW, Vector3.zero );
-			textSet ( PLAYER_OBJECT_LIST.TEXT_WINDOW, FIELD_NAVI_MESSAGE );
+            objectDraw( PLAYER_OBJECT_LIST.TEXT_WINDOW, Vector3.zero );
+			textSet( PLAYER_OBJECT_LIST.TEXT_WINDOW, FIELD_NAVI_MESSAGE );
 
 			//初期設定完了フラグ
 			_initial_setting = true;
@@ -257,24 +238,22 @@ public class BattlePhaseManager : MonoBehaviour {
         if ( !_wait_phase ) {
             //初期設定が済んでなければ行う
             if ( !_initial_setting ) {
-                Debug.Log ( "リザルトフェイズです" );
-
-                phaseInit ( );
+                phaseInit( );
 
                 //キャンバスにテキストウィンドウを作成
-                objectDraw ( PLAYER_OBJECT_LIST.TEXT_WINDOW, Vector3.zero );
+                objectDraw( PLAYER_OBJECT_LIST.TEXT_WINDOW, Vector3.zero );
                 //リザルト結果によってテキスト変更
                 switch ( _Result ) {
                     case BATTLE_RESULT.WIN:
-                        textSet ( PLAYER_OBJECT_LIST.TEXT_WINDOW, BATTLE_RESULT.WIN.ToString ( ) );
+                        textSet( PLAYER_OBJECT_LIST.TEXT_WINDOW, BATTLE_RESULT.WIN.ToString( ) );
                         break;
 
                     case BATTLE_RESULT.DRAW:
-                        textSet ( PLAYER_OBJECT_LIST.TEXT_WINDOW, BATTLE_RESULT.DRAW.ToString ( ) );
+                        textSet( PLAYER_OBJECT_LIST.TEXT_WINDOW, BATTLE_RESULT.DRAW.ToString( ) );
                         break;
 
                     case BATTLE_RESULT.LOSE:
-                        textSet ( PLAYER_OBJECT_LIST.TEXT_WINDOW, BATTLE_RESULT.DRAW.ToString ( ) );
+                        textSet( PLAYER_OBJECT_LIST.TEXT_WINDOW, BATTLE_RESULT.DRAW.ToString( ) );
                         break;
                 }
 
@@ -285,16 +264,12 @@ public class BattlePhaseManager : MonoBehaviour {
                 _now_time += Time.deltaTime;
                 //表示時間を経過時間が超えたら
                 if ( _now_time >= _interval_time ) {
-
                     //オブジェクトを削除
-                    objectDelete ( );
-
+                    objectDelete( );
                     //経過時間をバトルタイマーにセット
                     _now_time = 0;
-
                     //テキストを設定
-                    textSet ( PLAYER_OBJECT_LIST.TEXT_WINDOW, PLAYER_WAIT_MESSAGE );
-
+                    textSet( PLAYER_OBJECT_LIST.TEXT_WINDOW, PLAYER_WAIT_MESSAGE );
                     //フェイズを待機状態に
                     _wait_phase = true;
                 }
@@ -303,60 +278,57 @@ public class BattlePhaseManager : MonoBehaviour {
     }
 
     //フェイズ開始に実行
-    void phaseInit ( ) {
-
+    void phaseInit( ) {
         //各種フラグや数値を初期化
-        _initial_setting = false;       //フェイズ毎の初期設定フラグ
-        _draw_card_use = false;         //ドローカードを使用したか
-        _select_confirm = false;        //ボタンを押したか
+        _initial_setting   = false;     //フェイズ毎の初期設定フラグ
+        _draw_card_use     = false;     //ドローカードを使用したか
+        _select_confirm    = false;     //ボタンを押したか
         _generate_complate = false;     //生成が終了したかどうか
         _card_select_start = false;     //カードセレクトが始まるかどうか
-        _select_push = false;           //確定を押したかどうか
-        _wait_phase = false;            //フェイズチェンジの待機フラグ
+        _select_push       = false;     //確定を押したかどうか
+        _wait_phase        = false;     //フェイズチェンジの待機フラグ
 
         //生成したオブジェクトを非表示に
-        objectDelete ( PLAYER_OBJECT_LIST.BATTLE_SELECT_AREA  );
+        objectDelete( PLAYER_OBJECT_LIST.BATTLE_SELECT_AREA  );
     }
 
-    public void phaseReset ( ) {
-        _wait_phase = false;
+    public void phaseReset( ) {
+        _wait_phase      = false;
         _initial_setting = false;
     }
 
 
     //描画されているオブジェクトを削除
-    public void objectDelete ( PLAYER_OBJECT_LIST _ignore_type = PLAYER_OBJECT_LIST.NONE_OBJECT ) {
+    public void objectDelete( PLAYER_OBJECT_LIST _ignore_type = PLAYER_OBJECT_LIST.NONE_OBJECT ) {
 		//オブジェクトを削除
 		for ( int i = 0; i < _battle_phase_objects.Count; i++ ) {
             if ( _battle_phase_objects[ i ].type != _ignore_type ) {
-                Destroy ( _battle_phase_objects[ i ].obj );
+                Destroy( _battle_phase_objects[ i ].obj );
             }
 		}
 	}
 
     //オブジェクトリストのオブジェクトを描画
-    void objectDraw ( PLAYER_OBJECT_LIST _obj_type, Vector3 _set_pos ) {
-        OBJECT_DATA obj_data = new OBJECT_DATA ( );
+    void objectDraw( PLAYER_OBJECT_LIST _obj_type, Vector3 _set_pos ) {
+        OBJECT_DATA obj_data = new OBJECT_DATA( );
         //オブジェクトのサーチ
         for ( int i = 0; i < _battle_phase_objects.Count; i++ ) {
             if ( _obj_type == _battle_phase_objects[ i ].type ) {
                 //データを保存
                 obj_data = _battle_phase_objects[ i ];
-
                 //オブジェクトにインスタンスを生成
-                obj_data.obj = ( GameObject )Instantiate ( _battle_phase_objects[ i ].resource );
-
+                obj_data.obj = ( GameObject )Instantiate( _battle_phase_objects[ i ].resource );
                 //オブジェクトをキャンバスに移動
-                obj_data.obj.transform.SetParent ( _canvas_Root.transform, false );
+                obj_data.obj.transform.SetParent( _canvas_Root.transform, false );
                 //オブジェクトに座標を設定
-                obj_data.obj.GetComponent<RectTransform> ( ).anchoredPosition3D = _set_pos;
+                obj_data.obj.GetComponent< RectTransform >( ).anchoredPosition3D = _set_pos;
 
                 //対象の現データを削除
-                _battle_phase_objects.RemoveAt ( i );
+                _battle_phase_objects.RemoveAt( i );
             }
         }
         //新たに追記したコピーデータを書き込み
-        _battle_phase_objects.Add ( obj_data );
+        _battle_phase_objects.Add( obj_data );
     }
 
 	//オブジェクトリストにプレハブとオブジェクトの種類を保存
@@ -366,11 +338,11 @@ public class BattlePhaseManager : MonoBehaviour {
 
 		//オブジェクトとIDとオブジェクトタイプを設定
 		obj.resource = _load_resouce;
-		obj.id = _battle_phase_objects.Count;
-		obj.type = _set_type;
+		obj.id       = _battle_phase_objects.Count;
+		obj.type     = _set_type;
 
         //リストに追加
-        _battle_phase_objects.Add ( obj );
+        _battle_phase_objects.Add( obj );
 
 	}
 
@@ -380,36 +352,36 @@ public class BattlePhaseManager : MonoBehaviour {
         for ( int i = 0; i < _battle_phase_objects.Count; i++ ) {
             if ( _obj_type == _battle_phase_objects[ i ].type ) {
                 //テキストを指定したメッセージに変更します
-                Text _Text = _battle_phase_objects[ i ].obj.GetComponentInChildren< Text > ( );
+                Text _Text = _battle_phase_objects[ i ].obj.GetComponentInChildren< Text >( );
                 _Text.text = _message;
             }
         }
 	}
 
     //フェイズが待機状態になっているかを取得
-    public bool getPhaseWait ( ) {
+    public bool getPhaseWait( ) {
         return _wait_phase;
     }
 
     //ドローが終了したかどうかを取得
-    public void drawEnd ( bool is_End ) {
+    public void drawEnd( bool is_End ) {
         _draw_end = is_End;
     }
 
     //プレイヤーにカードIDを渡すため
-    public void getCardId ( int _card_id ) {
+    public void getCardId( int _card_id ) {
         //プレイヤーにカードIDを渡す
-        _player_manager.deckCardList ( _card_id );
+        _player_manager.deckCardList( _card_id );
     }
 
 	//カードセレクトフラグを取得する関数です、カードを必要な時に動かせないようにしています
-	public bool getCardSelectStart( ){
+	public bool getCardSelectStart( ) {
 		//カードセレクトが始まったかどうかを取得します
 		return _card_select_start;
 	}
 
 	//ドローカードを使うかどうかを決める関数です、ボタンを押した際のはいといいえの挙動に使います
-	public bool drowCardUse( bool _set_use ){
+	public bool drowCardUse( bool _set_use ) {
 		//ドローカードを使うかどうかを取得します
 		_draw_card_use = _set_use;
 		//ボタンを押したフラグをON
@@ -418,7 +390,7 @@ public class BattlePhaseManager : MonoBehaviour {
 	}
 
 	//決定ボタンを押したかどうかを取得する関数です。押した状態でカードセレクトであれば決定フラグが立ちます
-	public void select_push( ){
+	public void select_push( ) {
 		//カード選択フェイズで押されると反応をします
 		if ( _card_select_start ) {
 			_select_push = true;

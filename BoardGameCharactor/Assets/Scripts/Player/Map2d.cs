@@ -65,7 +65,7 @@ public class Map2d : MonoBehaviour {
 	
 	}
 
-	bool isError() {
+	bool isError( ) {
 		bool error = false;
 
 		if ( !_file_manager ) {
@@ -80,28 +80,25 @@ public class Map2d : MonoBehaviour {
 		return error;
 	}
 
-	void massCreate( int count ){
+	void massCreate( int count ) {
 		//マスのプレハブを生成
 		GameObject obj = ( GameObject )Instantiate( _mass_Prefab );
-        Debug.Log ( _Contect );
-		obj.transform.SetParent (_Contect);
-		obj.GetComponent<RectTransform> ().anchoredPosition3D
-		= new Vector3 ( _start_Mass_X + (count * _mass_While_X), _start_Mass_Y, 0 );
-		obj.GetComponent<massData>().SetMassData( _file_manager.getMapData().mass[ count ].type, count );
-		obj.GetComponent<RectTransform> ().localScale = new Vector3 (1, 1, 1);
+		obj.transform.SetParent( _Contect );
+		obj.GetComponent< RectTransform >( ).anchoredPosition3D = new Vector3( _start_Mass_X + ( count * _mass_While_X ), _start_Mass_Y, 0 );
+		obj.GetComponent< massData >( ).SetMassData( _file_manager.getMapData( ).mass[ count ].type, count );
+		obj.GetComponent< RectTransform >( ).localScale = new Vector3( 1, 1, 1 );
 		obj.name = "Mass:ID" + count;
 	}
 
 	void miniMassCreate( int count ) {
 		GameObject obj = ( GameObject )Instantiate( _mini_Mass_Prefab );
-		obj.transform.SetParent (_Contect);
-		obj.GetComponent<RectTransform> ().anchoredPosition3D 
-		= new Vector3 ( _start_Mass_X + (count * _mass_While_X + _mini_Mass_While_X ) , _start_Mass_Y, 0 );
-		obj.GetComponent<RectTransform> ().localScale = new Vector3 (1, 1, 1);
+		obj.transform.SetParent( _Contect );
+		obj.GetComponent< RectTransform >( ).anchoredPosition3D = new Vector3( _start_Mass_X + ( count * _mass_While_X + _mini_Mass_While_X ) , _start_Mass_Y, 0 );
+		obj.GetComponent< RectTransform >( ).localScale = new Vector3( 1, 1, 1 );
 		obj.name = "mini_Mass:ID" + count;
 	}
 
-	public Vector2 getEndPosition( ){
+	public Vector2 getEndPosition( ) {
 		return end_Position;
 	}
 }
