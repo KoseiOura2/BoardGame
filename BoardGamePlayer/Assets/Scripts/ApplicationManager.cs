@@ -390,10 +390,11 @@ public class ApplicationManager : MonoBehaviour {
             if ( Input.GetKeyDown( KeyCode.A ) ) {
                 // 選択結果を送る
                 int player_status = 10;
-                int[ ] card_list = new int[ ]{ 0, 1, 2 };
+				int[ ] card_list = new int[ ]{ 0, 1, 2 };
+				int[ ] turned_card_list = new int[ ]{ 0, 1, 2 };
 
-                _client_data.CmdSetSendBattleData( true, player_status, card_list );
-                _client_data.setBattleData( true, player_status, card_list );
+				_client_data.CmdSetSendBattleData( true, player_status, card_list, turned_card_list );
+				_client_data.setBattleData( true, player_status, card_list, turned_card_list );
             }
         }
 	}

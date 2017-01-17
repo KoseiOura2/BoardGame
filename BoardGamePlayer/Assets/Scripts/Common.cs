@@ -133,6 +133,7 @@ namespace Common {
 		public bool ready;
 		public int player_status;
 		public int[ ] used_card_list;
+		public int[ ] turned_card_list;
 		public bool battle_ready;
 		public MASS_ADJUST mass_adjust;
 	};
