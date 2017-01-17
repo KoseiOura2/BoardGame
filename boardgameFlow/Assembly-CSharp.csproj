@@ -49,8 +49,10 @@
      <Compile Include="Assets\Scripts\ApplicationManager.cs" />
      <Compile Include="Assets\Scripts\BattleManager.cs" />
      <Compile Include="Assets\Scripts\CameraManager.cs" />
+     <Compile Include="Assets\Scripts\Card.cs" />
      <Compile Include="Assets\Scripts\CardManager.cs" />
      <Compile Include="Assets\Scripts\ClientData.cs" />
+     <Compile Include="Assets\Scripts\ClientPlayerManager.cs" />
      <Compile Include="Assets\Scripts\Common.cs" />
      <Compile Include="Assets\Scripts\DebugManager.cs" />
      <Compile Include="Assets\Scripts\FileManager.cs" />
@@ -62,6 +64,7 @@
      <Compile Include="Assets\Scripts\PhaseManager.cs" />
      <Compile Include="Assets\Scripts\PlayerManager.cs" />
      <Compile Include="Assets\Scripts\StageManager.cs" />
+     <Compile Include="Assets\Scripts\old\oldPlayerManager.cs" />
  <Reference Include="UnityEngine.Networking">
  <HintPath>/Applications/Unity/Unity.app/Contents/UnityExtensions/Unity/Networking/UnityEngine.Networking.dll</HintPath>
  </Reference>
