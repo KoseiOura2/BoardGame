@@ -495,13 +495,15 @@ public class PlayerManager : MonoBehaviour {
 	}
 
 	//指定ランクプレイヤーのゲームオブジェクトを返す
-	public GameObject getTopPlayer( PLAYER_RANK player_rank ) {
+	public PLAYER_DATA getTopPlayer( PLAYER_RANK player_rank ) {
+		PLAYER_DATA data = new PLAYER_DATA( );
+
 		for ( int i = 0; i < ( int )PLAYER_ORDER.MAX_PLAYER_NUM; i++ ) {
 			if ( player_rank == _players[ i ].rank ) {
-				return _players[ i ].obj;
+				return _players[ i ];
 			} 
 		}
-		return null;
+		return data;
 	}
 
 	//最下位プレイヤーのゲームオブジェクトを返す

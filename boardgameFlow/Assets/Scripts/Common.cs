@@ -106,6 +106,14 @@ namespace Common {
         EVENT_GOAL
     }
 
+	public enum FIELD_ENVIRONMENT {
+		SHOAL_FIELD,
+		OPEN_SEA_FIELD,
+		DEEP_SEA_FIELD,
+		FIELD_ENVIRONMENT_NUM,
+		NO_FIELD,
+	};
+
 	/// <summary>
 	/// 通信で送受信するフィールド側のデータ
 	/// </summary>

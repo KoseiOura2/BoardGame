@@ -239,6 +239,23 @@ public class ApplicationManager : Manager< ApplicationManager > {
 			}
 			_stage_manager.init( );
 
+			// ステージマネージャーの環境情報の設定
+			for ( int i = 0; i < _file_manager.getMassCount( ); i++ ) {
+				if ( _file_manager.getEnvironment( i ) != "" ) {
+					switch ( _file_manager.getEnvironment( i ) ) {
+					case "shallows":
+						_stage_manager.setEnvironmentID( i, FIELD_ENVIRONMENT.SHOAL_FIELD );
+						break;
+					case "shoal":
+						_stage_manager.setEnvironmentID( i, FIELD_ENVIRONMENT.OPEN_SEA_FIELD );
+						break;
+					case "deep":
+						_stage_manager.setEnvironmentID( i, FIELD_ENVIRONMENT.DEEP_SEA_FIELD );
+						break;
+					}
+				}
+			}
+
 			if ( _mode != PROGRAM_MODE.MODE_NO_CONNECT ) {
 				try {
 					_host_data.setSendScene( _scene );
@@ -323,7 +340,22 @@ public class ApplicationManager : Manager< ApplicationManager > {
         _player_manager.dicisionTopAndLowestPlayer( ref count );
 
         // カメラの位置更新
-		_camera_manager.moveCameraPos( _player_manager.getTopPlayer( PLAYER_RANK.RANK_FIRST ), _player_manager.getLastPlayer( ) );
+		_camera_manager.moveCameraPos( _player_manager.getTopPlayer( PLAYER_RANK.RANK_FIRST ).obj, _player_manager.getLastPlayer( ) );
+
+		int num = _player_manager.getTopPlayer( PLAYER_RANK.RANK_FIRST ).advance_count;
+		switch ( _file_manager.getEnvironment( num ) ) {
+		case "shallows":
+			_stage_manager.setEnvironment( FIELD_ENVIRONMENT.SHOAL_FIELD );
+			break;
+		case "shoal":
+			_stage_manager.setEnvironment( FIELD_ENVIRONMENT.OPEN_SEA_FIELD );
+			break;
+		case "deep":
+			_stage_manager.setEnvironment( FIELD_ENVIRONMENT.DEEP_SEA_FIELD );
+			break;
+		}
+
+		_stage_manager.updateLightColor( _stage_manager.getEnvironment( ), num );
 	}
 
 	/// <summary>
@@ -370,7 +402,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
 				// 送られてきた賽の目の数
 				int[ ] dice_value = new int[ ( int )PLAYER_ORDER.MAX_PLAYER_NUM ];
 				for ( int i = 0; i < ( int )PLAYER_ORDER.MAX_PLAYER_NUM; i++ ) {
-					dice_value[ i ] = 2;//( int )Random.Range( 1.0f, 4.0f );
+					dice_value[ i ] = 30;//( int )Random.Range( 1.0f, 4.0f );
                     _dice_value[ i ] = dice_value[ i ];
 				}
 				// キャラクター移動フェイズへの移行
