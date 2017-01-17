@@ -1,1 +1,24 @@
-﻿using UnityEngine; using System.Collections; using UnityEngine.UI; using Common;  public class Card : MonoBehaviour {  	private GameObject _card_front;						    //カードの前面を取得 	[SerializeField] 	private Material _front_material;							    //フロントに貼るマテリアルを取得 	private CARD_DATA _me_data;  	// Use this for initialization 	void Awake() { 		//カードの前面オブジェクトを取得 		if( _front_material == null ) { 			_card_front = gameObject.transform.FindChild( "Front" ).gameObject; 		} 	} 	void Update(){ 		Debug.Log(_me_data.name); 	} 	/// <summary> 	/// CSVからカードを判別してマテリアルを張り替える 	/// </summary> 	/// <param name="card_data">Card data.</param> 	public void setCardData( CARD_DATA card_data ) { 		_front_material = Resources.Load<Material>( "Materials/Cards/" + card_data.name ); 		_card_front.GetComponent<Renderer>( ).material = _front_material; 	} }  
+﻿using UnityEngine;
+using System.Collections;
+using Common;
+
+public class Card : MonoBehaviour {
+	private GameObject _front_object;
+	private Material _front_material;
+	private CARD_DATA _card_data;
+
+	void start (){
+		if ( _front_material == null ) {
+			_front_object = gameObject.transform.FindChild( "Front" ).gameObject;
+		}
+	}
+	// <summary>
+	/// CSVからカードを判別してマテリアルを張り替える
+	/// </summary>
+	/// <param name="card_data">Card data.</param>
+	public void setCardData( CARD_DATA card_data ) {
+		_front_material = Resources.Load<Material>( "Materials/Cards/" + card_data.name );
+		_front_object.GetComponent<Renderer>( ).material = _front_material;
+	}
+
+}
