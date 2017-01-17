@@ -7,7 +7,7 @@ using Common;
 public class PlayerManager : MonoBehaviour {
     
     public float ADJUST_FIRST_PLAYER_Y_POS = 0.3f;          // プレイヤー初期生成時の修正Y座標
-    public float ADJUST_FIRST_PLAYER_Z_POS = 0.6f;          // プレイヤー初期生成時の修正Z座標
+    public float ADJUST_PLAYER_POS = 0.6f;          // プレイヤー初期生成時の修正Z座標
 
     [ SerializeField ]
     private PLAYER_ORDER _player_order;     // どのプレイヤーが行動中か
@@ -35,7 +35,8 @@ public class PlayerManager : MonoBehaviour {
 	private int _defalut_power = 0;
 	private int _plus_draw;
 	private int _plus_power;
-    private float _time = 1;
+    private float _time = 0.3f;
+    private Vector3 _velocity = Vector3.zero;
     private float[] _startTime = new float[2];
 	[ SerializeField ]
     private bool _move_flag    = false;     //動かす時のフラグが立っているか
@@ -88,11 +89,11 @@ public class PlayerManager : MonoBehaviour {
             first_pos.y = ADJUST_FIRST_PLAYER_Y_POS;
             switch ( _player_order ) {
                 case PLAYER_ORDER.PLAYER_ONE:
-                    first_pos.z += ADJUST_FIRST_PLAYER_Z_POS;
+                    first_pos.z += ADJUST_PLAYER_POS;
                     _player_order = PLAYER_ORDER.PLAYER_TWO;
                     break;
                 case PLAYER_ORDER.PLAYER_TWO:
-                    first_pos.z -= ADJUST_FIRST_PLAYER_Z_POS;
+                    first_pos.z -= ADJUST_PLAYER_POS;
                     _player_order = PLAYER_ORDER.NO_PLAYER;
                     break;
             }
@@ -150,7 +151,7 @@ public class PlayerManager : MonoBehaviour {
         if ( _player_id > -1 ) {
             _move_start[ _player_id ] = true;
             //if( _target != null )
-                adjustmentUpdate( target_pos );
+               // adjustmentUpdate( target_pos );
             if ( _limit_value > 0 ) {
                 if ( !_move_flag ) {
                     setTargetPos( 0, _player_id, ref target_pos );
@@ -172,7 +173,7 @@ public class PlayerManager : MonoBehaviour {
 		}
 	}
 
-    private void adjustmentUpdate( GameObject target_pos ) {
+    /*private void adjustmentUpdate( GameObject target_pos ) {
         if ( _limit_value_adjustment == 0 ) {
             _limit_value_adjustment--;
             _adjustment_flag = false;
@@ -182,31 +183,9 @@ public class PlayerManager : MonoBehaviour {
                     playerPostionAdjustment( target_pos );
                 }
             } else if( _limit_value_adjustment > 0 ) {
-                playerAdjustment( );
+                //playerAdjustment( );
             }
         }
-    }
-
-	/// <summary>
-	/// ターゲットの設定
-	/// </summary>
-	/// <param name="count">Count.</param>
-	/// <param name="advance_pos">Advance position.</param>
-	/// <param name="back_pos">Back position.</param>
-	private void setTargetPos( int i, int id, ref GameObject target_pos ) {
-        if ( _time <= 0 ) {
-			_players[ id ].obj.transform.position = _end_position[ i ];
-			_player_id = -1;
-            _target[ 0 ] = null;
-            return;
-        }
-
-        _startTime[ i ] = Time.timeSinceLevelLoad;
-		_start_position[ i ] = _players[ id ].obj.transform.position;
-		_target[ i ] = target_pos;
-        _end_position[ i ] = _target[ i ].transform.localPosition;
-        _end_position[ i ].y += 0.3f;
-        _move_flag = true;
     }
 
     private void setAdjustmentTargetPos( int i, int id, ref GameObject target_pos ) {
@@ -253,7 +232,7 @@ public class PlayerManager : MonoBehaviour {
         }
     }
 
-    private void playerAdjustment( ) {
+    /*private void playerAdjustment( ) {
         if( _players[ 0 ].advance_count + 1 == _players[ 1 ].advance_count ) {
             if( _advance_flag ) {
                 if( getPlayerID( ) == 0 && _limit_value > 1 ) {
@@ -284,7 +263,7 @@ public class PlayerManager : MonoBehaviour {
                     }
                 }
             }
-        }*/
+        }
     }
 
     public void playerAdjustmentMove( int i, int id ) {
@@ -297,15 +276,52 @@ public class PlayerManager : MonoBehaviour {
 		var rate = diff / _time;
 
 		_players[ id ].obj.transform.position = Vector3.Lerp ( _start_position[ i ], _end_position[ i ], rate );
-    }
-
-	/// <summary>
-	/// プレイヤーを動かす処理
+    }*/
+    /// <summary>
+	/// ターゲットの設定
 	/// </summary>
+	/// <param name="count">Count.</param>
+	/// <param name="advance_pos">Advance position.</param>
+	/// <param name="back_pos">Back position.</param>
+	private void setTargetPos(int i, int id, ref GameObject target_pos)
+    {
+        if (_time <= 0)
+        {
+            _players[id].obj.transform.position = _end_position[i];
+            _player_id = -1;
+            _target[0] = null;
+            return;
+        }
+
+        
+
+        _startTime[i] = Time.timeSinceLevelLoad;
+        _start_position[i] = _players[id].obj.transform.position;
+        _target[i] = target_pos;
+        _end_position[i] = _target[i].transform.localPosition;
+
+        Vector3 direc = Vector3.Cross(_start_position[i], _end_position[i]).normalized;
+        switch (_player_id)
+        {
+        case 0:
+                _end_position[i].x -= ADJUST_PLAYER_POS;
+                _end_position[i].z += ADJUST_PLAYER_POS;
+            break;
+        case 1:
+                _end_position[i].x += ADJUST_PLAYER_POS;
+                _end_position[i].z -= ADJUST_PLAYER_POS;
+                break;
+        }
+        _end_position[i].y += 0.3f;
+        _move_flag = true;
+    }
+    /// <summary>
+    /// プレイヤーを動かす処理
+    /// </summary>
     private void playerMove( int i, int id ) {
         var diff = Time.timeSinceLevelLoad - _startTime[ i ];
         float distance = Vector3.Distance( _players[ id ].obj.transform.position, _end_position[ i ] );
-		if ( diff > _time || distance < 0.1f ) {
+		if ( diff > _time * 2 ) {
 			_players[ id ].obj.transform.position = _end_position[ i ];
             _accel_init = false;
             _limit_value--;
@@ -341,8 +357,7 @@ public class PlayerManager : MonoBehaviour {
             _first_speed = _speed;
             rate = ( _speed * ( diff - 0.2f ) * 10 ) / dis;
         }
-
-        _players[ id ].obj.transform.position = Vector3.Lerp ( _start_position[ i ], _end_position[ i ], rate );
+        _players[ id ].obj.transform.position = Vector3.SmoothDamp(_players[id].obj.transform.position, _end_position[i], ref _velocity , _time);//Vector3.Lerp ( _start_position[ i ], _end_position[ i ], rate );
     }
     
 	/// <summary>
