@@ -3,11 +3,12 @@ using System.Collections;
 using Common;
 
 public class Card : MonoBehaviour {
+    [SerializeField]
 	private GameObject _front_object;
 	private Material _front_material;
 	private CARD_DATA _card_data;
 
-	void start (){
+	void Awake (){
 		if ( _front_material == null ) {
 			_front_object = gameObject.transform.FindChild( "Front" ).gameObject;
 		}

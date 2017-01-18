@@ -26,6 +26,8 @@ public class ApplicationManager : Manager< ApplicationManager > {
     private StageManager _stage_manager;
 	[ SerializeField ]
 	private CameraManager _camera_manager;
+    [ SerializeField ]
+    private ClientPlayerManager _client_player_manager;
 
     [ SerializeField ]
     private NetworkGUIControll _network_gui_controll;
@@ -106,6 +108,9 @@ public class ApplicationManager : Manager< ApplicationManager > {
 			}
 			if ( _camera_manager == null ) {
 				_camera_manager = Camera.main.GetComponent< CameraManager >( );
+			}
+            if ( _client_player_manager == null ) {
+				_client_player_manager = GameObject.Find( "ClientPlayerManager" ).GetComponent< ClientPlayerManager >( );
 			}
 			_network_gui_controll = GameObject.Find( "NetworkManager" ).GetComponent< NetworkGUIControll >( );
 		}
