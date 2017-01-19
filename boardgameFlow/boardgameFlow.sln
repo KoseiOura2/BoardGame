@@ -1,7 +1,7 @@
-﻿
-Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2015
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "boardgameFlow.CSharp", "boardgameFlow.CSharp.csproj", "{B7F62293-5A51-A13A-F0AF-6BAF07ABDC42}"
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2008
+
+Project("{46174634-27F2-46F7-D19A-E62713D9D64F}") = "boardgameFlow", "Assembly-CSharp.csproj", "{8E653294-F71D-8CE7-40A5-5701BC0BB5AE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -9,12 +9,15 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{B7F62293-5A51-A13A-F0AF-6BAF07ABDC42}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{B7F62293-5A51-A13A-F0AF-6BAF07ABDC42}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{B7F62293-5A51-A13A-F0AF-6BAF07ABDC42}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{B7F62293-5A51-A13A-F0AF-6BAF07ABDC42}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8E653294-F71D-8CE7-40A5-5701BC0BB5AE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8E653294-F71D-8CE7-40A5-5701BC0BB5AE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8E653294-F71D-8CE7-40A5-5701BC0BB5AE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8E653294-F71D-8CE7-40A5-5701BC0BB5AE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(MonoDevelopProperties) = preSolution
+		StartupItem = Assembly-CSharp.csproj
 	EndGlobalSection
 EndGlobal

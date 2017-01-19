@@ -803,6 +803,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
 			Debug.Log ("トラップ発動");
 			Debug.Log ("カード" + _file_manager.getMassValue( i )[ 1 ] + "捨てる");
 			Debug.Log (_file_manager.getMassValue( i )[ 0 ] + "マス進む");
+            _player_manager.setCurrentFlag( true );
 			_player_manager.setPlayerID( id );
 			_player_manager.setAdvanceFlag( true );
 			_player_manager.setLimitValue( _file_manager.getMassValue( i )[ 0 ] );
@@ -812,6 +813,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
 			Debug.Log( "トラップ発動");
 			Debug.Log( "カード"+_file_manager.getMassValue( i )[ 0 ] + "ドロー");
 			Debug.Log( _file_manager.getMassValue( i )[ 1 ] + "マス戻る" );
+            _player_manager.setCurrentFlag( true );
 			_player_manager.setPlayerID( id );
 			_player_manager.setAdvanceFlag( false );
 			_player_manager.setLimitValue( _file_manager.getMassValue( i )[ 1 ] );
@@ -820,6 +822,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
 		case "advance":
 			Debug.Log(_file_manager.getMassValue( i )[ 0 ] + "マス進む" );
 			_player_manager.setPlayerID( id );
+            _player_manager.setCurrentFlag( true );
 			_player_manager.setAdvanceFlag( true );
 			_player_manager.setLimitValue( _file_manager.getMassValue( i )[ 0 ] );
             _player_manager.setEventType( id, EVENT_TYPE.EVENT_MOVE );
@@ -839,6 +842,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
 			} else if ( _player_manager.getPlayerResult( id ) == BATTLE_RESULT.LOSE || _player_manager.getPlayerResult( id ) == BATTLE_RESULT.DRAW ) {
 				_player_manager.setPlayerID( id );
 				_player_manager.setAdvanceFlag ( false );
+                _player_manager.setCurrentFlag( true );
 				_player_manager.setLimitValue( 1 );
                 _player_manager.setEventType( id, EVENT_TYPE.EVENT_MOVE );
 			}

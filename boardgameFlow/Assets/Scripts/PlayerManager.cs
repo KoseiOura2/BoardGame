@@ -49,6 +49,8 @@ public class PlayerManager : MonoBehaviour {
 	[ SerializeField ]
 	private bool[ ] _event_finish = new bool[ ]{ false, false };
     private bool _advance_flag = true;   	//前に進むか後ろに戻るか
+    [ SerializeField ]
+    private bool _current_flag = false;
     
     private bool _accel_init = false;
     private float _accel = 0.0f;
@@ -293,7 +295,8 @@ public class PlayerManager : MonoBehaviour {
             return;
         }
 
-        
+        if(_current_flag) _time = 1.0f;
+        else _time = 0.5f;
 
         _startTime[i] = Time.timeSinceLevelLoad;
         _start_position[i] = _players[id].obj.transform.position;
@@ -321,41 +324,28 @@ public class PlayerManager : MonoBehaviour {
     private void playerMove( int i, int id ) {
         var diff = Time.timeSinceLevelLoad - _startTime[ i ];
         float distance = Vector3.Distance( _players[ id ].obj.transform.position, _end_position[ i ] );
-		if ( diff > _time * 2 ) {
+		if ( diff > _time * 3.5f ) {
 			_players[ id ].obj.transform.position = _end_position[ i ];
             _accel_init = false;
-            _limit_value--;
-			if ( _advance_flag ) {
-				_players[ id ].advance_count++;
-			} else {
-				_players[ id ].advance_count--;
-			}
+            
+            if( _current_flag ) {
+			    if ( _advance_flag ) {
+				    _players[ id ].advance_count += _limit_value;
+			    } else {
+				    _players[ id ].advance_count -= _limit_value;
+			    }
+                _limit_value = 0;
+            } else {
+                if ( _advance_flag ) {
+				    _players[ id ].advance_count++;
+			    } else {
+				    _players[ id ].advance_count--;
+			    }
+                _limit_value--;
+            }
+            _current_flag = false;
             _move_flag = false;
             return;
-        }
-
-        float dis = Vector3.Distance( _start_position[ i ], _end_position[ i ] );
-		float rate = 0.0f;
-        if ( !_accel_init ) {
-            _accel = 0.0f;
-            _speed = 0.0f;
-            _first_speed = 0.0f;
-            _accel_init = true;
-        }
-
-        if ( diff >= 0 && diff < 0.2 ) {
-            _first_speed = 0.0f;
-            _accel = 0.1f;
-            _speed = _accel * diff * 10;
-            _first_speed = _speed;
-            rate = ( _speed * diff / 2 ) / dis;
-        } else if ( diff > 0.75 ) {
-            _accel = -0.1f;
-            _speed = _accel * ( diff - 0.75f ) * 10 + _first_speed;
-            rate = ( _speed * ( diff - 0.75f ) * 10 / 2 ) / dis;
-        } else {
-            _first_speed = _speed;
-            rate = ( _speed * ( diff - 0.2f ) * 10 ) / dis;
         }
         _players[ id ].obj.transform.position = Vector3.SmoothDamp(_players[id].obj.transform.position, _end_position[i], ref _velocity , _time);//Vector3.Lerp ( _start_position[ i ], _end_position[ i ], rate );
     }
@@ -512,13 +502,21 @@ public class PlayerManager : MonoBehaviour {
 	public int getTargetMassID( int length ) {
 		if( _advance_flag ) {
 			if( getPlayerCount( getPlayerID( ), length ) < length - 1 ) {
-				return getPlayerCount( getPlayerID( ), length ) + 1;
+                if( _current_flag ){
+				    return getPlayerCount( getPlayerID( ), length ) + _limit_value;
+                } else {
+                    return getPlayerCount( getPlayerID( ), length ) + 1;
+                }
 			} else {
                 _limit_value = 0;
 				return getPlayerCount( getPlayerID( ), length );
 			}
 		} else {
-			return getPlayerCount( getPlayerID( ), length ) - 1;
+            if( _current_flag ){
+                return getPlayerCount( getPlayerID( ), length ) - _limit_value;
+            } else {
+			    return getPlayerCount( getPlayerID( ), length ) - 1;
+            }
 		}
 	}
 
@@ -581,6 +579,10 @@ public class PlayerManager : MonoBehaviour {
 	public void setAdvanceFlag( bool flag ) {
 		_advance_flag = flag;
 	}
+
+    public void setCurrentFlag( bool flag ){
+        _current_flag = flag;
+    }
 
 	public void setLimitValue( int value ) {
 		_limit_value = value;
