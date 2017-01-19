@@ -9,12 +9,16 @@ public class PhaseManager : MonoBehaviour {
     private MAIN_GAME_PHASE _main_game_phase;   // メインゲームのフロー
 	private bool _phase_changed = false;
 
+    private Sprite _dice_phase_image;
+    private GameObject _phase_image_obj;
 	public Text _phase_text;
 
 	// Use this for initialization
 	void Start( ) {
         _main_game_phase = MAIN_GAME_PHASE.GAME_PHASE_NO_PLAY;
 		_phase_text.text = "NoPlay";
+
+        _dice_phase_image = Resources.Load< Sprite >( "Graphics/UI/ui_phase_dice" );
 	}
 	
 	// Update is called once per frame
@@ -36,6 +40,20 @@ public class PhaseManager : MonoBehaviour {
         catch {
             Debug.Log( log_text + "へ移行できませんでした。" );
         }
+    }
+
+    public void createPhaseText( MAIN_GAME_PHASE phase ) {
+        _phase_image_obj = new GameObject( "PhaseImage" );
+        _phase_image_obj.transform.parent = GameObject.Find( "Canvas" ).transform;
+        _phase_image_obj.AddComponent< RectTransform >( ).anchoredPosition = new Vector3( 0, 0, 0 );
+        _phase_image_obj.GetComponent< RectTransform >( ).localScale = new Vector3( 1, 1, 1 );
+        switch ( phase ) {
+            case MAIN_GAME_PHASE.GAME_PHASE_DICE:
+                _phase_image_obj.AddComponent< Image >( ).sprite = _dice_phase_image;
+            break;
+        }
+        _phase_image_obj.GetComponent< Image >( ).preserveAspect = true;
+        _phase_image_obj.GetComponent< Image >( ).SetNativeSize( );
     }
 
 	/// <summary>

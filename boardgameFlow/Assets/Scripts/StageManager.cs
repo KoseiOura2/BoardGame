@@ -29,7 +29,7 @@ public class StageManager : MonoBehaviour {
 		_sea_color = new Color[ ]{ SHOAL_COLOR, MESOPELAGIC_COLOR, DEEP_SEA_COLOR, GOAL_COLOR };
 
 		for( int i = 0; i < _mass_list.Count - 1; i++ ) {
-			_mass_prefab = ( GameObject )Resources.Load( "Prefabs/masu_mini" );
+			_mass_prefab = ( GameObject )Resources.Load( "Prefabs/Mass/mass_mini" );
 			Vector3 pos = Vector3.Lerp( _mass_list[ i ].transform.localPosition, _mass_list[ i + 1 ].transform.localPosition, 0.5f );
 			GameObject obj = ( GameObject )Instantiate( _mass_prefab, pos, _mass_prefab.transform.localRotation );
 			obj.transform.parent = _mass_list[ i ].transform;
@@ -56,18 +56,18 @@ public class StageManager : MonoBehaviour {
 		switch ( type ) {
 			case "start":
 			case "goal":
-				_mass_prefab = ( GameObject )Resources.Load( "Prefabs/masu_yellow" );
+				_mass_prefab = ( GameObject )Resources.Load( "Prefabs/Mass/mass_yellow" );
                 break;
             case "draw":
             case "advance":
-				_mass_prefab = ( GameObject )Resources.Load( "Prefabs/masu_blue" );
+				_mass_prefab = ( GameObject )Resources.Load( "Prefabs/Mass/mass_blue" );
                 break;
 			case "trap1":
 			case "trap2":
-				_mass_prefab = ( GameObject )Resources.Load( "Prefabs/masu_red" );
+				_mass_prefab = ( GameObject )Resources.Load( "Prefabs/Mass/mass_red" );
 				break;
 			case "event":
-				_mass_prefab = ( GameObject )Resources.Load( "Prefabs/masu_green" );
+				_mass_prefab = ( GameObject )Resources.Load( "Prefabs/Mass/mass_green" );
                 break;
         }
 

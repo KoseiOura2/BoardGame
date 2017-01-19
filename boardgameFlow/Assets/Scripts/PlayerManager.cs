@@ -60,8 +60,8 @@ public class PlayerManager : MonoBehaviour {
     /// <param name="first_pos"></param>
     public void init( Vector3 first_pos ) {
 
-		_player_pref[ 0 ] = ( GameObject )Resources.Load( "Prefabs/Player1" );
-		_player_pref[ 1 ] = ( GameObject )Resources.Load( "Prefabs/Player2" );
+		_player_pref[ 0 ] = ( GameObject )Resources.Load( "Prefabs/Player/Player1" );
+		_player_pref[ 1 ] = ( GameObject )Resources.Load( "Prefabs/Player/Player2" );
 
         createObj( first_pos );
         // playerオブジェクトの色替え

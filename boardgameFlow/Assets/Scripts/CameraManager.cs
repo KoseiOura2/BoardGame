@@ -39,7 +39,8 @@ public class CameraManager : MonoBehaviour {
 		// カメラの座標を計算
 		float y = distance * Mathf.Sin( CAMERA_ANGLE );
 		float z = distance * Mathf.Cos( CAMERA_ANGLE );
-		Camera.main.transform.position = new Vector3( view_x, y, z );
+        float adjust = -5.0f;
+		Camera.main.transform.position = new Vector3( view_x, y, z + adjust );
 
 		// カメラの回転を計算
 		Camera.main.transform.LookAt( view_point );

@@ -109,9 +109,6 @@ public class ApplicationManager : Manager< ApplicationManager > {
 			if ( _camera_manager == null ) {
 				_camera_manager = Camera.main.GetComponent< CameraManager >( );
 			}
-            if ( _client_player_manager == null ) {
-				_client_player_manager = GameObject.Find( "ClientPlayerManager" ).GetComponent< ClientPlayerManager >( );
-			}
 			_network_gui_controll = GameObject.Find( "NetworkManager" ).GetComponent< NetworkGUIControll >( );
 		}
 		catch {
@@ -370,6 +367,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
         // サイコロフェイズへの移行
 		StartCoroutine( "gameStart" );
         _phase_manager.changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_DICE, "DicePhase" );
+        _phase_manager.createPhaseText( MAIN_GAME_PHASE.GAME_PHASE_DICE );
 	}
     
     private IEnumerator gameStart( ) {
