@@ -206,6 +206,9 @@ public class HostData : NetworkBehaviour {
 		_field_data.send_card[ 1 ] = _network_send_card_two;
 
 		for ( int i = 0; i < _network_card_list_0.Count; i++ ) {
+            if ( _field_data.card_list_one.Length < _network_card_list_0.Count ) {
+                Debug.Log( _network_card_list_0.Count );
+            }
             _field_data.card_list_one[ i ] = _network_card_list_0[ i ];
         }
         for ( int i = 0; i < _network_card_list_1.Count; i++ ) {

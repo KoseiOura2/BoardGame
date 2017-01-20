@@ -113,8 +113,6 @@ public class ClientPlayerManager : MonoBehaviour {
 
 		//IDのカードデータを取得
 		card = _card_manager.getCardData( get_card_id );
-
-		Debug.Log( card.name );
 		//カードを手札に追加
 		_player_card.hand_list.Add( card );
     }
@@ -226,15 +224,24 @@ public class ClientPlayerManager : MonoBehaviour {
 	/// </summary>
 	/// <returns>The select card.</returns>
 	public int[ ] dicisionSelectCard( ) {
+        List< int > card_num = new List< int >( );
 		for ( int i = 0; i < _player_card.hand_list.Count; i++ ) {
 			if ( _player_card.hand_obj_list[ i ].GetComponent< Card >( ).getSelectFlag( ) ) {
 				// 選択カードに登録
 				_player_card.select_list.Add( _player_card.hand_list[ i ] );
-				// 選択したカードを削除
-				deletePlayerCardData( i );
-				deletePlayerCardObject( i );
+
+                card_num.Add( i );
 			}
 		}
+        
+        int count = 0;
+		for ( int i = 0; i < card_num.Count; i++ ) {
+			// 選択したカードを削除
+		    deletePlayerCardData( card_num[ i ] - count );
+		    deletePlayerCardObject( card_num[ i ] - count );
+            count++;
+		}
+		
 
 		// 選択カードのIDを返す
 		int[ ] card_list = new int[ _player_card.select_list.Count ];

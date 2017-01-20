@@ -291,6 +291,7 @@ public class ApplicationManager : MonoBehaviour {
 				Debug.Log( player_status.ToString( ) );
 				_client_data.CmdSetSendBattleData( true, player_status, card_list, turned_card_list );
 				_client_data.setBattleData( true, player_status, card_list, turned_card_list );
+                _player_manager.refreshSelectCard( );
 			}
 		}
 	}

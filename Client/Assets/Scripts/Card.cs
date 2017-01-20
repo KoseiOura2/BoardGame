@@ -7,6 +7,7 @@ public class Card : MonoBehaviour {
 	private GameObject _front_object;
 	private Material _front_material;
 	private CARD_DATA _card_data;
+	[ SerializeField ]
 	private int _hand_num = -1;
 	[ SerializeField ]
 	private bool _selected;
