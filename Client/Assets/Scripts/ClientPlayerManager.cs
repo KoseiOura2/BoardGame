@@ -38,7 +38,7 @@ public class ClientPlayerManager : MonoBehaviour {
 			_hand_Area = GameObject.Find( "HandArea" );
 		}
 		if ( _hand_Area2 == null ) {
-			_hand_Area2 = GameObject.Find( "HandArea" );
+			_hand_Area2 = GameObject.Find( "SelectHandArea" );
 		}
 		if ( _card_obj == null ) {
 			_card_obj = ( GameObject )Resources.Load( "Prefabs/Card" );
@@ -134,6 +134,7 @@ public class ClientPlayerManager : MonoBehaviour {
 		float handArea_postion_y;
 		if (selected) {
 			handArea_postion_y = _selected_position_y;
+			Debug.Log ("card position y = " + handArea_postion_y);
 		} else {
 			handArea_postion_y = _no_select_position_y;
 		}
@@ -182,13 +183,8 @@ public class ClientPlayerManager : MonoBehaviour {
 				Card card = hit.collider.gameObject.GetComponent<Card>();
 				card_data = card.getCardData ();
 				card.setSelectFlag(!card.getSelectFlag());
-				//以下未実装項目
-				#if false
-				//getSelectCardでオブジェクト番号（何番目の手札か？）をlist検索などで判別
-
-				//playerCardPositionSettingで選択状態を判別して表示位置を更新
-				playerCardPositionSetting(playerCardID, card.getSelectFlag());
-				#endif 
+				int id = _player_card.hand_list.IndexOf(card_data);
+				playerCardPositionSetting(id, card.getSelectFlag());
 			}
 		}
 		return card_data;
