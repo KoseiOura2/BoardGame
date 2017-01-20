@@ -67,14 +67,16 @@ public class CardManager : MonoBehaviour {
 	void Start( ) {
 
 	}
+
 	#if UNITY_EDITOR
 	// Update is called once per frame
 	void Update( ) {
-		if (_card_datas.Count == 0) {
-			loadCardDataFile ();
+		if ( _card_datas.Count == 0 ) {
+			loadCardDataFile( );
 		}
 	}
 	#endif 
+
 	/// <summary>
 	/// デッキの読み込み
 	/// </summary>
@@ -163,11 +165,11 @@ public class CardManager : MonoBehaviour {
 	/// 第一引数ID 返り値カードデータ　失敗した場合ダミーデータ
 	/// </summary>
 	public CARD_DATA getCardData( int id ) {
-		Debug.Log (id);
+		Debug.Log( id );
 		try {
 			return _card_datas[ id ];
 		} catch {
-			Debug.Log("カードデータ取得エラー");
+			Debug.Log( "カードデータ取得エラー" );
 			return _card_datas[ 0 ];
 		}
 	}

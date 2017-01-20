@@ -5,40 +5,50 @@ using System.Collections.Generic;
 using Common;
 
 public class ClientPlayerManager : MonoBehaviour {
-	
+
+	private const float MAX_DICE_VALUE = 3.9f;
+	private const float MIN_DICE_VALUE = 1.0f;
+	private const int INIT_PLAYER_POWER = 10;
+
+	/// <summary>
+	/// プレイヤーの持つカードのデータ
+	/// </summary>
 	private struct PLAYER_CARD_DATA {
 		public List< CARD_DATA >  hand_list;
 		public List< GameObject > hand_obj_list;
 		public List< Vector3 >    select_position;
+		public List< CARD_DATA >  select_list;
 	}
 
 	[ SerializeField ]
 	private CardManager _card_manager;
 	[ SerializeField ]
 	private PLAYER_CARD_DATA _player_card = new PLAYER_CARD_DATA( );
+	private PLAYER_DATA _player_data;
 	[ SerializeField ]
-	private GameObject _hand_Area;
-	private GameObject _hand_Area2;
-	float handArea_Width_Size;
+	private GameObject _hand_area;
+	private GameObject _select_area;
+	private float _hand_area_width;
 	private float _no_select_position_y;
 	private float _selected_position_y;
-	public GameObject _card_obj;
+	private int _dice_value = 0;
+	private bool _dice_roll = false;
+
 	#if UNITY_EDITOR
 	private bool _debug_inst_flag;
-	/// <summary>
-	/// オートで生成したくない場合はfalseに
-	/// </summary>
-	[SerializeField]
-	private bool _auto_inst_flag = false;
+	[ SerializeField ]
+	private bool _auto_inst_flag = false;	// オートで生成したくない場合はfalseに
 	#endif
+
+	public GameObject _card_obj;
 
 	// Use this for initialization
 	void Start( ) {
-		if ( _hand_Area == null ) {
-			_hand_Area = GameObject.Find( "HandArea" );
+		if ( _hand_area == null ) {
+			_hand_area = GameObject.Find( "HandArea" );
 		}
-		if ( _hand_Area2 == null ) {
-			_hand_Area2 = GameObject.Find( "SelectHandArea" );
+		if ( _select_area == null ) {
+			_select_area = GameObject.Find( "SelectHandArea" );
 		}
 		if ( _card_obj == null ) {
 			_card_obj = ( GameObject )Resources.Load( "Prefabs/Card" );
@@ -46,12 +56,18 @@ public class ClientPlayerManager : MonoBehaviour {
 		if ( _card_manager == null ) {
 			_card_manager = GameObject.Find( "CardManager" ).GetComponent< CardManager >( );
 		}
+
+		// プレイヤーの初期化
 		_player_card.hand_list       = new List< CARD_DATA >( );
 		_player_card.hand_obj_list   = new List< GameObject >( );
 		_player_card.select_position = new List< Vector3 >( );
-		handArea_Width_Size = _hand_Area.GetComponent< Transform >( ).localScale.x;
-		_no_select_position_y = _hand_Area.GetComponent< Transform > ().position.y;
-		_selected_position_y = _hand_Area2.GetComponent< Transform > ().position.y;
+		_player_card.select_list     = new List< CARD_DATA >( );
+
+		_hand_area_width      = _hand_area.GetComponent< Transform >( ).localScale.x;
+		_no_select_position_y = _hand_area.GetComponent< Transform >( ).position.y;
+		_selected_position_y  = _select_area.GetComponent< Transform >( ).position.y;
+
+		_player_data.power = INIT_PLAYER_POWER;
 	}
 	
 	/// <summary>
@@ -60,7 +76,7 @@ public class ClientPlayerManager : MonoBehaviour {
 	#if UNITY_EDITOR
 	void Update( ) {
         // カードデータの追加
-		if ( Input.GetKeyDown( KeyCode.X ) || _auto_inst_flag) {
+		if ( Input.GetKeyDown( KeyCode.X ) || _auto_inst_flag ) {
 			//適当に追加　ToDoランダムに手札を追加する機能
 			addPlayerCard( 1 );
 			addPlayerCard( 2 );
@@ -71,28 +87,28 @@ public class ClientPlayerManager : MonoBehaviour {
 			_debug_inst_flag = true;
 		}
 
-		if (Input.GetKeyDown (KeyCode.U) && _debug_inst_flag || _auto_inst_flag && _debug_inst_flag) {
+		if ( Input.GetKeyDown( KeyCode.U ) && _debug_inst_flag || _auto_inst_flag && _debug_inst_flag ) {
 			// カードオブジェクトの更新処理
-			updateAllPlayerCard ();
+			updateAllPlayerCard( );
 			_debug_inst_flag = false;
-			if (_auto_inst_flag) {
+			if ( _auto_inst_flag ) {
 				_auto_inst_flag = false;
 			}
 		}
-		if (mouseClick ()) {
+
+		if ( mouseClick( ) ) {
 			//GUIにカード情報表示用
-			Debug.Log (getSelectCard().name);
+			Debug.Log( getSelectCard( ).name );
 		}
 
 	}
 	#endif
 
-	//現在の手札の生成を行う
     /// <summary>
 	/// 手札にカードを追加する処理(追加用のカードIDを登録)
     /// </summary>
     /// <param name="get_card_id"></param>
-	private void addPlayerCard( int get_card_id ) {
+	public void addPlayerCard( int get_card_id ) {
 		CARD_DATA card;
 
 		//IDのカードデータを取得
@@ -115,46 +131,51 @@ public class ClientPlayerManager : MonoBehaviour {
     /// 手札の更新を行う
     /// </summary>
 	public void updateAllPlayerCard( ) {
-		//allDeletePlayerCard ();
+		allDeletePlayerCard( );
 		for ( int i = 0; i < _player_card.hand_list.Count; i++ ) {
 			//プレハブを生成してリストのオブジェクトに入れる
 			_player_card.hand_obj_list.Add( ( GameObject )Instantiate( _card_obj ) );
 			//カードデータ設定
 			_player_card.hand_obj_list[ i ].GetComponent< Card >( ).setCardData( _player_card.hand_list[ i ] );
-			playerCardPositionSetting(i, false);
+			_player_card.hand_obj_list[ i ].GetComponent< Card >( ).changeHandNum( i );
+			playerCardPositionSetting( i, false );
 		}
 	}
 
 	/// <summary>
-	/// カードの表示場所を設定　第一引数手札ID 第二引数ture=選択状態 false=！選択状態
+	/// カードの表示場所を設定
 	/// </summary>
-	/// <param name="list_id">List identifier.</param>
-	/// <param name="selected">If set to <c>true</c> selected.</param>
-	private void playerCardPositionSetting(int list_id, bool selected ){
-		float handArea_postion_y;
-		if (selected) {
-			handArea_postion_y = _selected_position_y;
-			Debug.Log ("card position y = " + handArea_postion_y);
+	/// <param name="list_id"> 手札ID </param>
+	/// <param name="selected"> ture=選択状態 false=！選択状態 </param>
+	private void playerCardPositionSetting( int list_id, bool selected ) {
+		float hand_area_postion_y;
+
+		if ( selected ) {
+			hand_area_postion_y = _selected_position_y;
+			Debug.Log ( "card position y = " + hand_area_postion_y );
 		} else {
-			handArea_postion_y = _no_select_position_y;
+			hand_area_postion_y = _no_select_position_y;
 		}
-		float start_Card_Point = ( handArea_Width_Size / 2 ) - _player_card.hand_obj_list[ list_id ].transform.localScale.x;
-		float card_potision_x;
+
+		float start_card_point = ( _hand_area_width / 2 ) - _player_card.hand_obj_list[ list_id ].transform.localScale.x;
+		float card_potision_x = 0.0f;
+
 		//手札が6枚以下なら
 		//カード間に現在の生成中の手札の順番を掛ける
-		card_potision_x = -start_Card_Point + ( handArea_Width_Size / _player_card.hand_list.Count ) * list_id;
+		card_potision_x = -start_card_point + ( _hand_area_width / _player_card.hand_list.Count ) * list_id;
 		//位置を設定する
-		_player_card.hand_obj_list[ list_id ].GetComponent< Transform >( ).position = new Vector3( card_potision_x, handArea_postion_y, 3 );
+		_player_card.hand_obj_list[ list_id ].GetComponent< Transform >( ).position = new Vector3( card_potision_x, hand_area_postion_y, 3 );
 	}
 		
 	/// <summary>
 	/// 手札を全て削除
 	/// </summary>
-	public void allDeletePlayerCard(){
-		for (int i = 0; i < _player_card.hand_obj_list.Count + 1; i++){
+	public void allDeletePlayerCard( ) {
+		for ( int i = 0; i < _player_card.hand_obj_list.Count; i++ ) {
 			deletePlayerCardObject( i );
 		}
 	}
+
     /// <summary>
     /// 任意の持ち札オブジェクトを削除する
     /// </summary>
@@ -170,35 +191,107 @@ public class ClientPlayerManager : MonoBehaviour {
 	/// </summary>
 	/// <returns>The select card.</returns>
 	public CARD_DATA getSelectCard( ) {
-		CARD_DATA card_data = _card_manager.getCardData(0);		//念のためダミーデータを挿入
+		CARD_DATA card_data = _card_manager.getCardData( 0 );		//念のためダミーデータを挿入
 		/*http://qiita.com/valbeat/items/799a18da3174a6af0b89*/
 		float distance = 100f;
-		Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+
+		Ray ray = Camera.main.ScreenPointToRay( Input.mousePosition );
 		// Rayの当たったオブジェクトの情報を格納する
-		RaycastHit hit = new RaycastHit();
+		RaycastHit hit = new RaycastHit( );
 		// オブジェクトにrayが当たった時
-		if (Physics.Raycast(ray, out hit, distance)) {
+		if ( Physics.Raycast( ray, out hit, distance ) ) {
 			// rayが当たったオブジェクトの名前を取得
-			if (hit.collider.gameObject.name == "Card(Clone)") {
-				Card card = hit.collider.gameObject.GetComponent<Card>();
-				card_data = card.getCardData ();
-				card.setSelectFlag(!card.getSelectFlag());
-				int id = _player_card.hand_list.IndexOf(card_data);
-				playerCardPositionSetting(id, card.getSelectFlag());
+			if ( hit.collider.gameObject.name == "Card(Clone)" ) {
+				Card card = hit.collider.gameObject.GetComponent< Card >( );
+				card_data = card.getCardData( );
+				card.setSelectFlag( !card.getSelectFlag( ) );
+				int id = card.getHandNum( );
+				playerCardPositionSetting( id, card.getSelectFlag( ) );
 			}
 		}
 		return card_data;
 	}
 
 	/// <summary>
+	/// ダイスの目を決定
+	/// </summary>
+	public void dicisionDiceValue( ) {
+		_dice_value = ( int )Random.Range( MIN_DICE_VALUE, MAX_DICE_VALUE );
+
+		_dice_roll = true;
+	}
+
+	/// <summary>
+	/// 選択したカードを決定する
+	/// </summary>
+	/// <returns>The select card.</returns>
+	public int[ ] dicisionSelectCard( ) {
+		for ( int i = 0; i < _player_card.hand_list.Count; i++ ) {
+			if ( _player_card.hand_obj_list[ i ].GetComponent< Card >( ).getSelectFlag( ) ) {
+				// 選択カードに登録
+				_player_card.select_list.Add( _player_card.hand_list[ i ] );
+				// 選択したカードを削除
+				deletePlayerCardData( i );
+				deletePlayerCardObject( i );
+			}
+		}
+
+		// 選択カードのIDを返す
+		int[ ] card_list = new int[ _player_card.select_list.Count ];
+		for ( int i = 0; i < _player_card.select_list.Count; i++ ) {
+			card_list[ i ] = _player_card.select_list[ i ].id;
+		}
+
+		return card_list;
+	}
+
+	public void refreshSelectCard( ) {
+		_player_card.select_list.Clear( );
+	}
+
+	/// <summary>
+	/// ダイスの目を返す
+	/// </summary>
+	/// <returns>The dice value.</returns>
+	public int getDiceValue( ) {
+		return _dice_value;
+	}
+
+	/// <summary>
+	/// ダイスの目を初期化
+	/// </summary>
+	public void initDiceValue( ) {
+		_dice_value = 0;
+	}
+
+	public PLAYER_DATA getPlayerData( ) {
+		return _player_data;
+	}
+
+	/// <summary>
+	/// ダイスをふったかどうかを返す
+	/// </summary>
+	/// <returns><c>true</c>, if dice roll was ised, <c>false</c> otherwise.</returns>
+	public bool isDiceRoll( ) {
+		if ( _dice_roll == true ) {
+			_dice_roll = false;
+			return true;
+		}
+
+		return false;
+	}
+
+	/// <summary>
 	/// マウスの左クリックの状態を取得
 	/// </summary>
 	/// <returns><c>true</c>, if click was moused, <c>false</c> otherwise.</returns>
-	public bool mouseClick(){
-		if (Input.GetMouseButtonDown (0)) {
-			return true;
-		} else {
-			return false;
+	public bool mouseClick( ) {
+		bool flag = false;
+
+		if ( Input.GetMouseButtonDown( 0 ) ) {
+			flag = true;
 		}
+
+		return flag;
 	}
 }

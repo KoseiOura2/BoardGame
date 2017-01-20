@@ -6,41 +6,41 @@ using Common;
 
 public class HostData : NetworkBehaviour {
 
-    [SerializeField]
+    [ SerializeField ]
     private SERVER_STATE _server_state = SERVER_STATE.STATE_NONE;
 
     // networkdata
-    [SyncVar]
-    public int _network_scene_data;
-    [SyncVar]
+    [ SyncVar ]
+	public int _network_scene_data;
+	[ SyncVar ]
     public int _network_phase_data;
 
     public SyncListInt _network_card_list_0 = new SyncListInt ( );
     public SyncListInt _network_card_list_1 = new SyncListInt ( );
 
-    /// //////////////////////////////////////////////////////~
-    [SyncVar]
-    public int _network_player_num;
-    /// ///////////////////////////////////////////////////////////\
-	[SyncVar]
-    public bool _network_change_scene;
-    [SyncVar]
-    public bool _network_change_phase;
-    [SyncVar]
-    public int _network_battle_result_one;
-    [SyncVar]
-    public int _network_battle_result_two;
-    [SyncVar]
-    public bool _network_send_result;
+	[ SyncVar ]
+	public int _network_player_num;
+	[ SyncVar ]
+	public bool _network_change_scene;
+	[ SyncVar ]
+	public bool _network_change_phase;
+	[ SyncVar ]
+	public int _network_battle_result_one;
+	[ SyncVar ]
+	public int _network_battle_result_two;
+	[ SyncVar ]
+	public bool _network_send_result;
+	[ SyncVar ]
+	public bool _network_send_card_one;
+	[ SyncVar ]
+	public bool _network_send_card_two;
 
     private NETWORK_FIELD_DATA _field_data;
 
     public int DISTRIBUT_CARD_NUM = 3;
 
     void Awake ( ) {
-        ///////////////////////////////////////~
         _network_player_num = -1;
-        /////////////////////////////////////////\
         _network_scene_data = 0;
         _network_phase_data = 0;
         _network_change_scene = false;
@@ -48,10 +48,10 @@ public class HostData : NetworkBehaviour {
         _network_battle_result_one = 0;
         _network_battle_result_two = 0;
         _network_send_result = false;
+		_network_send_card_one = false;
+		_network_send_card_two = false;
 
-        /////////////////////////////////////////////////////~
         _field_data.player_num = -1;
-        /////////////////////////////////////////////////////\
         _field_data.scene = ( SCENE )_network_scene_data;
         _field_data.main_game_phase = ( MAIN_GAME_PHASE )_network_phase_data;
         _field_data.change_scene = _network_change_scene;
@@ -61,6 +61,7 @@ public class HostData : NetworkBehaviour {
         _field_data.result_player_one = ( BATTLE_RESULT )_network_battle_result_one;
         _field_data.result_player_two = ( BATTLE_RESULT )_network_battle_result_two;
         _field_data.send_result = _network_send_result;
+		_field_data.send_card = new bool[ ]{ false, false };
     }
 
     // Use this for initialization
@@ -79,24 +80,22 @@ public class HostData : NetworkBehaviour {
 
     }
 
-    ////////////////////////////////////////////////////////~
     /// <summary>
     /// 新しいプレイヤー接続時、プレイヤー番号を一つ繰り上げ
     /// </summary>
-    [Server]
+    [ Server ]
     public void increasePlayerNum ( ) {
         if ( isLocalPlayer ) {
             _field_data.player_num++;
             _network_player_num++;
         }
     }
-    /////////////////////////////////////////////////////////\
 
     /// <summary>
     /// scenedataのセット
     /// </summary>
 	/// <param name="data"></param>
-	[Server]
+	[ Server ]
     public void setSendScene ( SCENE data ) {
         if ( isLocalPlayer ) {
             _field_data.scene = data;
@@ -108,7 +107,7 @@ public class HostData : NetworkBehaviour {
     /// phasedataのセット
     /// </summary>
     /// <param name="data"></param>
-    [Server]
+    [ Server ]
     public void setSendGamePhase ( MAIN_GAME_PHASE data ) {
         if ( isLocalPlayer ) {
             _field_data.main_game_phase = data;
@@ -120,7 +119,7 @@ public class HostData : NetworkBehaviour {
     /// シーンが変化したかどうかを設定
     /// </summary>
 	/// <param name="flag"></param>
-	[Server]
+	[ Server ]
     public void setSendChangeFieldScene ( bool flag ) {
         _field_data.change_scene = flag;
         _network_change_scene = flag;
@@ -130,7 +129,7 @@ public class HostData : NetworkBehaviour {
     /// フェイズが変化したかどうかを設定
     /// </summary>
     /// <param name="flag"></param>
-    [Server]
+    [ Server ]
     public void setSendChangeFieldPhase ( bool flag ) {
         _field_data.change_phase = flag;
         _network_change_phase = flag;
@@ -141,31 +140,39 @@ public class HostData : NetworkBehaviour {
     /// </summary>
     /// <param name="player_num"></param>
     /// <param name="card_list"></param>
-	[Server]
+	[ Server ]
     public void setSendCardlist ( int player_num, List<int> card_list ) {
         for ( int i = 0; i < card_list.Count; i++ ) {
             if ( player_num == ( int )PLAYER_ORDER.PLAYER_ONE ) {
                 _field_data.card_list_one[ i ] = card_list[ i ];
                 _network_card_list_0.Add ( card_list[ i ] );
+				_field_data.send_card[ player_num ] = true;
+				_network_send_card_one = true;
             } else if ( player_num == ( int )PLAYER_ORDER.PLAYER_TWO ) {
                 _field_data.card_list_two[ i ] = card_list[ i ];
-                _network_card_list_1.Add ( card_list[ i ] );
+				_network_card_list_1.Add ( card_list[ i ] );
+				_field_data.send_card[ player_num ] = true;
+				_network_send_card_two = true;
             }
         }
     }
 
-    [Server]
+    [ Server ]
     public void refreshCardList ( int player_num ) {
         if ( player_num == ( int )PLAYER_ORDER.PLAYER_ONE ) {
             for ( int i = 0; i < _field_data.card_list_one.Length; i++ ) {
                 _field_data.card_list_one[ i ] = -1;
             }
-            _network_card_list_0.Clear ( );
+			_network_card_list_0.Clear ( );
+			_field_data.send_card[ player_num ] = false;
+			_network_send_card_one = false;
         } else if ( player_num == ( int )PLAYER_ORDER.PLAYER_TWO ) {
             for ( int i = 0; i < _field_data.card_list_one.Length; i++ ) {
                 _field_data.card_list_two[ i ] = -1;
             }
-            _network_card_list_1.Clear ( );
+			_network_card_list_1.Clear ( );
+			_field_data.send_card[ player_num ] = false;
+			_network_send_card_two = false;
         }
     }
 
@@ -175,7 +182,7 @@ public class HostData : NetworkBehaviour {
     /// <param name="result_one"></param>
     /// <param name="result_two"></param>
     /// <param name="result"></param>
-	[Server]
+	[ Server ]
     public void setSendBattleResult ( BATTLE_RESULT result_one, BATTLE_RESULT result_two, bool result ) {
         _field_data.result_player_one = result_one;
         _field_data.result_player_two = result_two;
@@ -185,8 +192,7 @@ public class HostData : NetworkBehaviour {
         _network_send_result = result;
     }
 
-    /////////////////////////////////////////////////////////////////~
-    [Client]
+    [ Client ]
     public NETWORK_FIELD_DATA getRecvData ( ) {
         _field_data.player_num = _network_player_num;
         _field_data.scene = ( SCENE )_network_scene_data;
@@ -196,8 +202,10 @@ public class HostData : NetworkBehaviour {
         _field_data.result_player_one = ( BATTLE_RESULT )_network_battle_result_one;
         _field_data.result_player_two = ( BATTLE_RESULT )_network_battle_result_two;
         _field_data.send_result = _network_send_result;
+		_field_data.send_card[ 0 ] = _network_send_card_one;
+		_field_data.send_card[ 1 ] = _network_send_card_two;
 
-        for ( int i = 0; i < _network_card_list_0.Count; i++ ) {
+		for ( int i = 0; i < _network_card_list_0.Count; i++ ) {
             _field_data.card_list_one[ i ] = _network_card_list_0[ i ];
         }
         for ( int i = 0; i < _network_card_list_1.Count; i++ ) {
@@ -206,13 +214,12 @@ public class HostData : NetworkBehaviour {
 
         return _field_data;
     }
-    ///////////////////////////////////////////////////////////////////\
 
     /// <summary>
     /// 
     /// </summary>
     /// <returns><c>true</c>, if change field scene was ised, <c>false</c> otherwise.</returns>
-    [Client]
+    [ Client ]
     public bool isChangeFieldScene ( ) {
         if ( _network_change_scene == true ) {
             _field_data.scene = ( SCENE )_network_scene_data;
@@ -226,8 +233,8 @@ public class HostData : NetworkBehaviour {
     /// 
     /// </summary>
     /// <returns><c>true</c>, if change field scene was ised, <c>false</c> otherwise.</returns>
-    [Client]
-    public bool isChangeFieldPhase ( ) {
+    [ Client ]
+    public bool isChangeFieldPhase( ) {
         if ( _network_change_phase == true ) {
             _field_data.main_game_phase = ( MAIN_GAME_PHASE )_network_phase_data;
             return true;
@@ -235,21 +242,52 @@ public class HostData : NetworkBehaviour {
 
         return false;
     }
+		
+	[ Client ]
+	public int[ ] getCardList( PLAYER_ORDER player_num ) {
+		int[ ] card_list = new int[ DISTRIBUT_CARD_NUM ];
 
-    public bool isLocal ( ) {
+		if ( player_num == PLAYER_ORDER.PLAYER_ONE ) {
+			for ( int i = 0; i < _network_card_list_0.Count; i++ ) {
+				card_list[ i ] = _network_card_list_0[ i ];
+				_field_data.card_list_one[ i ] = _network_card_list_0[ i ];
+			}
+		} else if ( player_num == PLAYER_ORDER.PLAYER_TWO ) {
+			for ( int i = 0; i < _network_card_list_1.Count; i++ ) {
+				card_list[ i ] = _network_card_list_1[ i ];
+				_field_data.card_list_two[ i ] = _network_card_list_1[ i ];
+			}
+		}
 
+		return card_list;
+	}
+
+	[ Client ]
+	public int getCardListNum( PLAYER_ORDER player_num ) {
+		int num = 0;
+
+		if ( player_num == PLAYER_ORDER.PLAYER_ONE ) {
+			num = _network_card_list_0.Count;
+		} else if ( player_num == PLAYER_ORDER.PLAYER_TWO ) {
+			num = _network_card_list_1.Count;
+		}
+
+		return num;
+	}
+
+    public bool isLocal( ) {
         return isLocalPlayer;
     }
 
-    public SERVER_STATE getServerState ( ) {
+    public SERVER_STATE getServerState( ) {
         return _server_state;
     }
 
-    public int getBattleResultOne ( ) {
+    public int getBattleResultOne( ) {
         return _network_battle_result_one;
     }
 
-    public int getBattleResultTwo ( ) {
+    public int getBattleResultTwo( ) {
         return _network_battle_result_two;
     }
 }

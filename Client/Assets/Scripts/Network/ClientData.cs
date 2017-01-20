@@ -18,7 +18,8 @@ public class ClientData : NetworkBehaviour {
         _player_data.changed_phase = false;
         _player_data.dice_value = -1;
         _player_data.ready = false;
-        _player_data.used_card_list = new int[ MAX_CARD_NUM ];
+		_player_data.used_card_list   = new int[ MAX_CARD_NUM ];
+		_player_data.turned_card_list = new int[ MAX_CARD_NUM ];
         _player_data.player_status = 0;
         _player_data.battle_ready = false;
         _player_data.mass_adjust = MASS_ADJUST.NO_ADJUST;
@@ -121,21 +122,24 @@ public class ClientData : NetworkBehaviour {
     /// <param name="status"></param>
     /// <param name="card_list"></param>
 	[ Command ]
-    public void CmdSetSendBattleData( bool ready, int status, int[ ] card_list ) { 
-        _player_data.battle_ready  = ready;
+	public void CmdSetSendBattleData( bool ready, int status, int[ ] used_card_list, int[ ] turned_card_list ) { 
         _player_data.player_status = status;
-        for ( int i = 0; i < card_list.Length; i++ ) {
-            _player_data.used_card_list[ i ] = card_list[ i ];
-        }
+		for ( int i = 0; i < used_card_list.Length; i++ ) {
+			_player_data.used_card_list[ i ] = used_card_list[ i ];
+		}
+		for ( int i = 0; i < turned_card_list.Length; i++ ) {
+			_player_data.turned_card_list[ i ] = turned_card_list[ i ];
+		}
+		_player_data.battle_ready  = ready;
     }
     
 	[ Client ]
-    public void setBattleData( bool ready, int status, int[ ] card_list ) { 
-        _player_data.battle_ready  = ready;
+	public void setBattleData( bool ready, int status, int[ ] used_card_list, int[ ] turned_card_list ) { 
         _player_data.player_status = status;
-        for ( int i = 0; i < card_list.Length; i++ ) {
-            _player_data.used_card_list[ i ] = card_list[ i ];
-        }
+		for ( int i = 0; i < turned_card_list.Length; i++ ) {
+			_player_data.turned_card_list[ i ] = turned_card_list[ i ];
+		}
+		_player_data.battle_ready  = ready;
     }
     
     /// <summary>
