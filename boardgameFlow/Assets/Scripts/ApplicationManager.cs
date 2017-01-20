@@ -378,6 +378,12 @@ public class ApplicationManager : Manager< ApplicationManager > {
 	/// DicePhaseの更新
 	/// </summary>
 	private void updateDicePhase( ) {
+		if ( _phase_manager.isFinishMovePhaseImage( ) == false ) {
+			_phase_manager.movePhaseImage( );
+		} else {
+			_phase_manager.setPhaseImagePos( );
+		}
+
 		if ( _mode == PROGRAM_MODE.MODE_TWO_CONNECT ) {
             // 送られてきた賽の目の数
             int[ ] dice_value = new int[ ( int )PLAYER_ORDER.MAX_PLAYER_NUM ];
@@ -389,6 +395,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
                 _dice_value[ 1 ] = dice_value[ 1 ];
                 // キャラクター移動フェイズへの移行
                 _phase_manager.changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_MOVE_CHARACTER, "MovePhase" );
+				_phase_manager.deletePhaseImage( );
             }
 		} else if ( _mode == PROGRAM_MODE.MODE_ONE_CONNECT ) {
             // 送られてきた賽の目の数
@@ -398,7 +405,8 @@ public class ApplicationManager : Manager< ApplicationManager > {
 		    if ( dice_value[ 0 ] > 0 ) {
                 _dice_value[ 0 ] = dice_value[ 0 ];
                 // キャラクター移動フェイズへの移行
-                _phase_manager.changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_MOVE_CHARACTER, "MovePhase" );
+				_phase_manager.changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_MOVE_CHARACTER, "MovePhase" );
+				_phase_manager.deletePhaseImage( );
             }
 		} else if ( _mode == PROGRAM_MODE.MODE_NO_CONNECT ) {
 			if ( Input.GetKeyDown( KeyCode.A ) ) {
@@ -410,6 +418,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
 				}
 				// キャラクター移動フェイズへの移行
 				_phase_manager.changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_MOVE_CHARACTER, "MovePhase" );
+				_phase_manager.deletePhaseImage( );
 			}
 		}
 	}

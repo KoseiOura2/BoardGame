@@ -11,6 +11,11 @@ public class PhaseManager : MonoBehaviour {
 
     private Sprite _dice_phase_image;
     private GameObject _phase_image_obj;
+	private float _phase_image_move_speed = 10.0f;
+	private float _phase_image_width      = 0.0f;
+	private float _phase_image_height     = 0.0f;
+	private bool _phase_image_move_finish = false;
+
 	public Text _phase_text;
 
 	// Use this for initialization
@@ -42,19 +47,61 @@ public class PhaseManager : MonoBehaviour {
         }
     }
 
-    public void createPhaseText( MAIN_GAME_PHASE phase ) {
+	/// <summary>
+	/// PhaseTextImageの生成
+	/// </summary>
+	/// <param name="phase">Phase.</param>
+	public void createPhaseText( MAIN_GAME_PHASE phase ) {
+		// flagを初期化
+		_phase_image_move_finish = false;
+		// オブジェクトの生成
         _phase_image_obj = new GameObject( "PhaseImage" );
-        _phase_image_obj.transform.parent = GameObject.Find( "Canvas" ).transform;
-        _phase_image_obj.AddComponent< RectTransform >( ).anchoredPosition = new Vector3( 0, 0, 0 );
-        _phase_image_obj.GetComponent< RectTransform >( ).localScale = new Vector3( 1, 1, 1 );
-        switch ( phase ) {
-            case MAIN_GAME_PHASE.GAME_PHASE_DICE:
-                _phase_image_obj.AddComponent< Image >( ).sprite = _dice_phase_image;
-            break;
-        }
-        _phase_image_obj.GetComponent< Image >( ).preserveAspect = true;
-        _phase_image_obj.GetComponent< Image >( ).SetNativeSize( );
+		_phase_image_obj.transform.parent = GameObject.Find( "Canvas" ).transform;
+
+		// 大きさを単位化
+		_phase_image_obj.AddComponent< RectTransform >( ).localScale = new Vector3( 1, 1, 1 );
+
+		// フェイズによって画像を切り替え
+		switch ( phase ) {
+		case MAIN_GAME_PHASE.GAME_PHASE_DICE:
+			_phase_image_obj.AddComponent< Image >( ).sprite = _dice_phase_image;
+			break;
+		}
+		// 画像のアクセプト比を維持し、サイズをリサイズ
+		_phase_image_obj.GetComponent< Image >( ).preserveAspect = true;
+		_phase_image_obj.GetComponent< Image >( ).SetNativeSize( );
+
+		// サイズを画面に合わせて調整し、位置を設定
+		_phase_image_width  = Screen.width * 2 / 3;
+		_phase_image_height = Screen.height / 3;
+		_phase_image_obj.GetComponent< RectTransform >( ).SetSizeWithCurrentAnchors( RectTransform.Axis.Horizontal, _phase_image_width );
+		_phase_image_obj.GetComponent< RectTransform >( ).SetSizeWithCurrentAnchors( RectTransform.Axis.Vertical, _phase_image_height );
+		_phase_image_obj.GetComponent< RectTransform >( ).anchoredPosition = new Vector3( -( Screen.width / 2 + _phase_image_width / 2 ), 0, 0 );
     }
+
+	/// <summary>
+	/// PhaseTextImageの移動
+	/// </summary>
+	public void movePhaseImage( ) {
+		Vector2 pos = _phase_image_obj.GetComponent< RectTransform >( ).anchoredPosition;
+
+		_phase_image_obj.GetComponent< RectTransform >( ).anchoredPosition = new Vector2( pos.x + _phase_image_move_speed, pos.y );
+
+		if ( _phase_image_obj.GetComponent< RectTransform >( ).anchoredPosition.x > Screen.width ) {
+			_phase_image_move_finish = true;
+		}
+	}
+
+	public void setPhaseImagePos( ) {
+		_phase_image_height = Screen.height / 6;
+		_phase_image_obj.GetComponent< RectTransform >( ).SetSizeWithCurrentAnchors( RectTransform.Axis.Vertical, _phase_image_height );
+		_phase_image_obj.GetComponent< RectTransform >( ).anchoredPosition = new Vector3( 0, ( Screen.height / 2 ) - _phase_image_height / 2, 0 );
+	}
+
+	public void deletePhaseImage( ) {
+		Destroy( _phase_image_obj );
+		_phase_image_move_finish = false;
+	}
 
 	/// <summary>
 	/// MainGamePhaseの取得
@@ -81,5 +128,9 @@ public class PhaseManager : MonoBehaviour {
 
 	public void setPhase( MAIN_GAME_PHASE phase ) {
 		_main_game_phase = phase;
+	}
+
+	public bool isFinishMovePhaseImage( ) {
+		return _phase_image_move_finish;
 	}
 }

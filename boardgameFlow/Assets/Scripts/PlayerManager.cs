@@ -210,7 +210,6 @@ public class PlayerManager : MonoBehaviour {
         _end_position.y += 0.3f;
         _move_flag = true;
     }
-
     /*private void setAdjustmentTargetPos( int i, int id ) {
         _startTime[ i ] = Time.timeSinceLevelLoad;
 		_start_position[ i ] = _players[ id ].obj.transform.position;
