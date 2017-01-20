@@ -869,6 +869,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
 				card_list.Add( _card_manager.distributeCard( ).id );
 			}
             if ( _mode != PROGRAM_MODE.MODE_NO_CONNECT ) {
+                _host_data.refreshCardList( id );
 			    _host_data.setSendCardlist( id, card_list );
             }
 			// カードリストを初期化
