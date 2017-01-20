@@ -7,6 +7,8 @@ public class Card : MonoBehaviour {
 	private GameObject _front_object;
 	private Material _front_material;
 	private CARD_DATA _card_data;
+	[SerializeField]
+	private bool _selected;
 
 	void Awake (){
 		if ( _front_material == null ) {
@@ -20,6 +22,16 @@ public class Card : MonoBehaviour {
 	public void setCardData( CARD_DATA card_data ) {
 		_front_material = Resources.Load<Material>( "Materials/Cards/" + card_data.name );
 		_front_object.GetComponent<Renderer>( ).material = _front_material;
+		_card_data = card_data;
 	}
 
+	public CARD_DATA getCardData(){
+		return _card_data;
+	}
+	public void setSelectFlag( bool selectFlag){
+		_selected = selectFlag;
+	}
+	public bool getSelectFlag(){
+		return _selected;
+	}
 }
