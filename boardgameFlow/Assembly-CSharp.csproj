@@ -56,7 +56,6 @@
      <Compile Include="Assets\Scripts\Common.cs" />
      <Compile Include="Assets\Scripts\DebugManager.cs" />
      <Compile Include="Assets\Scripts\FileManager.cs" />
-     <Compile Include="Assets\Scripts\Graphics\Billboard.cs" />
      <Compile Include="Assets\Scripts\HostData.cs" />
      <Compile Include="Assets\Scripts\Manager.cs" />
      <Compile Include="Assets\Scripts\NetworkData.cs" />

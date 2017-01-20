@@ -123,7 +123,6 @@ public class ClientData : NetworkBehaviour {
     /// <param name="card_list"></param>
 	[ Command ]
 	public void CmdSetSendBattleData( bool ready, int status, int[ ] used_card_list, int[ ] turned_card_list ) { 
-        _player_data.battle_ready  = ready;
         _player_data.player_status = status;
 		for ( int i = 0; i < used_card_list.Length; i++ ) {
 			_player_data.used_card_list[ i ] = used_card_list[ i ];
@@ -131,11 +130,11 @@ public class ClientData : NetworkBehaviour {
 		for ( int i = 0; i < turned_card_list.Length; i++ ) {
 			_player_data.turned_card_list[ i ] = turned_card_list[ i ];
 		}
+		_player_data.battle_ready  = ready;
     }
     
 	[ Client ]
 	public void setBattleData( bool ready, int status, int[ ] used_card_list, int[ ] turned_card_list ) { 
-        _player_data.battle_ready  = ready;
         _player_data.player_status = status;
 		for ( int i = 0; i < used_card_list.Length; i++ ) {
 			_player_data.used_card_list[ i ] = used_card_list[ i ];
@@ -143,6 +142,7 @@ public class ClientData : NetworkBehaviour {
 		for ( int i = 0; i < turned_card_list.Length; i++ ) {
 			_player_data.turned_card_list[ i ] = turned_card_list[ i ];
 		}
+		_player_data.battle_ready  = ready;
     }
     
     /// <summary>

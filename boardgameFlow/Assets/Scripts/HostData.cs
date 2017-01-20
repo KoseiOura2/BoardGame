@@ -29,7 +29,11 @@ public class HostData : NetworkBehaviour {
 	[ SyncVar ]
     public int _network_battle_result_two;
 	[ SyncVar ]
-    public bool _network_send_result;
+	public bool _network_send_result;
+	[ SyncVar ]
+	public bool _network_send_card_one;
+	[ SyncVar ]
+	public bool _network_send_card_two;
 
     private NETWORK_FIELD_DATA _field_data;
 
@@ -46,6 +50,8 @@ public class HostData : NetworkBehaviour {
         _network_battle_result_one = 0;
         _network_battle_result_two = 0;
         _network_send_result = false;
+		_network_send_card_one = false;
+		_network_send_card_two = false;
 
         _field_data.player_num = -1;
         _field_data.scene = ( SCENE )_network_scene_data;
@@ -57,6 +63,7 @@ public class HostData : NetworkBehaviour {
         _field_data.result_player_one = ( BATTLE_RESULT )_network_battle_result_one;
         _field_data.result_player_two = ( BATTLE_RESULT )_network_battle_result_two;
         _field_data.send_result = _network_send_result;
+		_field_data.send_card = new bool[ ]{ false, false };
     }
 
 	// Use this for initialization
@@ -141,9 +148,13 @@ public class HostData : NetworkBehaviour {
             if ( player_num == ( int )PLAYER_ORDER.PLAYER_ONE ) {
                 _field_data.card_list_one[ i ] = card_list[ i ];
                 _network_card_list_0.Add( card_list[ i ] );
+				_field_data.send_card[ 0 ] = true;
+				_network_send_card_one     = true;
             } else if ( player_num == ( int )PLAYER_ORDER.PLAYER_TWO ) {
                 _field_data.card_list_two[ i ] = card_list[ i ];
-                _network_card_list_1.Add( card_list[ i ] );
+				_network_card_list_1.Add( card_list[ i ] );
+				_field_data.send_card[ 1 ] = true;
+				_network_send_card_two     = true;
             }
         }
     }
@@ -155,11 +166,15 @@ public class HostData : NetworkBehaviour {
                 _field_data.card_list_one[ i ] = -1;
             }
             _network_card_list_0.Clear( );
+			_field_data.send_card[ player_num ] = false;
+			_network_send_card_one = false;
         } else if ( player_num == ( int )PLAYER_ORDER.PLAYER_TWO ) {
             for ( int i = 0; i < _field_data.card_list_one.Length; i++ ) {
                 _field_data.card_list_two[ i ] = -1;
             }
-            _network_card_list_1.Clear( );
+			_network_card_list_1.Clear( );
+			_field_data.send_card[ player_num ] = false;
+			_network_send_card_two = false;
         }
     }
 
@@ -189,6 +204,8 @@ public class HostData : NetworkBehaviour {
         _field_data.result_player_one = ( BATTLE_RESULT )_network_battle_result_one;
         _field_data.result_player_two = ( BATTLE_RESULT )_network_battle_result_two;
         _field_data.send_result       = _network_send_result;
+		_field_data.send_card[ 0 ]    = _network_send_card_one;
+		_field_data.send_card[ 1 ]    = _network_send_card_two;
 
         for ( int i = 0; i < _network_card_list_0.Count; i++ ) {
             _field_data.card_list_one[ i ] = _network_card_list_0[ i ];
@@ -227,6 +244,38 @@ public class HostData : NetworkBehaviour {
 
         return false;
     }
+
+	[ Client ]
+	public int[ ] getCardList( PLAYER_ORDER player_num ) {
+		int[ ] card_list = new int[ DISTRIBUT_CARD_NUM ];
+
+		if ( player_num == PLAYER_ORDER.PLAYER_ONE ) {
+			for ( int i = 0; i < _network_card_list_0.Count; i++ ) {
+				card_list[ i ] = _network_card_list_0[ i ];
+				_field_data.card_list_one[ i ] = _network_card_list_0[ i ];
+			}
+		} else if ( player_num == PLAYER_ORDER.PLAYER_TWO ) {
+			for ( int i = 0; i < _network_card_list_1.Count; i++ ) {
+				card_list[ i ] = _network_card_list_1[ i ];
+				_field_data.card_list_two[ i ] = _network_card_list_1[ i ];
+			}
+		} 
+
+		return card_list;
+	}
+
+	[ Client ]
+	public int getCardListNum( PLAYER_ORDER player_num ) {
+		int num = 0;
+
+		if ( player_num == PLAYER_ORDER.PLAYER_ONE ) {
+			num = _network_card_list_0.Count;
+		} else if ( player_num == PLAYER_ORDER.PLAYER_TWO ) {
+			num = _network_card_list_1.Count;
+		}
+
+		return num;
+	}
 
 	public bool isLocal( ) {
 

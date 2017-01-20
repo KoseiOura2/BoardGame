@@ -125,6 +125,7 @@ namespace Common {
 		public bool change_phase;
 		public int[ ] card_list_one;
 		public int[ ] card_list_two;
+		public bool[ ] send_card;
 		public BATTLE_RESULT result_player_one;
 		public BATTLE_RESULT result_player_two;
 		public bool send_result;

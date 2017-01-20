@@ -1,11 +1,15 @@
 ﻿<Properties StartupItem="Assembly-CSharp.csproj">
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" PreferredExecutionTarget="Unity.Instance.Unity Editor" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="Assets/Scripts/PhaseManager.cs">
+  <MonoDevelop.Ide.Workbench ActiveDocument="Assets/Scripts/ApplicationManager.cs">
     <Files>
-      <File FileName="Assets/Scripts/StageManager.cs" Line="1" Column="1" />
+      <File FileName="Assets/Scripts/ClientData.cs" Line="128" Column="1" />
+      <File FileName="Assets/Scripts/StageManager.cs" Line="118" Column="32" />
       <File FileName="Assets/Scripts/PhaseManager.cs" Line="90" Column="91" />
-      <File FileName="Assets/Scripts/ApplicationManager.cs" Line="409" Column="1" />
-      <File FileName="Assets/Scripts/PlayerManager.cs" Line="212" Column="6" />
+      <File FileName="Assets/Scripts/ApplicationManager.cs" Line="508" Column="37" />
+      <File FileName="Assets/Scripts/PlayerManager.cs" Line="395" Column="39" />
+      <File FileName="Assets/Scripts/HostData.cs" Line="177" Column="26" />
+      <File FileName="Assets/Scripts/CardManager.cs" Line="149" Column="2" />
+      <File FileName="Assets/Scripts/Common.cs" Line="128" Column="28" />
     </Files>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>

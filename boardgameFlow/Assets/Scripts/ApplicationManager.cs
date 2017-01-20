@@ -26,8 +26,6 @@ public class ApplicationManager : Manager< ApplicationManager > {
     private StageManager _stage_manager;
 	[ SerializeField ]
 	private CameraManager _camera_manager;
-    [ SerializeField ]
-    private ClientPlayerManager _client_player_manager;
 
     [ SerializeField ]
     private NetworkGUIControll _network_gui_controll;
@@ -46,7 +44,11 @@ public class ApplicationManager : Manager< ApplicationManager > {
     private bool _game_playing = false;
     private bool _goal_flag = false;
     private int _connect_wait_time = 0;
-    private const int CONNECT_WAIT_TIME = 120;
+	private bool _refresh_card_list = false;
+
+	private const int CONNECT_WAIT_TIME = 120;
+	private const int SECOND_CONNECT_WAIT_TIME = 180;
+	private const int MAX_DRAW_VALUE = 4;
 
 	public Text _scene_text;
 	public Text[ ] _reside_text = new Text[ ( int )PLAYER_ORDER.MAX_PLAYER_NUM ];    //残りマス用テキスト
@@ -495,63 +497,82 @@ public class ApplicationManager : Manager< ApplicationManager > {
 
 		if ( _mode == PROGRAM_MODE.MODE_TWO_CONNECT ) {
             // 1Pにカード配布
-            if ( _host_data.getRecvData( ).card_list_one.Length == 0 ) {
-		        for ( int i = 0; i < _dice_value[ 0 ]; i++ ) {
+			if ( _host_data.getRecvData( ).send_card[ 0 ] == false ) {
+				for ( int i = 0; i < MAX_DRAW_VALUE - _dice_value[ 0 ]; i++ ) {
 			        // デッキのカード数が０になったらリフレッシュ
 			        if ( _card_manager.getDeckCardNum( ) <= 0 ) {
 				        _card_manager.createDeck( );
 			        }
                     card_list.Add( _card_manager.distributeCard( ).id );
-		        }
+				}
+				_host_data.refreshCardList( 0 );
                 _host_data.setSendCardlist( ( int )PLAYER_ORDER.PLAYER_ONE, card_list );
                 // カードリストを初期化
                 card_list.Clear( );
             }
             
             // 2Pにカード配布
-            if ( _host_data.getRecvData( ).card_list_two.Length == 0 ) {
-		        for ( int i = 0; i < _dice_value[ 1 ]; i++ ) {
+			if ( _host_data.getRecvData( ).send_card[ 1 ] == false ) {
+				for ( int i = 0; i < MAX_DRAW_VALUE - _dice_value[ 1 ]; i++ ) {
 			        // デッキのカード数が０になったらリフレッシュ
 			        if ( _card_manager.getDeckCardNum( ) <= 0 ) {
 				        _card_manager.createDeck( );
 			        }
                     card_list.Add( _card_manager.distributeCard( ).id );
-		        }
+				}
+				_host_data.refreshCardList( 1 );
                 _host_data.setSendCardlist( ( int )PLAYER_ORDER.PLAYER_TWO, card_list );
             }
 
             // ドローカード処理を追加
 
             // 両方の準備が終わったら次のフェイズへ
-            if ( _client_data[ 0 ].getRecvData( ).ready == true && _client_data[ 1 ].getRecvData( ).ready == true ) {
-                _host_data.refreshCardList( 0 );
-                _host_data.refreshCardList( 1 );
-                _phase_manager.changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_BATTLE, "ButtlePhase" );
+			if ( _client_data[ 0 ].getRecvData( ).ready == true && _client_data[ 1 ].getRecvData( ).ready == true ) {
+				if ( _connect_wait_time >= CONNECT_WAIT_TIME && !_refresh_card_list ) {
+					_host_data.refreshCardList( 0 );
+					_host_data.refreshCardList( 1 );
+					_refresh_card_list = true;
+				}
+				_connect_wait_time++;
+				if ( _connect_wait_time >= SECOND_CONNECT_WAIT_TIME ) {
+					_phase_manager.changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_BATTLE, "BattlePhase" );
+					_connect_wait_time = 0;
+					_refresh_card_list = false;
+				}
             }
 		} else if ( _mode == PROGRAM_MODE.MODE_ONE_CONNECT ) {
             // 1Pにカード配布
-            if ( _host_data.getRecvData( ).card_list_one.Length == 0 ) {
-		        for ( int i = 0; i < _dice_value[ 0 ]; i++ ) {
+			if ( _host_data.getRecvData( ).send_card[ 0 ] == false ) {
+				for ( int i = 0; i < MAX_DRAW_VALUE - _dice_value[ 0 ]; i++ ) {
 			        // デッキのカード数が０になったらリフレッシュ
 			        if ( _card_manager.getDeckCardNum( ) <= 0 ) {
 				        _card_manager.createDeck( );
 			        }
                     card_list.Add( _card_manager.distributeCard( ).id );
 		        }
+				_host_data.refreshCardList( 0 );
                 _host_data.setSendCardlist( ( int )PLAYER_ORDER.PLAYER_ONE, card_list );
             }
             
             // ドローカード処理を追加
 
             // 準備が終わったら次のフェイズへ
-            if ( _client_data[ 0 ].getRecvData( ).ready == true ) {
-                _host_data.refreshCardList( 0 );
-                _phase_manager.changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_BATTLE, "ButtlePhase" );
+			if ( _client_data[ 0 ].getRecvData( ).ready == true ) {
+				if ( _connect_wait_time >= CONNECT_WAIT_TIME && !_refresh_card_list ) {
+					_host_data.refreshCardList( 0 );
+					_refresh_card_list = true;
+				}
+				_connect_wait_time++;
+				if ( _connect_wait_time >= SECOND_CONNECT_WAIT_TIME ) {
+					_phase_manager.changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_BATTLE, "BattlePhase" );
+					_connect_wait_time = 0;
+					_refresh_card_list = false;
+				}
             }
 		} else if ( _mode == PROGRAM_MODE.MODE_NO_CONNECT ) {
 			// 準備が終わったら次のフェイズへ
 			if ( Input.GetKeyDown( KeyCode.A ) ) {
-				_phase_manager.changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_BATTLE, "ButtlePhase" );
+				_phase_manager.changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_BATTLE, "BattlePhase" );
 			}
 		}
 	}
@@ -808,7 +829,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
             }
 
 		}
-        if (_player_manager.getPlayerID() > -1) {
+        if ( _player_manager.getPlayerID( ) > -1 ) {
             _player_manager.movePhaseUpdate( getResideCount( ), _stage_manager.getTargetMass( _player_manager.getTargetMassID( _stage_manager.getMassCount( ) ) ) );
         }
 
@@ -825,6 +846,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
                 _host_data.refreshCardList( 1 );
             }
 			_phase_manager.changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_DICE, "DisePhase" );
+			_phase_manager.createPhaseText( MAIN_GAME_PHASE.GAME_PHASE_DICE );
 		}
 	}
 
