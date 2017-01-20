@@ -1,60 +1,143 @@
-﻿/*
-using UnityEngine;
+﻿using UnityEngine;
+using UnityEngine.UI;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using Common;
 
 public class CardManager : MonoBehaviour {
-
 	/// <summary>
-	/// デッキデータ
+	/// デッキクラス
 	/// </summary>
-	private struct DECK_DATA {
-		public int max_card_num;
-		public int card_num;
-		public List< CARD_DATA > cards_list;
+	public class Deck {
+		private int _max_card_num;
+		private int _card_num;
+		[ SerializeField ]
+		private List< CARD_DATA > _cards_list;
+
+		public Deck( ) {
+			_max_card_num = 0;
+			_card_num     = 0;
+			_cards_list   = new List< CARD_DATA >( );
+		}
+
+		public void addToCard( CARD_DATA card ) {
+			_cards_list.Add( card );
+			_card_num++;
+			_max_card_num = _card_num;
+		}
+
+		public CARD_DATA drawCard( int id ) {
+			CARD_DATA card = _cards_list[ id ];
+			_cards_list.RemoveAt( id );
+			_card_num--;
+
+			return card;
+		}
+
+		public void init( ) {
+			_max_card_num = 0;
+			_card_num     = 0;
+			_cards_list.Clear( );
+		}
+
+		public int getMaxCardNum( ) {
+			return _max_card_num;
+		}
+
+		public int getCardNum( ) {
+			return _card_num;
+		}
 	};
 
 	private List< CARD_DATA > _card_datas = new List< CARD_DATA >( );
-	private DECK_DATA _deck_data = new DECK_DATA( );
+	private Deck _deck = new Deck( );
+	//private int _height = 0;
+	private List< int > _card_num_for_name = new List< int >( );
 
-	void Awake( ) {
-		_deck_data.max_card_num = 30;
-		_deck_data.card_num     = 0;
-		_deck_data.cards_list   = new List< CARD_DATA >( );
+
+	public void init( ) {
+		loadCardDataFile( );
+		loadDeckFile( );
+		createDeck( );
 	}
 
 	// Use this for initialization
 	void Start( ) {
-		loadCardDataFile( );
-		createDeck ();
+
 	}
-	
+	#if UNITY_EDITOR
 	// Update is called once per frame
 	void Update( ) {
-	
+		if (_card_datas.Count == 0) {
+			loadCardDataFile ();
+		}
+	}
+	#endif 
+	/// <summary>
+	/// デッキの読み込み
+	/// </summary>
+	void loadDeckFile( ) {
+		StreamReader sr = new StreamReader( Application.dataPath + "/Resources/CSV/DeckData.csv", false );
+
+		for ( int i = 0; i < _card_datas.Count; i++ ) {
+			string str = sr.ReadLine( );
+			string[ ] values = str.Split( ',' );
+
+			for ( int j = 0; j < _card_datas.Count; j++ ) {
+				if ( _card_datas[ j ].name == values[ 0 ] ) {
+					_card_num_for_name[ j ] = int.Parse( values[ 1 ] );
+					continue;
+				}
+			}
+		}
+		sr.Close( );
 	}
 
+	/// <summary>
+	/// CSVを読み込み　文字列から数値などへ変換
+	/// </summary>
 	public void loadCardDataFile( ) {
-		
+		try {
+			StreamReader sr = new StreamReader( Application.dataPath + "/Resources/CSV/data.csv", false );
+
+			string str_0 = sr.ReadLine( );
+			string[ ] values_0 = str_0.Split( ',' );
+
+			int length = int.Parse( values_0[ 0 ] );
+
+			{
+				//変換
+				try {
+					for ( int i = 0; i < length; i++ ) {
+						string str_1 = sr.ReadLine( );
+						string[ ] values_1 = str_1.Split( ',' );
+
+						CARD_DATA data = new CARD_DATA( int.Parse( values_1[ 0 ] ), values_1[ 1 ], values_1[ 2 ],
+							int.Parse( values_1[ 3 ] ), int.Parse( values_1[ 4 ] ), int.Parse( values_1[ 5 ] ) );
+						_card_datas.Add( data );
+						_card_num_for_name.Add( 0 );
+					}
+				} catch {
+					Debug.Log( "変換エラー" );
+				}
+			}
+			sr.Close( );
+		} catch {
+			Debug.Log( "カードデータロードエラー" );
+		}
 	}
 
 	/// <summary>
 	/// デッキ生成
 	/// </summary>
 	public void createDeck( ) {
-		for ( int i = 0; i < _deck_data.max_card_num; i++ ) {
-			try {
-				// ランダムで選び出す
-				int card_id = ( int )Random.Range( 0, ( float )_card_datas.Count );
-				CARD_DATA card = _card_datas[ card_id ];
-				_deck_data.cards_list.Add( card );
-			}
-			catch {
-				Debug.Log( "デッキの生成に失敗しました" );
+		for ( int i = 0; i < _card_num_for_name.Count; i++ ) {
+			for ( int j = 0; j < _card_num_for_name[ i ]; j++ ) {
+				_deck.addToCard( _card_datas[ i ] );
 			}
 		}
-		_deck_data.card_num = _deck_data.max_card_num;
 	}
 
 	/// <summary>
@@ -63,105 +146,29 @@ public class CardManager : MonoBehaviour {
 	/// <returns>The card.</returns>
 	public CARD_DATA distributeCard( ) {
 		CARD_DATA card = new CARD_DATA( );
-		int num = ( int )Random.Range( 0, ( float )_deck_data.card_num );
-		card = _deck_data.cards_list[ num ];
-		_deck_data.cards_list.RemoveAt( num );
-		_deck_data.card_num--;
+
+		if ( _deck.getCardNum( ) > 0 ) {
+			int num = ( int )Random.Range( 0, ( float )_deck.getCardNum( ) );
+			card = _deck.drawCard( num );
+		}
 
 		return card;
 	}
 
 	public int getDeckCardNum( ) {
-		return _deck_data.card_num;
+		return _deck.getCardNum( );
 	}
-}
-*/
-using UnityEngine;
-using UnityEngine.UI;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using Common;
 
-public class CardManager : MonoBehaviour {
-
-    public enum GET_CARD_DATA {
-        CARD_NAME,
-        ENCHANT_TYPE,
-        ENCHANT_VALUE,
-        SPESIAL_VALUE,
-        RARITY,
-        NO_DATA
-    }
-
-    private List< CARD_DATA > _card_datas = new List< CARD_DATA >( );
-
-    public GET_CARD_DATA _get_data_type;
-    [ SerializeField ]
-    private int _enhance;       //合計の強化情報格納
-    private PlayerManager _player_manager;
-    private string _name;
-    private TextAsset _csv_file;
-    private List< string[ ] > _csv_datas = new List< string[ ] >( );
-    private int _height = 0;
-
-    void Awake( ) {
-        if ( _player_manager == null ) {
-            _player_manager = GameObject.Find ( "PlayerManager" ).GetComponent< PlayerManager >( );
-        }
-        loadCardDataFile( );
-    }
-
-    // Use this for initialization
-    void Start( ) {
-
-    }
-
-    // Update is called once per frame
-    void Update( ) {
-
-    }
-
-    public void loadCardDataFile( ) {
-        try {
-            //よみこみ
-            _name = "data";
-            _csv_file = Resources.Load( "CSV/" + _name ) as TextAsset; // Resouces/CSV下のCSV読み込み
-            StringReader reader = new StringReader( _csv_file.text );
-            while ( reader.Peek( ) > -1 ) {
-                string line = reader.ReadLine( );
-                _csv_datas.Add ( line.Split( ',' ) );
-                _height++;
-            }
-            {
-                //変換
-                try {
-                    for ( int i = 0; i < _csv_datas.Count; i++ ) {
-                        CARD_DATA data = new CARD_DATA( int.Parse ( _csv_datas[ i ][ 0 ] ), _csv_datas[ i ][ 1 ], _csv_datas[ i ][ 2 ],
-                                                        int.Parse ( _csv_datas[ i ][ 3 ] ), int.Parse ( _csv_datas[ i ][ 4 ] ),
-                                                        int.Parse ( _csv_datas[ i ][ 5 ] ) );
-                        _card_datas.Add( data );
-                    }
-                } catch {
-                    Debug.Log( "変換エラー" );
-                }
-            }
-        } catch {
-            Debug.Log( "カードデータロードエラー" );
-        }
-    }
-
-    /// <summary>
-    /// 第一引数ID　返り値カードデータ　失敗した場合ダミーデータ
-    /// </summary>
-    public CARD_DATA getCardData( int id ) {
-        try {
-            return _card_datas[ id ];
-        } catch {
-            Debug.Log( "カードデータ取得エラー" );
-            return _card_datas[ 0 ];
-        }
-    }
-
+	/// <summary>
+	/// 第一引数ID 返り値カードデータ　失敗した場合ダミーデータ
+	/// </summary>
+	public CARD_DATA getCardData( int id ) {
+		Debug.Log (id);
+		try {
+			return _card_datas[ id ];
+		} catch {
+			Debug.Log("カードデータ取得エラー");
+			return _card_datas[ 0 ];
+		}
+	}
 }
