@@ -250,6 +250,10 @@ public class ApplicationManager : MonoBehaviour {
 			// カードデータを受診したら
 			if ( _host_data.getCardListNum( _player_num ) == MAX_DRAW_NUM - _player_manager.getDiceValue( ) &&
 			     _client_data.getRecvData( ).ready == false ) {
+                //7枚以上だったら選んで消す処理
+                
+                //一度画面上に配置しているカードオブジェクトを削除
+                 _player_manager.allDeletePlayerCard();
 				for ( int i = 0; i < _host_data.getCardListNum( _player_num ); i++ ) {
 					if ( _host_data.getCardList( _player_num )[ i ] < 1 ) {
 						continue;
