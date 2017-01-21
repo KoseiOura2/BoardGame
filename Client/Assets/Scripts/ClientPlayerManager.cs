@@ -6,9 +6,9 @@ using Common;
 
 public class ClientPlayerManager : MonoBehaviour {
 
-	private const float MAX_DICE_VALUE = 3.9f;
-	private const float MIN_DICE_VALUE = 1.0f;
-	private const int INIT_PLAYER_POWER = 10;
+	private const float MAX_DICE_VALUE   = 3.9f;
+	private const float MIN_DICE_VALUE   = 1.0f;
+	private const int INIT_PLAYER_POWER  = 10;
 
 	/// <summary>
 	/// プレイヤーの持つカードのデータ
@@ -33,6 +33,9 @@ public class ClientPlayerManager : MonoBehaviour {
 	private float _selected_position_y;
 	private int _dice_value = 0;
 	private bool _dice_roll = false;
+    private const int MAX_PLAYER_CARD_NUM = 6;
+	[ SerializeField ]
+	private int _hand_num = 0;
 
 	#if UNITY_EDITOR
 	private bool _debug_inst_flag;
@@ -139,6 +142,7 @@ public class ClientPlayerManager : MonoBehaviour {
 			_player_card.hand_obj_list[ i ].GetComponent< Card >( ).changeHandNum( i );
 			playerCardPositionSetting( i, false );
 		}
+        _hand_num = _player_card.hand_list.Count;
 	}
 
 	/// <summary>
@@ -166,6 +170,12 @@ public class ClientPlayerManager : MonoBehaviour {
 		_player_card.hand_obj_list[ list_id ].GetComponent< Transform >( ).position = new Vector3( card_potision_x, hand_area_postion_y, 3 );
 	}
 		
+    public void allSelectInit( ) {
+        for ( int i = 0; i < _player_card.hand_obj_list.Count; i++ ) {
+            _player_card.hand_obj_list[ i ].GetComponent< Card >( ).setSelectFlag( false );
+        }
+    }
+
 	/// <summary>
 	/// 手札を全て削除
 	/// </summary>
@@ -252,6 +262,35 @@ public class ClientPlayerManager : MonoBehaviour {
 
 		return card_list;
 	}
+    
+	public bool dicisionSelectPlayerCard( ) {
+        List< int > card_num = new List< int >( );
+        bool flag = false;
+
+		for ( int i = 0; i < _player_card.hand_list.Count; i++ ) {
+			if ( !_player_card.hand_obj_list[ i ].GetComponent< Card >( ).getSelectFlag( ) ) {
+				// 選択カードに登録
+				_player_card.select_list.Add( _player_card.hand_list[ i ] );
+
+                card_num.Add( i );
+			}
+		}
+
+        // プレイヤーカード数が最大所時数以内だったら
+        if ( _player_card.hand_list.Count - card_num.Count <= MAX_PLAYER_CARD_NUM ) {
+            int count = 0;
+		    for ( int i = 0; i < card_num.Count; i++ ) {
+			    // 選択したカードを削除
+		        deletePlayerCardData( card_num[ i ] - count );
+		        deletePlayerCardObject( card_num[ i ] - count );
+                count++;
+		    }
+
+            flag = true;
+        }
+
+		return flag;
+	}
 
 	public void refreshSelectCard( ) {
 		_player_card.select_list.Clear( );
@@ -283,6 +322,10 @@ public class ClientPlayerManager : MonoBehaviour {
 	public int getPlayerCardNum( ) {
 		return _player_card.hand_list.Count;
 	}
+
+    public int getMaxPlayerCardNum( ) {
+        return MAX_PLAYER_CARD_NUM;
+    }
 
 	/// <summary>
 	/// ダイスをふったかどうかを返す

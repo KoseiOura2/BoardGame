@@ -154,32 +154,36 @@ public class ApplicationManager : MonoBehaviour {
 	/// </summary>
 	private void updateGameScene( ) {
 		// フェイズごとの更新
-		switch( _phase_manager.getMainGamePhase( ) ) {
-		case MAIN_GAME_PHASE.GAME_PHASE_NO_PLAY:
-			updateNoPlayPhase( );
-			break;
-		case MAIN_GAME_PHASE.GAME_PHASE_DICE:
-			updateDicePhase( );
-			break;
-		case MAIN_GAME_PHASE.GAME_PHASE_MOVE_CHARACTER:
-			updateMovePhase( );
-			break;
-		case MAIN_GAME_PHASE.GAME_PHASE_DRAW_CARD:
-			updateDrawPhase( );
-			break;
-		case MAIN_GAME_PHASE.GAME_PHASE_BATTLE:
-			updateButtlePhase( );
-			break;
-		case MAIN_GAME_PHASE.GAME_PHASE_RESULT:
-			updateResultPhase( );
-			break;
-		case MAIN_GAME_PHASE.GAME_PHASE_EVENT:
-			updateEventPhase( );
-			break;
-		case MAIN_GAME_PHASE.GAME_PHASE_FINISH:
-			updateFinishPhase( );
-			break;
-		}
+        if ( _play_mode == GAME_PLAY_MODE.MODE_NORMAL_PLAY ) { 
+		    switch( _phase_manager.getMainGamePhase( ) ) {
+		    case MAIN_GAME_PHASE.GAME_PHASE_NO_PLAY:
+			    updateNoPlayPhase( );
+			    break;
+		    case MAIN_GAME_PHASE.GAME_PHASE_DICE:
+			    updateDicePhase( );
+			    break;
+		    case MAIN_GAME_PHASE.GAME_PHASE_MOVE_CHARACTER:
+			    updateMovePhase( );
+			    break;
+		    case MAIN_GAME_PHASE.GAME_PHASE_DRAW_CARD:
+			    updateDrawPhase( );
+			    break;
+		    case MAIN_GAME_PHASE.GAME_PHASE_BATTLE:
+			    updateButtlePhase( );
+			    break;
+		    case MAIN_GAME_PHASE.GAME_PHASE_RESULT:
+			    updateResultPhase( );
+			    break;
+		    case MAIN_GAME_PHASE.GAME_PHASE_EVENT:
+			    updateEventPhase( );
+			    break;
+		    case MAIN_GAME_PHASE.GAME_PHASE_FINISH:
+			    updateFinishPhase( );
+			    break;
+		    }
+        } else if ( _play_mode == GAME_PLAY_MODE.MODE_PLAYER_SELECT ) {
+            updateSelectPlayerCard( );
+        }
 
 		if ( _mode == PROGRAM_MODE.MODE_CONNECT ) {
 			if ( _host_data != null && _client_data != null ) {
@@ -272,12 +276,33 @@ public class ApplicationManager : MonoBehaviour {
 				// カードを生成
 				_player_manager.updateAllPlayerCard( );
 
+                if ( _player_manager.getPlayerCardNum( ) > _player_manager.getMaxPlayerCardNum( ) ) {
+                    _play_mode = GAME_PLAY_MODE.MODE_PLAYER_SELECT;
+                    return;
+                }
+
 				// サーバーに準備完了を送信
 				_client_data.CmdSetSendReady( true );
 				_client_data.setReady( true );
 			}
 		}
 	}
+
+    public void updateSelectPlayerCard( ) {
+		if ( _mode == PROGRAM_MODE.MODE_CONNECT ) {
+			if ( Input.GetKeyDown( KeyCode.A ) ) {
+                if ( _player_manager.dicisionSelectPlayerCard( ) ) {
+                    _play_mode = GAME_PLAY_MODE.MODE_NORMAL_PLAY;
+                    _player_manager.allSelectInit( );
+				    // カードを更新
+				    _player_manager.updateAllPlayerCard( );
+				    // サーバーに準備完了を送信
+				    _client_data.CmdSetSendReady( true );
+				    _client_data.setReady( true );
+                }
+			}
+		}
+    }
 
 	/// <summary>
 	/// ButtlePhaseの更新
