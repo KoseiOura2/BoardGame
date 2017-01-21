@@ -1,15 +1,15 @@
-﻿<Properties StartupItem="Assembly-CSharp.csproj">
-  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" PreferredExecutionTarget="Unity.Instance.Unity Editor" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="Assets\ObjectTest.cs">
+﻿<Properties StartupItem="boardgameFlow.CSharp.csproj">
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
+  <MonoDevelop.Ide.Workbench ActiveDocument="Assets\Scripts\PlayerManager.cs">
     <Files>
       <File FileName="Assets\Scripts\ClientData.cs" Line="1" Column="1" />
-      <File FileName="Assets\Scripts\StageManager.cs" Line="125" Column="25" />
+      <File FileName="Assets\Scripts\StageManager.cs" Line="1" Column="1" />
       <File FileName="Assets\Scripts\PhaseManager.cs" Line="1" Column="1" />
       <File FileName="Assets\Scripts\ApplicationManager.cs" Line="1" Column="1" />
-      <File FileName="Assets\Scripts\PlayerManager.cs" Line="497" Column="20" />
+      <File FileName="Assets\Scripts\PlayerManager.cs" Line="98" Column="1" />
       <File FileName="Assets\Scripts\HostData.cs" Line="1" Column="1" />
       <File FileName="Assets\Scripts\CardManager.cs" Line="1" Column="1" />
-      <File FileName="Assets\Scripts\Common.cs" Line="169" Column="3" />
+      <File FileName="Assets\Scripts\Common.cs" Line="1" Column="1" />
       <File FileName="Assets\ObjectTest.cs" Line="29" Column="2" />
     </Files>
   </MonoDevelop.Ide.Workbench>

@@ -3,6 +3,7 @@ using UnityEngine.UI;
 using System.Collections;
 using System.Collections.Generic;
 using Common;
+using UnityEngine.Events;
 
 public class ApplicationManager : Manager< ApplicationManager > {
 
@@ -419,7 +420,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
 				// 送られてきた賽の目の数
 				int[ ] dice_value = new int[ ( int )PLAYER_ORDER.MAX_PLAYER_NUM ];
 				for ( int i = 0; i < ( int )PLAYER_ORDER.MAX_PLAYER_NUM; i++ ) {
-					dice_value[ i ] = 30;//( int )Random.Range( 1.0f, 4.0f );
+					dice_value[ i ] = 2;//( int )Random.Range( 1.0f, 4.0f );
                     _dice_value[ i ] = dice_value[ i ];
 				}
 				// キャラクター移動フェイズへの移行
@@ -864,26 +865,34 @@ public class ApplicationManager : Manager< ApplicationManager > {
 	/// <param name="i">The index.</param>
 	public void massEvent( int i, int id ) {
 		_player_manager.setEventStart( id, true );
-		switch ( _file_manager.getFileData( ).mass[ i ].type ) {
-		case "draw":
-			int value = _file_manager.getMassValue( i )[ 0 ];
-			List< int > card_list = new List< int >( );
-			Debug.Log( "カード" + value + "ドロー" );
-			for ( int j = 0; j < value; j++ ) {
-				// デッキのカード数が０になったらリフレッシュ
-				if ( _card_manager.getDeckCardNum( ) <= 0 ) {
-					_card_manager.createDeck( );
-				}
-				card_list.Add( _card_manager.distributeCard( ).id );
-			}
+        bool end_animation = false;
+
+        switch ( _file_manager.getFileData( ).mass[ i ].type ) {
+        case "draw":
+            int value = _file_manager.getMassValue( i )[ 0 ];
+            List<int> card_list = new List<int>( );
+
+            Debug.Log( "カード" + value + "ドロー" );
+            for ( int j = 0; j < value; j++ ) {
+                // デッキのカード数が０になったらリフレッシュ
+                if ( _card_manager.getDeckCardNum( ) <= 0 ) {
+                    _card_manager.createDeck( );
+                }
+                card_list.Add( _card_manager.distributeCard( ).id );
+            }
             if ( _mode != PROGRAM_MODE.MODE_NO_CONNECT ) {
                 _host_data.refreshCardList( id );
-			    _host_data.setSendCardlist( id, card_list );
+                _host_data.setSendCardlist( id, card_list );
             }
-			// カードリストを初期化
-			card_list.Clear( );
-			_player_manager.setEventFinish( id, true );
-            _player_manager.setEventType( id, EVENT_TYPE.EVENT_DRAW );
+            StartCoroutine( massAnimation( i, card_list ) );
+            
+           //コルーチンの処理が終わったら実行
+           //if ( end_animation ) {
+                // カードリストを初期化
+                card_list.Clear( );
+                _player_manager.setEventFinish( id, true );
+                _player_manager.setEventType( id, EVENT_TYPE.EVENT_DRAW );
+           //}
 			break;
 		case "trap1":
 			Debug.Log ("トラップ発動");
@@ -946,10 +955,32 @@ public class ApplicationManager : Manager< ApplicationManager > {
 		}  
 	}
 
-	/// <summary>
-	/// FinishPhaseの更新
-	/// </summary>
-	private void updateFinishPhase( ) {
+    /// <summary>
+    /// マス効果のコルーチン
+    /// </summary>
+    IEnumerator massAnimation( int i, List<int> card_list ) {
+        switch ( _file_manager.getFileData( ).mass[ i ].type ) {
+        case "draw":
+            int j = 0;
+            while( j < card_list.Count ) {
+                GameObject card = Instantiate( ( GameObject )Resources.Load( "Prefabs/AnimationCard" ) );
+                GameObject treasure_chest = GameObject.Find( "TreasureChest" );
+                card.GetComponent<Card>( ).setCardData( _card_manager.getCardData( card_list[ j ] ) );
+                card.transform.parent = treasure_chest.transform;
+                card.transform.position = Vector3.zero;
+                yield return new WaitForSeconds( 3.0f );
+
+                Destroy( card );
+                j++;
+            }
+            break;
+        }
+    }
+
+    /// <summary>
+    /// FinishPhaseの更新
+    /// </summary>
+    private void updateFinishPhase( ) {
 		if ( Input.GetKeyDown( KeyCode.A ) ) {
 			_scene = SCENE.SCENE_FINISH;
 			_scene_text.text = "SCENEFINISH";

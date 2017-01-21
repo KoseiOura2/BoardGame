@@ -33,15 +33,12 @@ public class ObjectTest : MonoBehaviour {
 		PLAYER_DATA _player1 = _player_manager.GetComponent< PlayerManager >( ).getTopPlayer( PLAYER_RANK.RANK_FIRST );
 		PLAYER_DATA _player2 = _player_manager.GetComponent< PlayerManager >( ).getTopPlayer( PLAYER_RANK.RANK_SECOND );
 
-		//プレイヤーが近くにいるならばマテリアルを変える
+		//プレイヤーが設定したマスにいるならマテリアルを変える
 		if ( _player1.obj != null || _player2.obj != null ) {
-			//Vector3 mypos = gameObject.transform.position;
-			//float player1_distance = Vector3.Distance (mypos, _player1.obj.transform.position);
-			//float player2_distance = Vector3.Distance (mypos, _player2.obj.transform.position);
 			if ( _player1.advance_count == _target_mass || _player2.advance_count == _target_mass ) {
-				gameObject.GetComponent< Renderer > ().material = _target_material;
-			} else {					 		    
-				gameObject.GetComponent< Renderer > ().material = _default_material;
+				gameObject.GetComponent< Renderer >( ).material = _target_material;
+			} else {					 		     
+				gameObject.GetComponent< Renderer >( ).material = _default_material;
 			}
 		}
 	}
