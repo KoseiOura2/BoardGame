@@ -551,6 +551,10 @@ public class PlayerManager : MonoBehaviour {
         return _adjustment_flag;
     }
 
+    public Vector3 isPlayerPosition( int id ) {
+        return _players[ id ].obj.transform.localPosition;
+    }
+
     public BATTLE_RESULT getPlayerResult( int id ) {
         return _players[ id ].battle_result;
     }
@@ -611,6 +615,22 @@ public class PlayerManager : MonoBehaviour {
 	public void setPlayerOnMove( int i, bool onMove ) {
 		_players[ i ].onMove = onMove;
 	}
+
+    public void setPlayerCount ( int id, int count ) {
+        _players[ id ].advance_count = count;
+    }
+
+    public void setPlayerPosition( int id, Vector3 position ) {
+        if ( id == 0 ) {
+            position.x -= ADJUST_PLAYER_POS;
+            position.z += ADJUST_PLAYER_POS;
+            _players[ id ].obj.transform.localPosition = position;
+        } else if( id == 1 ) {
+            position.x += ADJUST_PLAYER_POS;
+            position.z -= ADJUST_PLAYER_POS;
+            _players[ id ].obj.transform.localPosition = position;
+        }
+    }
 
      /// <summary>
      /// 特定のプレイヤーをボーナスマップへ移動させる

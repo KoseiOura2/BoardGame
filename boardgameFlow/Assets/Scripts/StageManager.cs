@@ -73,6 +73,20 @@ public class StageManager : MonoBehaviour {
 	public int getMassCount( ) {
 		return _create_mass_count;
 	}
+
+    public void resetMassColor ( int i, ref bool flag ) {
+        if ( getTargetMass ( i ).transform.localScale.x >= 0.3f || getTargetMass ( i ).transform.localScale.z >= 0.3f ) {
+            getTargetMass ( i ).GetComponent<Renderer> ( ).material.SetColor ( "_Color", new Color ( 0.4f, 0.4f, 0.4f, 1f ) );
+            getTargetMass ( i ).transform.localScale =
+            new Vector3 ( getTargetMass ( i ).transform.localScale.x - 0.02f,
+            getTargetMass ( i ).transform.localScale.y,
+            getTargetMass ( i ).transform.localScale.z - 0.02f );
+        } else {
+            getTargetMass ( i ).transform.localScale =
+            new Vector3 ( 0.3f, getTargetMass ( i ).transform.localScale.y, 0.3f );
+            flag = false;
+        }
+    }
 	
 	// Update is called once per frame
 	void Update( ) {

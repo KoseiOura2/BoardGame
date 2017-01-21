@@ -43,8 +43,12 @@ public class ApplicationManager : Manager< ApplicationManager > {
     private int[ ] _dice_value = new int[ ( int )PLAYER_ORDER.MAX_PLAYER_NUM ];
     private bool _game_playing = false;
     private bool _goal_flag = false;
+    [SerializeField]
+    private bool[ ] _reset_mass_update = new bool[ 2 ] { false, false };
+    private int _before_player_count;
 
-	public Text _scene_text;
+
+    public Text _scene_text;
 	public Text[ ] _reside_text = new Text[ ( int )PLAYER_ORDER.MAX_PLAYER_NUM ];    //残りマス用テキスト
 	public Text[ ] _environment = new Text[ ( int )PLAYER_ORDER.MAX_PLAYER_NUM ];    //環境情報用テキスト
 
@@ -740,37 +744,51 @@ public class ApplicationManager : Manager< ApplicationManager > {
 	/// EventPhaseの更新
 	/// </summary>
 	private void updateEventPhase( ) {
-		if ( _player_manager.isEventStart( 0 ) == false ) {
-			massEvent( _player_manager.getPlayerCount( 0, _stage_manager.getMassCount( ) ), 0 );
-		} else if ( _player_manager.isEventFinish( 0 ) == true && _player_manager.isEventStart( 1 ) == false ) {
-			massEvent (_player_manager.getPlayerCount( 1, _stage_manager.getMassCount( ) ), 1 );
-		}
-
-		// マス移動終了時にイベントフラグをfalseにしてもう一度イベントが発生するようにする
-		for ( int i = 0; i < ( int )PLAYER_ORDER.MAX_PLAYER_NUM; i++ ) {
-            if( _player_manager.getEventType( i ) == EVENT_TYPE.EVENT_MOVE ){
-			    if ( _player_manager.isPlayerMoveFinish( i ) == true && _player_manager.isAdjsutmentStart( ) == false ) {
-				    _player_manager.setEventStart( i, false );
-				    _player_manager.movedRefresh( );
-			    }
+        if ( _player_manager.isEventStart ( 0 ) == false ) {
+            massEvent ( _player_manager.getPlayerCount ( 0, _stage_manager.getMassCount ( ) ), 0 );
+        } else if ( _player_manager.isEventFinish ( 0 ) == true && _player_manager.isEventStart ( 1 ) == false ) {
+            if ( _reset_mass_update[ 0 ] ) {
+                _stage_manager.resetMassColor ( _player_manager.getPlayerCount ( 0, _stage_manager.getMassCount ( ) ), ref _reset_mass_update[ 0 ] );
+            } else {
+                massEvent ( _player_manager.getPlayerCount ( 1, _stage_manager.getMassCount ( ) ), 1 );
             }
-
-		}
-        if (_player_manager.getPlayerID() > -1) {
-            _player_manager.movePhaseUpdate( getResideCount( ), _stage_manager.getTargetMass( _player_manager.getTargetMassID( _stage_manager.getMassCount( ) ) ) );
         }
-
-		if ( _player_manager.isEventFinish( 0 ) == true && _player_manager.isEventFinish( 1 ) == true && _goal_flag == false) {
-			_player_manager.setEventStart( 0, false );
-			_player_manager.setEventStart( 1, false );
-			_player_manager.setEventFinish( 0, false );
-			_player_manager.setEventFinish( 1, false );
-            if ( _mode != PROGRAM_MODE.MODE_NO_CONNECT ) {
-                _host_data.refreshCardList( 0 );
-                _host_data.refreshCardList( 1 );
+        
+        // マス移動終了時にイベントフラグをfalseにしてもう一度イベントが発生するようにする
+        for ( int i = 0; i < ( int )PLAYER_ORDER.MAX_PLAYER_NUM; i++ ) {
+            if ( _player_manager.getEventType ( i ) == EVENT_TYPE.EVENT_MOVE ) {
+                if ( _player_manager.isPlayerMoveFinish ( i ) == true && _player_manager.isAdjsutmentStart ( ) == false ) {
+                    if ( _reset_mass_update[ i ] ) {
+                        _stage_manager.resetMassColor ( _before_player_count, ref _reset_mass_update[ i ] );
+                    } else {
+                        _player_manager.setEventStart ( i, false );
+                        _player_manager.movedRefresh ( );
+                    }
+                }
+            } else {
+                if ( _reset_mass_update[ i ] ) {
+                    _stage_manager.resetMassColor ( _player_manager.getPlayerCount ( i, _stage_manager.getMassCount ( ) ), ref _reset_mass_update[ i ] );
+                }
             }
-			_phase_manager.changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_DICE, "DisePhase" );
-		}
+        
+        }
+        if ( _player_manager.getPlayerID ( ) > -1 ) {
+            _player_manager.movePhaseUpdate ( getResideCount ( ), _stage_manager.getTargetMass ( _player_manager.getTargetMassID ( _stage_manager.getMassCount ( ) ) ) );
+        }
+        // ゴールまでの残りマスを表示
+        resideCount ( );
+
+        if ( _player_manager.isEventFinish ( 0 ) == true && _player_manager.isEventFinish ( 1 ) == true && _goal_flag == false && _reset_mass_update[ 0 ] == false && _reset_mass_update[ 1 ] == false ) {
+            _player_manager.setEventStart ( 0, false );
+            _player_manager.setEventStart ( 1, false );
+            _player_manager.setEventFinish ( 0, false );
+            _player_manager.setEventFinish ( 1, false );
+            if ( _mode != PROGRAM_MODE.MODE_NO_CONNECT ) {
+                _host_data.refreshCardList ( 0 );
+                _host_data.refreshCardList ( 1 );
+            }
+            _phase_manager.changeMainGamePhase ( MAIN_GAME_PHASE.GAME_PHASE_DICE, "DisePhase" );
+        }
 	}
 
 	/// <summary>
@@ -778,90 +796,146 @@ public class ApplicationManager : Manager< ApplicationManager > {
 	/// </summary>
 	/// <param name="i">The index.</param>
 	public void massEvent( int i, int id ) {
-		_player_manager.setEventStart( id, true );
-		switch ( _file_manager.getFileData( ).mass[ i ].type ) {
-		case "draw":
-			int value = _file_manager.getMassValue( i )[ 0 ];
-			List< int > card_list = new List< int >( );
-			Debug.Log( "カード" + value + "ドロー" );
-			for ( int j = 0; j < value; j++ ) {
-				// デッキのカード数が０になったらリフレッシュ
-				if ( _card_manager.getDeckCardNum( ) <= 0 ) {
-					_card_manager.createDeck( );
-				}
-				card_list.Add( _card_manager.distributeCard( ).id );
-			}
-            if ( _mode != PROGRAM_MODE.MODE_NO_CONNECT ) {
-			    _host_data.setSendCardlist( id, card_list );
+        _stage_manager.getTargetMass ( i ).GetComponent<Renderer> ( ).material.SetColor ( "_Color", Color.white);
+        if ( _stage_manager.getTargetMass ( i ).transform.localScale.x < 0.5f || _stage_manager.getTargetMass ( i ).transform.localScale.z < 0.5f ) {
+            _stage_manager.getTargetMass ( i ).transform.localScale =
+                new Vector3 ( _stage_manager.getTargetMass ( i ).transform.localScale.x + 0.02f,
+                _stage_manager.getTargetMass ( i ).transform.localScale.y,
+                _stage_manager.getTargetMass ( i ).transform.localScale.z + 0.02f );
+        } else {
+            _player_manager.setEventStart ( id, true );
+            switch ( _file_manager.getFileData ( ).mass[ i ].type ) {
+                case "draw":
+                    int value = _file_manager.getMassValue ( i )[ 0 ];
+                    List<int> card_list = new List<int> ( );
+                    Debug.Log ( "カード" + value + "ドロー" );
+                    for ( int j = 0; j < value; j++ ) {
+                        // デッキのカード数が０になったらリフレッシュ
+                        if ( _card_manager.getDeckCardNum ( ) <= 0 ) {
+                            _card_manager.createDeck ( );
+                        }
+                        card_list.Add ( _card_manager.distributeCard ( ).id );
+                    }
+                    if ( _mode != PROGRAM_MODE.MODE_NO_CONNECT ) {
+                        _host_data.setSendCardlist ( id, card_list );
+                    }
+                    // カードリストを初期化
+                    card_list.Clear ( );
+                    _player_manager.setEventFinish ( id, true );
+                    _reset_mass_update[ id ] = true;
+                    _player_manager.setEventType ( id, EVENT_TYPE.EVENT_DRAW );
+                    break;
+                case "trap1":
+                    Debug.Log ( "トラップ発動" );
+                    Debug.Log ( "カード" + _file_manager.getMassValue ( i )[ 1 ] + "捨てる" );
+                    Debug.Log ( _file_manager.getMassValue ( i )[ 0 ] + "マス進む" );
+                    _player_manager.setCurrentFlag ( true );
+                    _player_manager.setPlayerID ( id );
+                    _player_manager.setAdvanceFlag ( true );
+                    _player_manager.setLimitValue ( _file_manager.getMassValue ( i )[ 0 ] );
+                    _before_player_count = _player_manager.getPlayerCount ( id, _stage_manager.getMassCount ( ) );
+                    _reset_mass_update[ id ] = true;
+                    _player_manager.setEventType ( id, EVENT_TYPE.EVENT_MOVE );
+                    break;
+                case "trap2":
+                    Debug.Log ( "トラップ発動" );
+                    Debug.Log ( "カード" + _file_manager.getMassValue ( i )[ 0 ] + "ドロー" );
+                    Debug.Log ( _file_manager.getMassValue ( i )[ 1 ] + "マス戻る" );
+                    _player_manager.setCurrentFlag ( true );
+                    _player_manager.setPlayerID ( id );
+                    _player_manager.setAdvanceFlag ( false );
+                    _player_manager.setLimitValue ( _file_manager.getMassValue ( i )[ 1 ] );
+                    _before_player_count = _player_manager.getPlayerCount ( id, _stage_manager.getMassCount ( ) );
+                    _reset_mass_update[ id ] = true;
+                    _player_manager.setEventType ( id, EVENT_TYPE.EVENT_MOVE );
+                    break;
+                case "advance":
+                    Debug.Log ( _file_manager.getMassValue ( i )[ 0 ] + "マス進む" );
+                    _player_manager.setPlayerID ( id );
+                    _player_manager.setCurrentFlag ( true );
+                    _player_manager.setAdvanceFlag ( true );
+                    _player_manager.setLimitValue ( _file_manager.getMassValue ( i )[ 0 ] );
+                    _before_player_count = _player_manager.getPlayerCount ( id, _stage_manager.getMassCount ( ) );
+                    _reset_mass_update[ id ] = true;
+                    _player_manager.setEventType ( id, EVENT_TYPE.EVENT_MOVE );
+                    break;
+                case "event":
+                    Debug.Log ( "イベント発生!!" );
+                    _player_manager.setEventFinish ( id, true );
+                    _reset_mass_update[ id ] = true;
+                    _player_manager.setEventType ( id, EVENT_TYPE.EVENT_ACTION );
+                    break;
+                case "goal":
+                    if ( _player_manager.getPlayerResult ( id ) == BATTLE_RESULT.WIN ) {
+                        _phase_manager.changeMainGamePhase ( MAIN_GAME_PHASE.GAME_PHASE_FINISH, "FinishPhase" );
+                        Debug.Log ( "プレイヤー" + ( id + 1 ) + ":Goal!!" );
+                        _goal_flag = true;
+                        _player_manager.setEventFinish ( id, true );
+                        _reset_mass_update[ id ] = true;
+                        _player_manager.setEventType ( id, EVENT_TYPE.EVENT_GOAL );
+                    } else if ( _player_manager.getPlayerResult ( id ) == BATTLE_RESULT.LOSE || _player_manager.getPlayerResult ( id ) == BATTLE_RESULT.DRAW ) {
+                        _player_manager.setPlayerID ( id );
+                        _player_manager.setAdvanceFlag ( false );
+                        _player_manager.setCurrentFlag ( true );
+                        _player_manager.setLimitValue ( 1 );
+                        _before_player_count = _player_manager.getPlayerCount ( id, _stage_manager.getMassCount ( ) );
+                        _reset_mass_update[ id ] = true;
+                        _player_manager.setEventType ( id, EVENT_TYPE.EVENT_MOVE );
+                    }
+                    break;
+                case "selectDraw":
+                    int cardType = _file_manager.getCardID ( i );
+                    _card_manager.getCardData ( cardType );
+                    _player_manager.setEventFinish ( id, true );
+                    _reset_mass_update[ id ] = true;
+                    break;
+                case "Buff":
+                    int buffValue = _file_manager.getMassValue ( i )[ 0 ];
+                    Debug.Log ( "プレイヤーのパラメーターを" + buffValue.ToString ( ) + "上昇" );
+                    _player_manager.setEventFinish ( id, true );
+                    _reset_mass_update[ id ] = true;
+                    break;
+                case "MoveSeal":
+                    Debug.Log ( "行動停止" );
+                    _player_manager.setPlayerOnMove ( id, false );
+                    _player_manager.setEventFinish ( id, true );
+                    _reset_mass_update[ id ] = true;
+                    _player_manager.setEventType ( id, EVENT_TYPE.EVENT_DRAW );
+                    break;
+                case "change":
+                    Debug.Log ( "チェンジ" );
+                    int count_tmp;
+                    Vector3 vector_tmp;
+                    count_tmp = _player_manager.getPlayerCount ( id, _stage_manager.getMassCount ( ) );
+                    vector_tmp = _stage_manager.getTargetMass ( count_tmp ).transform.localPosition;
+                    if ( id == 0 ) {
+                        _player_manager.setPlayerCount ( 0, _player_manager.getPlayerCount ( 1, _stage_manager.getMassCount ( ) ) );
+                        _player_manager.setPlayerPosition ( 0, _stage_manager.getTargetMass ( _player_manager.getPlayerCount ( 1, _stage_manager.getMassCount ( ) ) ).transform.localPosition );
+                        _player_manager.setPlayerPosition ( 1, vector_tmp );
+                        _player_manager.setPlayerCount ( 1, count_tmp );
+                    } else if ( id == 1 ) {
+                        _player_manager.setPlayerCount ( 1, _player_manager.getPlayerCount ( 0, _stage_manager.getMassCount ( ) ) );
+                        _player_manager.setPlayerPosition ( 1, _stage_manager.getTargetMass ( _player_manager.getPlayerCount ( 0, _stage_manager.getMassCount ( ) ) ).transform.localPosition );
+                        _player_manager.setPlayerPosition ( 0, vector_tmp );
+                        _player_manager.setPlayerCount ( 0, count_tmp );
+                    }
+                    for ( int j = 0; j < ( int )PLAYER_ORDER.MAX_PLAYER_NUM; j++ ) {
+                        _player_manager.setEventFinish ( j, true );
+                        _reset_mass_update[ j ] = true;
+                    }
+                    _player_manager.setEventType ( id, EVENT_TYPE.EVENT_CHANGE );
+                    break;
+                case "worp":
+                    Debug.Log ( "ワープ" );
+                    int worp_position = 15;
+                    _player_manager.setPlayerCount ( id, worp_position );
+                    _player_manager.setPlayerPosition ( id, _stage_manager.getTargetMass ( worp_position ).transform.localPosition );
+                    _player_manager.setEventFinish ( id, true );
+                    _reset_mass_update[ id ] = true;
+                    _player_manager.setEventType ( id, EVENT_TYPE.EVENT_WORP );
+                    break;
             }
-			// カードリストを初期化
-			card_list.Clear( );
-			_player_manager.setEventFinish( id, true );
-            _player_manager.setEventType( id, EVENT_TYPE.EVENT_DRAW );
-			break;
-		case "trap1":
-			Debug.Log ("トラップ発動");
-			Debug.Log ("カード" + _file_manager.getMassValue( i )[ 1 ] + "捨てる");
-			Debug.Log (_file_manager.getMassValue( i )[ 0 ] + "マス進む");
-            _player_manager.setCurrentFlag( true );
-			_player_manager.setPlayerID( id );
-			_player_manager.setAdvanceFlag( true );
-			_player_manager.setLimitValue( _file_manager.getMassValue( i )[ 0 ] );
-            _player_manager.setEventType( id, EVENT_TYPE.EVENT_MOVE );
-			break;
-		case "trap2":
-			Debug.Log( "トラップ発動");
-			Debug.Log( "カード"+_file_manager.getMassValue( i )[ 0 ] + "ドロー");
-			Debug.Log( _file_manager.getMassValue( i )[ 1 ] + "マス戻る" );
-            _player_manager.setCurrentFlag( true );
-			_player_manager.setPlayerID( id );
-			_player_manager.setAdvanceFlag( false );
-			_player_manager.setLimitValue( _file_manager.getMassValue( i )[ 1 ] );
-            _player_manager.setEventType( id, EVENT_TYPE.EVENT_MOVE );
-			break;
-		case "advance":
-			Debug.Log(_file_manager.getMassValue( i )[ 0 ] + "マス進む" );
-			_player_manager.setPlayerID( id );
-            _player_manager.setCurrentFlag( true );
-			_player_manager.setAdvanceFlag( true );
-			_player_manager.setLimitValue( _file_manager.getMassValue( i )[ 0 ] );
-            _player_manager.setEventType( id, EVENT_TYPE.EVENT_MOVE );
-			break;
-		case "event":
-			Debug.Log( "イベント発生!!" );
-			_player_manager.setEventFinish( id, true );
-            _player_manager.setEventType( id, EVENT_TYPE.EVENT_ACTION );
-			break;
-		case "goal":
-			if( _player_manager.getPlayerResult( id ) == BATTLE_RESULT.WIN ){
-				_phase_manager.changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_FINISH, "FinishPhase" );
-				Debug.Log( "プレイヤー" + ( id + 1 ) +":Goal!!" );
-				_goal_flag = true;
-				_player_manager.setEventFinish( id, true );
-                _player_manager.setEventType( id, EVENT_TYPE.EVENT_GOAL );
-			} else if ( _player_manager.getPlayerResult( id ) == BATTLE_RESULT.LOSE || _player_manager.getPlayerResult( id ) == BATTLE_RESULT.DRAW ) {
-				_player_manager.setPlayerID( id );
-				_player_manager.setAdvanceFlag ( false );
-                _player_manager.setCurrentFlag( true );
-				_player_manager.setLimitValue( 1 );
-                _player_manager.setEventType( id, EVENT_TYPE.EVENT_MOVE );
-			}
-			break;
-		case "selectDraw":
-			int cardType = _file_manager.getCardID( i );
-			_card_manager.getCardData( cardType );
-			break;
-		case "Buff":
-			int buffValue = _file_manager.getMassValue( i )[ 0 ];
-			Debug.Log( "プレイヤーのパラメーターを" + buffValue.ToString( ) + "上昇" );
-			break;
-		case "MoveSeal":
-			Debug.Log( "行動停止" );
-			_player_manager.setPlayerOnMove( id, false );
-			_player_manager.setEventFinish( id, true );
-			_player_manager.setEventType( id, EVENT_TYPE.EVENT_DRAW );
-			break;
-		}  
+        } 
 	}
 
 	/// <summary>
