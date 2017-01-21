@@ -11,12 +11,8 @@ public class ApplicationManager : MonoBehaviour {
 		MODE_CONNECT,
 	};
 
-	enum GAME_PLAY_MODE {
-		MODE_NORMAL_PLAY,
-		MODE_PLAYER_SELECT,
-	};
-
 	private const int MAX_DRAW_NUM = 4;
+	private const int MAX_SEND_CARD_NUM = 4;
 
 	[ SerializeField ]
 	private SCENE _scene = SCENE.SCENE_CONNECT;
@@ -35,12 +31,30 @@ public class ApplicationManager : MonoBehaviour {
 	[ SerializeField ]
 	private ClientData _client_data;
 
-	[SerializeField]
+	[ SerializeField ]
 	private PLAYER_ORDER _player_num = PLAYER_ORDER.NO_PLAYER;
-	[SerializeField]
+	[ SerializeField ]
 	private PROGRAM_MODE _mode = PROGRAM_MODE.MODE_NO_CONNECT;
-	[SerializeField]
+	[ SerializeField ]
 	private GAME_PLAY_MODE _play_mode = GAME_PLAY_MODE.MODE_NORMAL_PLAY;
+    
+    private GameObject _light_off_pref;
+    private GameObject _light_off_obj;
+    private Sprite _game_scene_back_ground;
+    private GameObject _game_scene_select_area_pref;
+    private GameObject _game_scene_select_area_obj;
+	[ SerializeField ]
+    private GameObject _select_throw_area_pref;
+	[ SerializeField ]
+    private GameObject _select_throw_area_obj;
+    private GameObject _dice_button_obj;
+    private GameObject _dice_button_pref;
+    private GameObject _complete_button_obj;
+    private GameObject _complete_button_pref;
+
+    private bool _init = false;
+    private bool _reject = false;
+    private bool _complete = false;
 
 	public Text _scene_text;
 
@@ -70,6 +84,20 @@ public class ApplicationManager : MonoBehaviour {
 		catch {
 			Debug.Log( "参照に失敗しました。" );
 		}
+
+        try {
+            _card_manager.init( );
+        }
+        catch {
+            Debug.Log( "Failure Init CardManager..." );
+        }
+
+        try {
+            _light_off_pref = Resources.Load< GameObject >( "Prefabs/Background/LightOff" );
+        }
+        catch {
+            Debug.Log( "Failure Load LightOffObj..." );
+        }
 	}
 
 	// Update is called once per frame
@@ -96,9 +124,7 @@ public class ApplicationManager : MonoBehaviour {
 					_client_data.setChangedScene( false );
 				}
 			}
-		} else {
-			_player_num = PLAYER_ORDER.PLAYER_ONE;
-		}
+		} 
 
 		switch( _scene ) {
 		case SCENE.SCENE_CONNECT:
@@ -125,6 +151,10 @@ public class ApplicationManager : MonoBehaviour {
 			_scene_text.text = _scene.ToString( );
 			_client_data.CmdSetSendChangedScene( true );
 			_client_data.setChangedScene( true );
+            _init = false;
+            if ( _scene == SCENE.SCENE_TITLE ) {
+                _network_gui_controll.setShowGUI( false );
+            }
 		}
 	}
 
@@ -132,27 +162,45 @@ public class ApplicationManager : MonoBehaviour {
 	/// ConnectSceneの更新
 	/// </summary>
 	private void updateConnectScene( ) {
-
+        if ( _mode == PROGRAM_MODE.MODE_NO_CONNECT ) {
+            if ( Input.GetKeyDown( KeyCode.A ) ) {
+			    _scene = SCENE.SCENE_TITLE;
+			    _scene_text.text = _scene.ToString( );
+			    _player_num = PLAYER_ORDER.PLAYER_ONE;
+                _network_gui_controll.setShowGUI( false );
+            }
+        }
 	}
 
 	/// <summary>
 	/// TitleSceneの更新
 	/// </summary>
 	private void updateTitleScene( ) {
-
+        if ( _mode == PROGRAM_MODE.MODE_NO_CONNECT ) {
+            if ( Input.GetKeyDown( KeyCode.A ) ) {
+			    _scene = SCENE.SCENE_GAME;
+			    _scene_text.text = _scene.ToString( );
+            } 
+        }
 	}
 
 	/// <summary>
 	/// FinishSceneの更新
 	/// </summary>
 	private void updateFinishScene( ) {
-
+        if ( _mode == PROGRAM_MODE.MODE_NO_CONNECT ) {
+            if ( Input.GetKeyDown( KeyCode.A ) ) {
+			    _scene = SCENE.SCENE_TITLE;
+			    _scene_text.text = _scene.ToString( );
+            } 
+        }
 	}
 
 	/// <summary>
 	/// GameSceneの更新
 	/// </summary>
 	private void updateGameScene( ) {
+
 		// フェイズごとの更新
         if ( _play_mode == GAME_PLAY_MODE.MODE_NORMAL_PLAY ) { 
 		    switch( _phase_manager.getMainGamePhase( ) ) {
@@ -197,6 +245,11 @@ public class ApplicationManager : MonoBehaviour {
 				}
 			}
 		}
+
+		if ( _player_manager.mouseClick( ) ) {
+			//GUIにカード情報表示用
+			Debug.Log( _player_manager.getSelectCard( ).name );
+		}
 	}
 
 	/// <summary>
@@ -212,6 +265,7 @@ public class ApplicationManager : MonoBehaviour {
 			}
 			_client_data.CmdSetSendChangedPhase( true );
 			_client_data.setChangedPhase( true );
+            _init = false;
 		}
 	}
 
@@ -219,7 +273,29 @@ public class ApplicationManager : MonoBehaviour {
 	/// NoPlayPhaseの更新
 	/// </summary>
 	private void updateNoPlayPhase( ) {
-		
+        // 初期化処理
+        if ( !_init ) {
+            switch ( _player_num ) {
+                case PLAYER_ORDER.PLAYER_ONE:
+                    _game_scene_back_ground = Resources.Load< Sprite >( "Graphics/Background/bg_P1" );
+                    break;
+                case PLAYER_ORDER.PLAYER_TWO:
+                    _game_scene_back_ground = Resources.Load< Sprite >( "Graphics/Background/bg_P2" );
+                    break;
+            }
+            GameObject.Find( "Canvas" ).GetComponent< Image >( ).sprite = _game_scene_back_ground;
+
+            createSelectArea( "MapBackground" );
+
+            _init = true;
+        }
+
+        if ( _mode == PROGRAM_MODE.MODE_NO_CONNECT ) {
+            if ( Input.GetKeyDown( KeyCode.A ) ) {
+			    _phase_manager.setPhase( MAIN_GAME_PHASE.GAME_PHASE_DICE );
+                _init = false;
+            } 
+        }
 	}
 
 	/// <summary>
@@ -227,16 +303,38 @@ public class ApplicationManager : MonoBehaviour {
 	/// </summary>
 	private void updateDicePhase( ) {
 		int value = 0;
-		if ( Input.GetKeyDown( KeyCode.A ) ) {
+        if ( !_init ) {
+            createLightOffObj( false );
+
+            _dice_button_pref = Resources.Load< GameObject >( "Prefabs/UI/DiceButton" );
+
+            _dice_button_obj = ( GameObject )Instantiate( _dice_button_pref );
+            _dice_button_obj.transform.SetParent( GameObject.Find( "Canvas" ).transform );
+            _dice_button_obj.GetComponent< RectTransform >( ).anchoredPosition = new Vector3( 0, 0, 0 );
+            _dice_button_obj.GetComponent< RectTransform >( ).localScale = new Vector3( 0.03f, 0.03f, 1 );
+            _dice_button_obj.GetComponent< RectTransform >( ).localPosition = new Vector3( 0, 0, -600 );
+
+            _dice_button_obj.GetComponent< Button >( ).onClick.AddListener( _player_manager.dicisionDiceValue );
+
+            _init = true;
+        }
+
+		if ( _player_manager.isDiceRoll( ) ) {
 			// ダイスの目を決定
-			_player_manager.dicisionDiceValue( );
 			value = _player_manager.getDiceValue( );
 
 			// サーバーにダイスの目を送信
 			if ( _mode == PROGRAM_MODE.MODE_CONNECT ) {
 				_client_data.CmdSetSendDiceValue( value );
 				_client_data.setDiceValue( value );
-			}
+			} else if ( _mode == PROGRAM_MODE.MODE_NO_CONNECT ) {
+                _phase_manager.setPhase( MAIN_GAME_PHASE.GAME_PHASE_MOVE_CHARACTER );
+            }
+
+            // ダイスオブジェ削除
+            Destroy( _dice_button_obj );
+            _dice_button_pref = null;
+            destroyLightOffObj( );
 		}
 	}
 
@@ -250,7 +348,9 @@ public class ApplicationManager : MonoBehaviour {
 				_client_data.CmdSetSendDiceValue ( -1 );
 				_client_data.setDiceValue( -1 );
 			}
-		}
+		} else if ( _mode == PROGRAM_MODE.MODE_NO_CONNECT ) {
+            _phase_manager.setPhase( MAIN_GAME_PHASE.GAME_PHASE_DRAW_CARD );
+        }
 	}
 
 	/// <summary>
@@ -274,10 +374,11 @@ public class ApplicationManager : MonoBehaviour {
 				// ダイスの目を初期化
 				_player_manager.initDiceValue( );
 				// カードを生成
-				_player_manager.updateAllPlayerCard( );
+				_player_manager.initAllPlayerCard( );
 
                 if ( _player_manager.getPlayerCardNum( ) > _player_manager.getMaxPlayerCardNum( ) ) {
                     _play_mode = GAME_PLAY_MODE.MODE_PLAYER_SELECT;
+                    _player_manager.setPlayMode( _play_mode );
                     return;
                 }
 
@@ -285,22 +386,95 @@ public class ApplicationManager : MonoBehaviour {
 				_client_data.CmdSetSendReady( true );
 				_client_data.setReady( true );
 			}
+		} else if ( _mode == PROGRAM_MODE.MODE_NO_CONNECT ) {
+			if ( Input.GetKeyDown( KeyCode.A ) ) {
+                //一度画面上に配置しているカードオブジェクトを削除
+                _player_manager.allDeletePlayerCard( );
+
+                // 配するカードを決定
+                List< int > card_list = new List< int >( );
+                for ( int i = 0; i < 4 - _player_manager.getDiceValue( ); i++ ) {
+                    if ( _card_manager.getDeckCardNum( ) <= 0 ) {
+                        _card_manager.createDeck( );
+                    }
+					card_list.Add( _card_manager.distributeCard( ).id );
+                    Debug.Log( "カードリスト" + i + ":" + card_list[ i ] );
+				}
+
+                // カード配布
+				for ( int i = 0; i < card_list.Count; i++ ) {
+					// カードデータを登録
+					_player_manager.addPlayerCard( card_list[ i ] );
+				}
+
+				// ダイスの目を初期化
+				_player_manager.initDiceValue( );
+				// カードを生成
+				_player_manager.initAllPlayerCard( );
+
+                if ( _player_manager.getPlayerCardNum( ) > _player_manager.getMaxPlayerCardNum( ) ) {
+                    _play_mode = GAME_PLAY_MODE.MODE_PLAYER_SELECT;
+                    _player_manager.setPlayMode( _play_mode );
+				    _player_manager.initAllPlayerCard( );
+                    _init = false;
+                    return;
+                }
+
+                _init = false;
+                _phase_manager.setPhase( MAIN_GAME_PHASE.GAME_PHASE_BATTLE );
+
+			}
 		}
 	}
 
     public void updateSelectPlayerCard( ) {
+        // 初期化処理
+        if ( !_init ) {
+            createLightOffObj( true );
+            _select_throw_area_pref = Resources.Load< GameObject >( "Prefabs/Background/SelectThrowArea" );
+            Vector3 pos = _select_throw_area_pref.GetComponent< RectTransform >( ).localPosition;
+            
+            _select_throw_area_obj = ( GameObject )Instantiate( _select_throw_area_pref );
+            _select_throw_area_obj.transform.SetParent( GameObject.Find( "Canvas" ).transform );
+            _select_throw_area_obj.GetComponent< RectTransform >( ).anchoredPosition = new Vector3( 0, 0, 0 );
+            _select_throw_area_obj.GetComponent< RectTransform >( ).localScale = new Vector3( 1, 1, 1 );
+            _select_throw_area_obj.GetComponent< RectTransform >( ).localPosition = pos;
+
+            _select_throw_area_obj.GetComponentInChildren< Button >( ).onClick.AddListener( _player_manager.dicisionSelectThrowCard );
+            _init = true;
+        }
+
 		if ( _mode == PROGRAM_MODE.MODE_CONNECT ) {
-			if ( Input.GetKeyDown( KeyCode.A ) ) {
-                if ( _player_manager.dicisionSelectPlayerCard( ) ) {
-                    _play_mode = GAME_PLAY_MODE.MODE_NORMAL_PLAY;
-                    _player_manager.allSelectInit( );
-				    // カードを更新
-				    _player_manager.updateAllPlayerCard( );
-				    // サーバーに準備完了を送信
-				    _client_data.CmdSetSendReady( true );
-				    _client_data.setReady( true );
-                }
-			}
+            if ( _player_manager.isSelectThrowComplete( ) ) {
+                _play_mode = GAME_PLAY_MODE.MODE_NORMAL_PLAY;
+                _player_manager.allSelectInit( );
+                // カードを更新
+                _player_manager.initAllPlayerCard( );
+                // サーバーに準備完了を送信
+                _client_data.CmdSetSendReady( true );
+                _client_data.setReady( true );
+                Destroy( _select_throw_area_obj );
+                _select_throw_area_pref = null;
+                destroyLightOffObj( );
+                _player_manager.refreshSelectCard( );
+                _player_manager.setPlayMode( _play_mode );
+                _player_manager.initAllPlayerCard( );
+            }
+		} else if ( _mode == PROGRAM_MODE.MODE_NO_CONNECT ) {
+            if ( _player_manager.isSelectThrowComplete( ) ) {
+                _play_mode = GAME_PLAY_MODE.MODE_NORMAL_PLAY;
+                _player_manager.allSelectInit( );
+				// カードを更新
+				_player_manager.initAllPlayerCard( );
+				_phase_manager.setPhase( MAIN_GAME_PHASE.GAME_PHASE_BATTLE );
+                Destroy( _select_throw_area_obj );
+                _select_throw_area_pref = null;
+                _init = false;
+                destroyLightOffObj( );
+                _player_manager.refreshSelectCard( );
+                _player_manager.setPlayMode( _play_mode );
+                _player_manager.initAllPlayerCard( );
+            }
 		}
     }
 
@@ -308,6 +482,14 @@ public class ApplicationManager : MonoBehaviour {
 	/// ButtlePhaseの更新
 	/// </summary>
 	private void updateButtlePhase( ) {
+        // 初期化処理
+        if ( !_init ) {
+            destroySelectArea( );
+            createSelectArea( "BattleCardBackground" );
+            createCompleteButton( );
+            _init = true;
+        }
+
 		if ( _mode == PROGRAM_MODE.MODE_CONNECT ) {
 			if ( _client_data.getRecvData( ).ready == true ) {
 				// 準備完了を初期化
@@ -316,25 +498,47 @@ public class ApplicationManager : MonoBehaviour {
 			}
 		}
 
-		if ( _mode == PROGRAM_MODE.MODE_CONNECT ) {
-			if ( Input.GetKeyDown( KeyCode.A ) ) {
+		if ( _complete ) {
+            destroyCompleteButton( );
+            _complete = false;
+			if (  _mode == PROGRAM_MODE.MODE_CONNECT) {
 				// 選択結果を送る
 				int player_status = _player_manager.getPlayerData( ).power;
 				int[ ] card_list = _player_manager.dicisionSelectCard( );
 				int[ ] turned_card_list = new int[ ]{ 0, 1, 2 };
-
-				Debug.Log( player_status.ToString( ) );
+                if ( card_list.Length > MAX_SEND_CARD_NUM ) {
+                    _player_manager.refreshSelectCard( );
+                    return;
+                }
 				_client_data.CmdSetSendBattleData( true, player_status, card_list, turned_card_list );
 				_client_data.setBattleData( true, player_status, card_list, turned_card_list );
                 _player_manager.refreshSelectCard( );
-			}
-		}
+				// カードを更新
+				_player_manager.initAllPlayerCard( );
+			} else if ( _mode == PROGRAM_MODE.MODE_NO_CONNECT ) {
+				int[ ] card_list = _player_manager.dicisionSelectCard( );
+                if ( card_list.Length > MAX_SEND_CARD_NUM ) {
+                    _player_manager.refreshSelectCard( );
+                    return;
+                }
+                _player_manager.refreshSelectCard( );
+			    _phase_manager.setPhase( MAIN_GAME_PHASE.GAME_PHASE_RESULT );
+                _init = false;
+            } 
+        }
 	}
 
 	/// <summary>
 	/// ResultPhaseの更新
 	/// </summary>
 	private void updateResultPhase( ) {
+        // 初期化処理
+        if ( !_init ) {
+            destroySelectArea( );
+            createSelectArea( "MapBackground" );
+            _init = true;
+        }
+
 		if ( _mode == PROGRAM_MODE.MODE_CONNECT ) {
 			if ( _client_data.getRecvData( ).battle_ready == true ) {
 				// 準備完了を初期化
@@ -402,8 +606,10 @@ public class ApplicationManager : MonoBehaviour {
 		} else if ( _mode == PROGRAM_MODE.MODE_NO_CONNECT ) {
 			if ( Input.GetKeyDown( KeyCode.A ) ) {
 				_phase_manager.setPhase( MAIN_GAME_PHASE.GAME_PHASE_DICE );
+                _init = false;
 			} else if ( Input.GetKeyDown( KeyCode.B ) ) {
 				_phase_manager.setPhase( MAIN_GAME_PHASE.GAME_PHASE_FINISH );
+                _init = false;
 			}
 		} 
 	}
@@ -414,6 +620,86 @@ public class ApplicationManager : MonoBehaviour {
 	private void updateFinishPhase( ) {
 
 	}
+    
+    /// <summary>
+    /// 完了ボタンを作成
+    /// </summary>
+    public void createCompleteButton( ) {
+        _complete_button_pref = Resources.Load< GameObject >( "Prefabs/UI/CompleteButton" );
+        
+        _complete_button_obj = ( GameObject )Instantiate( _complete_button_pref );
+        _complete_button_obj.transform.SetParent( GameObject.Find( "Canvas" ).transform );
+        _complete_button_obj.GetComponent< RectTransform >( ).anchoredPosition = new Vector3( 0, 0, 0 );
+        _complete_button_obj.GetComponent< RectTransform >( ).localScale = new Vector3( 1, 1, 1 );
+
+        Vector3 pos = _complete_button_pref.GetComponent< RectTransform >( ).localPosition;
+        _complete_button_obj.GetComponent< RectTransform >( ).localPosition = pos;
+            
+        _complete_button_obj.GetComponent< Button >( ).onClick.AddListener( readyComplete );
+    }
+    
+    /// <summary>
+    /// 完了ボタンを削除
+    /// </summary>
+    private void destroyCompleteButton( ) {
+        Destroy( _complete_button_obj );
+        _complete_button_obj = null;
+        _complete_button_pref = null;
+    }
+
+    /// <summary>
+    /// 暗くなる画面を生成
+    /// </summary>
+    private void createLightOffObj( bool throw_card ) {
+        Vector3 pos = _light_off_pref.GetComponent< RectTransform >( ).localPosition;
+            
+        _light_off_obj = ( GameObject )Instantiate( _light_off_pref );
+        _light_off_obj.transform.SetParent( GameObject.Find( "Canvas" ).transform );
+        _light_off_obj.GetComponent< RectTransform >( ).localScale = new Vector3( 1, 1, 1 );
+
+        _reject = true;
+
+        if ( !throw_card ) {
+            pos = new Vector3( pos.x, pos.y, -550.0f );
+        }
+        _light_off_obj.GetComponent< RectTransform >( ).localPosition = pos;
+        _light_off_obj.GetComponent< RectTransform >( ).offsetMax = new Vector2( 0, 0 );
+        _light_off_obj.GetComponent< RectTransform >( ).offsetMin = new Vector2( 0, 0 );
+
+    }
+    
+    /// <summary>
+    /// 暗くなる画面を削除
+    /// </summary>
+    private void destroyLightOffObj( ) {
+        Destroy( _light_off_obj );
+        _light_off_obj = null;
+        _reject = false;
+    }
+
+    /// <summary>
+    /// セレクトエリアの生成
+    /// </summary>
+    /// <param name="data_path"></param>
+    private void createSelectArea( string data_path ) {
+        _game_scene_select_area_pref = Resources.Load< GameObject >( "Prefabs/Background/" + data_path );
+        Vector3 pos = _game_scene_select_area_pref.GetComponent< RectTransform >( ).localPosition;
+            
+        _game_scene_select_area_obj = ( GameObject )Instantiate( _game_scene_select_area_pref );
+        _game_scene_select_area_obj.transform.SetParent( GameObject.Find( "Canvas" ).transform );
+        _game_scene_select_area_obj.GetComponent< RectTransform >( ).anchoredPosition = new Vector3( 0, 0, 0 );
+        _game_scene_select_area_obj.GetComponent< RectTransform >( ).localScale = new Vector3( 1, 1, 1 );
+        _game_scene_select_area_obj.GetComponent< RectTransform >( ).localPosition = pos;
+    }
+
+    /// <summary>
+    /// セレクトエリアの削除
+    /// </summary>
+    private void destroySelectArea( ) {
+        Destroy( _game_scene_select_area_obj );
+        _game_scene_select_area_obj = null;
+        _game_scene_select_area_pref = null;
+    }
 
 	public void OnGUI( ) {
 		if ( _scene == SCENE.SCENE_CONNECT && _host_data != null ) {
@@ -443,5 +729,9 @@ public class ApplicationManager : MonoBehaviour {
 	public SCENE getScene( ) {
 		return _scene;
 	}
+
+    public void readyComplete( ) {
+        _complete = true;
+    }
 
 }

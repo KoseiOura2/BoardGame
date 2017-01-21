@@ -10,6 +10,8 @@ public class Card : MonoBehaviour {
 	[ SerializeField ]
 	private int _hand_num = -1;
 	[ SerializeField ]
+    private int _select_area_num = -1;
+	[ SerializeField ]
 	private bool _selected;
 	[ SerializeField ]
 	private int _id = -1;
@@ -28,12 +30,19 @@ public class Card : MonoBehaviour {
 		_front_material = Resources.Load< Material >( "Materials/Cards/" + card_data.name );
 		_front_object.GetComponent< Renderer >( ).material = _front_material;
 		_card_data = card_data;
+        if ( card_data.id < 0 ) {
+            Debug.Log( "korosu2" );
+        }
 		_id = card_data.id;
 	}
 
 	public void changeHandNum( int id ) {
 		_hand_num = id;
 	}
+
+    public void changeSelectAreaNum( int id ) {
+        _select_area_num = id;
+    }
 
 	public void setSelectFlag( bool selectFlag ) {
 		_selected = selectFlag;
@@ -46,6 +55,10 @@ public class Card : MonoBehaviour {
 	public int getHandNum( ) {
 		return _hand_num;
 	}
+
+    public int getSelectAreaNum( ) {
+        return _select_area_num;
+    }
 
 	public bool getSelectFlag( ) {
 		return _selected;

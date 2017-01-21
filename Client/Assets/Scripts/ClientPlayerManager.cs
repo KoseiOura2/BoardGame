@@ -9,6 +9,7 @@ public class ClientPlayerManager : MonoBehaviour {
 	private const float MAX_DICE_VALUE   = 3.9f;
 	private const float MIN_DICE_VALUE   = 1.0f;
 	private const int INIT_PLAYER_POWER  = 10;
+    private const int MAX_PLAYER_CARD_NUM = 6;
 
 	/// <summary>
 	/// プレイヤーの持つカードのデータ
@@ -25,17 +26,26 @@ public class ClientPlayerManager : MonoBehaviour {
 	[ SerializeField ]
 	private PLAYER_CARD_DATA _player_card = new PLAYER_CARD_DATA( );
 	private PLAYER_DATA _player_data;
-	[ SerializeField ]
-	private GameObject _hand_area;
-	private GameObject _select_area;
-	private float _hand_area_width;
-	private float _no_select_position_y;
-	private float _selected_position_y;
+
+	private GameObject _player_card_area_base;
+	private GameObject _select_area_base;
+    private Vector3[ ] _select_area = new Vector3[ MAX_PLAYER_CARD_NUM ];
+	private GameObject[ ] _throw_player_card_area_base = new GameObject[ 2 ];
+	private GameObject _select_throw_area_base;
+    private Vector3[ ] _select_throw_area = new Vector3[ MAX_PLAYER_CARD_NUM ];
+
+    private GAME_PLAY_MODE _play_mode = GAME_PLAY_MODE.MODE_NORMAL_PLAY;
+
+    private float _card_width = 3.0f;
+
 	private int _dice_value = 0;
 	private bool _dice_roll = false;
-    private const int MAX_PLAYER_CARD_NUM = 6;
+    private bool _select_throw_complete = false;
+
 	[ SerializeField ]
 	private int _hand_num = 0;
+	[ SerializeField ]
+	private int _hand_obj_num = 0;
 
 	#if UNITY_EDITOR
 	private bool _debug_inst_flag;
@@ -47,12 +57,47 @@ public class ClientPlayerManager : MonoBehaviour {
 
 	// Use this for initialization
 	void Start( ) {
-		if ( _hand_area == null ) {
-			_hand_area = GameObject.Find( "HandArea" );
+		if ( _player_card_area_base == null ) {
+			_player_card_area_base = GameObject.Find( "HandArea" );
 		}
-		if ( _select_area == null ) {
-			_select_area = GameObject.Find( "SelectHandArea" );
+		if ( _select_area_base == null ) {
+			_select_area_base = GameObject.Find( "SelectHandArea" );
 		}
+        
+        // 選択エリアの設定
+        for ( int i = 0; i < _select_area.Length; i++ ) {
+            float start_pos = _select_area_base.transform.position.x - _select_area_base.transform.localScale.x / 2;
+            float adjust = 0.3f;
+
+            float x = start_pos + ( _card_width + adjust ) * i;
+            float y = _select_area_base.transform.position.y;
+            float z = _select_area_base.transform.position.z;
+
+            _select_area[ i ] = new Vector3( x, y, z );
+        }
+
+        for ( int i = 0; i < 2; i++ ) {
+            if ( _throw_player_card_area_base[ i ] == null ) {
+                _throw_player_card_area_base[ i ] = GameObject.Find( "ThrowHandArea_" + i );
+            }
+        }
+
+		if ( _select_throw_area_base == null ) {
+			_select_throw_area_base = GameObject.Find( "ThrowSelectArea" );
+		}
+        
+        // 選択エリアの設定
+        for ( int i = 0; i < _select_throw_area.Length; i++ ) {
+            float start_pos = _select_throw_area_base.transform.position.x - _select_throw_area_base.transform.localScale.x / 2;
+            float adjust = 0.4f;
+
+            float x = start_pos + ( _card_width + adjust ) * i;
+            float y = _select_throw_area_base.transform.position.y;
+            float z = _select_throw_area_base.transform.position.z;
+
+            _select_throw_area[ i ] = new Vector3( x, y, z );
+        }
+
 		if ( _card_obj == null ) {
 			_card_obj = ( GameObject )Resources.Load( "Prefabs/Card" );
 		}
@@ -60,15 +105,12 @@ public class ClientPlayerManager : MonoBehaviour {
 			_card_manager = GameObject.Find( "CardManager" ).GetComponent< CardManager >( );
 		}
 
+
 		// プレイヤーの初期化
 		_player_card.hand_list       = new List< CARD_DATA >( );
 		_player_card.hand_obj_list   = new List< GameObject >( );
 		_player_card.select_position = new List< Vector3 >( );
 		_player_card.select_list     = new List< CARD_DATA >( );
-
-		_hand_area_width      = _hand_area.GetComponent< Transform >( ).localScale.x;
-		_no_select_position_y = _hand_area.GetComponent< Transform >( ).position.y;
-		_selected_position_y  = _select_area.GetComponent< Transform >( ).position.y;
 
 		_player_data.power = INIT_PLAYER_POWER;
 	}
@@ -100,10 +142,6 @@ public class ClientPlayerManager : MonoBehaviour {
 			}
 		}
 
-		if ( mouseClick( ) ) {
-			//GUIにカード情報表示用
-			Debug.Log( getSelectCard( ).name );
-		}
 
 	}
 	#endif
@@ -132,17 +170,40 @@ public class ClientPlayerManager : MonoBehaviour {
     /// <summary>
     /// 手札の更新を行う
     /// </summary>
-	public void updateAllPlayerCard( ) {
+	public void initAllPlayerCard( ) {
 		allDeletePlayerCard( );
 		for ( int i = 0; i < _player_card.hand_list.Count; i++ ) {
 			//プレハブを生成してリストのオブジェクトに入れる
 			_player_card.hand_obj_list.Add( ( GameObject )Instantiate( _card_obj ) );
 			//カードデータ設定
+            if ( _player_card.hand_list[ i ].id < 0 ) {
+                Debug.Log( "korosu" );
+            }
 			_player_card.hand_obj_list[ i ].GetComponent< Card >( ).setCardData( _player_card.hand_list[ i ] );
 			_player_card.hand_obj_list[ i ].GetComponent< Card >( ).changeHandNum( i );
-			playerCardPositionSetting( i, false );
+            if ( _play_mode == GAME_PLAY_MODE.MODE_NORMAL_PLAY ) {
+			    playerCardPositionSetting( i, false );
+            } else if ( _play_mode == GAME_PLAY_MODE.MODE_PLAYER_SELECT ) {
+                overHandPlayerCardPositionSetting( i, false );
+            }
 		}
         _hand_num = _player_card.hand_list.Count;
+        _hand_obj_num = _player_card.hand_obj_list.Count;
+	}
+    
+    /// <summary>
+    /// 手札の更新を行う
+    /// </summary>
+	public void updateAllPlayerCard( ) {
+		for ( int i = 0; i < _player_card.hand_list.Count; i++ ) {
+			//カードデータ設定
+            Card card = _player_card.hand_obj_list[ i ].GetComponent< Card >( );
+            if ( _play_mode == GAME_PLAY_MODE.MODE_NORMAL_PLAY ) {
+			    playerCardPositionSetting( i, card.getSelectFlag( ) );
+            } else if ( _play_mode == GAME_PLAY_MODE.MODE_PLAYER_SELECT ) {
+                overHandPlayerCardPositionSetting( i, card.getSelectFlag( ) );
+            }
+		}
 	}
 
 	/// <summary>
@@ -151,23 +212,49 @@ public class ClientPlayerManager : MonoBehaviour {
 	/// <param name="list_id"> 手札ID </param>
 	/// <param name="selected"> ture=選択状態 false=！選択状態 </param>
 	private void playerCardPositionSetting( int list_id, bool selected ) {
-		float hand_area_postion_y;
-
-		if ( selected ) {
-			hand_area_postion_y = _selected_position_y;
-			Debug.Log ( "card position y = " + hand_area_postion_y );
-		} else {
-			hand_area_postion_y = _no_select_position_y;
-		}
-
-		float start_card_point = ( _hand_area_width / 2 ) - _player_card.hand_obj_list[ list_id ].transform.localScale.x;
+		float hand_area_postion_y = 0.0f;
+        
+		float start_card_point = _player_card_area_base.transform.position.x - _player_card_area_base.transform.localScale.x / 2;
 		float card_potision_x = 0.0f;
 
-		//手札が6枚以下なら
-		//カード間に現在の生成中の手札の順番を掛ける
-		card_potision_x = -start_card_point + ( _hand_area_width / _player_card.hand_list.Count ) * list_id;
-		//位置を設定する
-		_player_card.hand_obj_list[ list_id ].GetComponent< Transform >( ).position = new Vector3( card_potision_x, hand_area_postion_y, 3 );
+		if ( !selected ) {
+            card_potision_x = start_card_point + _card_width * list_id;
+			hand_area_postion_y = _player_card_area_base.transform.position.y;//位置を設定する
+		    _player_card.hand_obj_list[ list_id ].GetComponent< Transform >( ).position = new Vector3( card_potision_x,
+                                                                                                       hand_area_postion_y,
+                                                                                                       _player_card_area_base.transform.position.z );
+		} else {
+            //位置を設定する
+            int num = _player_card.hand_obj_list[ list_id ].GetComponent< Card >( ).getSelectAreaNum( );
+		    _player_card.hand_obj_list[ list_id ].GetComponent< Transform >( ).position = _select_area[ num ];
+        }
+	}
+    
+	private void overHandPlayerCardPositionSetting( int list_id, bool selected ) {
+		float hand_area_postion_y = 0.0f;
+		float card_potision_x = 0.0f;
+
+		if ( !selected ) {
+            if ( list_id >= MAX_PLAYER_CARD_NUM ) {
+                float start_card_point = _throw_player_card_area_base[ 1 ].transform.position.x - _throw_player_card_area_base[ 1 ].transform.localScale.x / 2;
+                card_potision_x = start_card_point + _card_width * ( list_id - MAX_PLAYER_CARD_NUM + 1);
+			    hand_area_postion_y = _throw_player_card_area_base[ 1 ].transform.position.y;//位置を設定する
+		        _player_card.hand_obj_list[ list_id ].GetComponent< Transform >( ).position = new Vector3( card_potision_x,
+                                                                                                           hand_area_postion_y,
+                                                                                                           _throw_player_card_area_base[ 1 ].transform.position.z );
+            } else {
+                float start_card_point = _throw_player_card_area_base[ 0 ].transform.position.x - _throw_player_card_area_base[ 0 ].transform.localScale.x / 2;
+                card_potision_x = start_card_point + _card_width * list_id;
+			    hand_area_postion_y = _throw_player_card_area_base[ 0 ].transform.position.y;//位置を設定する
+		        _player_card.hand_obj_list[ list_id ].GetComponent< Transform >( ).position = new Vector3( card_potision_x,
+                                                                                                           hand_area_postion_y,
+                                                                                                           _throw_player_card_area_base[ 0 ].transform.position.z );
+            }
+		} else {
+            //位置を設定する
+            int num = _player_card.hand_obj_list[ list_id ].GetComponent< Card >( ).getSelectAreaNum( );
+		    _player_card.hand_obj_list[ list_id ].GetComponent< Transform >( ).position = _select_throw_area[ num ];
+        }
 	}
 		
     public void allSelectInit( ) {
@@ -181,8 +268,9 @@ public class ClientPlayerManager : MonoBehaviour {
 	/// </summary>
 	public void allDeletePlayerCard( ) {
 		for ( int i = 0; i < _player_card.hand_obj_list.Count; i++ ) {
-			deletePlayerCardObject( i );
+			Destroy( _player_card.hand_obj_list[ i ] );
 		}
+        _player_card.hand_obj_list.Clear( );
 	}
 
     /// <summary>
@@ -213,9 +301,36 @@ public class ClientPlayerManager : MonoBehaviour {
 			if ( hit.collider.gameObject.name == "Card(Clone)" ) {
 				Card card = hit.collider.gameObject.GetComponent< Card >( );
 				card_data = card.getCardData( );
-				card.setSelectFlag( !card.getSelectFlag( ) );
+                if ( _player_card.select_list.Count >= MAX_PLAYER_CARD_NUM &&
+                     !card.getSelectFlag( ) ) {
+				    return card_data;
+                }
+                card.setSelectFlag( !card.getSelectFlag( ) );
+
+                if ( card.getSelectFlag( ) ) {
+                    _player_card.select_list.Add( _player_card.hand_list[ card.getHandNum( ) ] );
+                    card.changeSelectAreaNum( _player_card.select_list.Count - 1 );
+                } else {
+                    _player_card.select_list.RemoveAt( card.getSelectAreaNum( ) );
+                    
+                    int count = card.getSelectAreaNum( ) + 1;
+                    for ( int i = 0; i < _player_card.hand_obj_list.Count; i++ ) {
+                        for ( int j = count; j < _player_card.select_list.Count + 1; j++ ) {
+                            if ( _player_card.hand_obj_list[ i ].GetComponent< Card >( ).getSelectAreaNum( ) == j ) {
+                                _player_card.hand_obj_list[ i ].GetComponent< Card >( ).changeSelectAreaNum( j - 1 );
+                            }
+                        }
+                    }
+                    card.changeSelectAreaNum( -1 );
+                    updateAllPlayerCard( );
+                }
+
 				int id = card.getHandNum( );
-				playerCardPositionSetting( id, card.getSelectFlag( ) );
+                if ( _play_mode == GAME_PLAY_MODE.MODE_NORMAL_PLAY ) {
+			        playerCardPositionSetting( id, card.getSelectFlag( ) );
+                } else if ( _play_mode == GAME_PLAY_MODE.MODE_PLAYER_SELECT ) {
+                    overHandPlayerCardPositionSetting( id, card.getSelectFlag( ) );
+                }
 			}
 		}
 		return card_data;
@@ -238,20 +353,19 @@ public class ClientPlayerManager : MonoBehaviour {
         List< int > card_num = new List< int >( );
 		for ( int i = 0; i < _player_card.hand_list.Count; i++ ) {
 			if ( _player_card.hand_obj_list[ i ].GetComponent< Card >( ).getSelectFlag( ) ) {
-				// 選択カードに登録
-				_player_card.select_list.Add( _player_card.hand_list[ i ] );
-
                 card_num.Add( i );
 			}
 		}
         
-        int count = 0;
-		for ( int i = 0; i < card_num.Count; i++ ) {
-			// 選択したカードを削除
-		    deletePlayerCardData( card_num[ i ] - count );
-		    deletePlayerCardObject( card_num[ i ] - count );
-            count++;
-		}
+        if ( _player_card.select_list.Count <= 4 ) {
+            int count = 0;
+		    for ( int i = 0; i < card_num.Count; i++ ) {
+			    // 選択したカードを削除
+		        deletePlayerCardData( card_num[ i ] - count );
+		        deletePlayerCardObject( card_num[ i ] - count );
+                count++;
+		    }
+        }
 		
 
 		// 選択カードのIDを返す
@@ -263,15 +377,11 @@ public class ClientPlayerManager : MonoBehaviour {
 		return card_list;
 	}
     
-	public bool dicisionSelectPlayerCard( ) {
+	public void dicisionSelectThrowCard( ) {
         List< int > card_num = new List< int >( );
-        bool flag = false;
 
 		for ( int i = 0; i < _player_card.hand_list.Count; i++ ) {
 			if ( !_player_card.hand_obj_list[ i ].GetComponent< Card >( ).getSelectFlag( ) ) {
-				// 選択カードに登録
-				_player_card.select_list.Add( _player_card.hand_list[ i ] );
-
                 card_num.Add( i );
 			}
 		}
@@ -286,10 +396,8 @@ public class ClientPlayerManager : MonoBehaviour {
                 count++;
 		    }
 
-            flag = true;
+            _select_throw_complete = true;
         }
-
-		return flag;
 	}
 
 	public void refreshSelectCard( ) {
@@ -310,6 +418,10 @@ public class ClientPlayerManager : MonoBehaviour {
 	public void initDiceValue( ) {
 		_dice_value = 0;
 	}
+
+    public void setPlayMode( GAME_PLAY_MODE mode ) {
+        _play_mode = mode;
+    }
 
 	public PLAYER_DATA getPlayerData( ) {
 		return _player_data;
@@ -353,4 +465,13 @@ public class ClientPlayerManager : MonoBehaviour {
 
 		return flag;
 	}
+
+    public bool isSelectThrowComplete( ) {
+        if ( _select_throw_complete ) {
+            _select_throw_complete = false;
+            return true;
+        }
+        
+        return false;
+    }
 }

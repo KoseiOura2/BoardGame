@@ -5,6 +5,11 @@ using System.IO;
 using System;
 
 namespace Common {
+    
+	public enum GAME_PLAY_MODE {
+		MODE_NORMAL_PLAY,
+		MODE_PLAYER_SELECT,
+	};
 
 	/// <summary>
 	/// ホストかクライアントか

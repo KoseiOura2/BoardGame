@@ -11,7 +11,7 @@ public class ClientData : NetworkBehaviour {
 	[ SerializeField ]
 	private NETWORK_PLAYER_DATA _player_data;
     
-    public int MAX_CARD_NUM = 4;
+    public int MAX_CARD_NUM = 6;
 
     void Awake( ) {
 		_player_data.changed_scene = false;
