@@ -84,6 +84,7 @@ public class ClientPlayerManager : MonoBehaviour {
 			addPlayerCard( 4 );
 			addPlayerCard( 1 );
 			addPlayerCard( 1 );
+			addPlayerCard( 1 );
 			_debug_inst_flag = true;
 		}
 
@@ -273,6 +274,14 @@ public class ClientPlayerManager : MonoBehaviour {
 
 	public PLAYER_DATA getPlayerData( ) {
 		return _player_data;
+	}
+
+	/// <summary>
+	/// プレイヤーの手札の枚数を返す
+	/// </summary>
+	/// <returns>The player card number.</returns>
+	public int getPlayerCardNum( ) {
+		return _player_card.hand_list.Count;
 	}
 
 	/// <summary>

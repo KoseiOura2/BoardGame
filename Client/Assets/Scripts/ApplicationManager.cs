@@ -11,6 +11,11 @@ public class ApplicationManager : MonoBehaviour {
 		MODE_CONNECT,
 	};
 
+	enum GAME_PLAY_MODE {
+		MODE_NORMAL_PLAY,
+		MODE_PLAYER_SELECT,
+	};
+
 	private const int MAX_DRAW_NUM = 4;
 
 	[ SerializeField ]
@@ -34,6 +39,8 @@ public class ApplicationManager : MonoBehaviour {
 	private PLAYER_ORDER _player_num = PLAYER_ORDER.NO_PLAYER;
 	[SerializeField]
 	private PROGRAM_MODE _mode = PROGRAM_MODE.MODE_NO_CONNECT;
+	[SerializeField]
+	private GAME_PLAY_MODE _play_mode = GAME_PLAY_MODE.MODE_NORMAL_PLAY;
 
 	public Text _scene_text;
 
@@ -250,8 +257,6 @@ public class ApplicationManager : MonoBehaviour {
 			// カードデータを受診したら
 			if ( _host_data.getCardListNum( _player_num ) == MAX_DRAW_NUM - _player_manager.getDiceValue( ) &&
 			     _client_data.getRecvData( ).ready == false ) {
-                //7枚以上だったら選んで消す処理
-                
                 //一度画面上に配置しているカードオブジェクトを削除
                  _player_manager.allDeletePlayerCard();
 				for ( int i = 0; i < _host_data.getCardListNum( _player_num ); i++ ) {
@@ -266,6 +271,7 @@ public class ApplicationManager : MonoBehaviour {
 				_player_manager.initDiceValue( );
 				// カードを生成
 				_player_manager.updateAllPlayerCard( );
+
 				// サーバーに準備完了を送信
 				_client_data.CmdSetSendReady( true );
 				_client_data.setReady( true );
