@@ -5,12 +5,6 @@ using System.Collections.Generic;
 using Common;
 
 public class ApplicationManager : Manager< ApplicationManager > {
-	//
-    enum PROGRAM_MODE {
-		MODE_NO_CONNECT,
-        MODE_ONE_CONNECT,
-		MODE_TWO_CONNECT,
-    };
 
 	[ SerializeField ]
 	private NetworkMNG _network_manager;
@@ -45,6 +39,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
     private bool _goal_flag = false;
     private int _connect_wait_time = 0;
 	private bool _refresh_card_list = false;
+    private bool _network_init = false;
 
 	private const int CONNECT_WAIT_TIME = 120;
 	private const int SECOND_CONNECT_WAIT_TIME = 180;
@@ -120,6 +115,11 @@ public class ApplicationManager : Manager< ApplicationManager > {
 	
 	// Update is called once per frame
 	void FixedUpdate( ) {
+
+        if ( _network_manager != null && !_network_init ) {
+            _network_manager.setProgramMode( _mode );
+            _network_init = true;
+        }
         
 		if ( _mode == PROGRAM_MODE.MODE_ONE_CONNECT ) {
 			if ( _host_data == null && _network_manager.getHostObj( ) != null ) {
@@ -155,33 +155,37 @@ public class ApplicationManager : Manager< ApplicationManager > {
 			break;
 		}
 
-		if ( _host_data != null && _client_data[ 0 ] != null /* && _client_data[ 1 ] != null */ ) {
+		if ( _host_data != null ) {
 			if ( _mode == PROGRAM_MODE.MODE_ONE_CONNECT ) {
-				// player側のシーン変更が完了したかどうか
-				if ( _client_data[ 0 ].getRecvData( ).changed_scene == true ) {
-					_host_data.setSendChangeFieldScene( false );
-				}
-				// player側のフェイズ変更が完了したかどうか
-				if ( _client_data[ 0 ].getRecvData( ).changed_phase == true ) {
-					_host_data.setSendChangeFieldPhase( false );
-				}
+                if ( _client_data[ 0 ] != null ) {
+				    // player側のシーン変更が完了したかどうか
+				    if ( _client_data[ 0 ].getRecvData( ).changed_scene == true ) {
+					    _host_data.setSendChangeFieldScene( false );
+				    }
+				    // player側のフェイズ変更が完了したかどうか
+				    if ( _client_data[ 0 ].getRecvData( ).changed_phase == true ) {
+					    _host_data.setSendChangeFieldPhase( false );
+				    }
+                }
 			} else if ( _mode == PROGRAM_MODE.MODE_TWO_CONNECT ) {
-				// player側のシーン変更が完了したかどうか
-				if ( _client_data[ 0 ].getRecvData( ).changed_scene == true ) {
-					_host_data.setSendChangeFieldScene( false );
-				}
-				// player側のフェイズ変更が完了したかどうか
-				if ( _client_data[ 0 ].getRecvData( ).changed_phase == true ) {
-					_host_data.setSendChangeFieldPhase( false );
-				}
-                // player側のシーン変更が完了したかどうか
-			    if ( _client_data[ 1 ].getRecvData( ).changed_scene == true ) {
-				    _host_data.setSendChangeFieldScene( false );
-			    }
-                // player側のフェイズ変更が完了したかどうか
-			    if ( _client_data[ 1 ].getRecvData( ).changed_phase == true ) {
-				    _host_data.setSendChangeFieldPhase( false );
-			    }
+                if ( _client_data[ 0 ] != null && _client_data[ 1 ] != null ) {
+				    // player側のシーン変更が完了したかどうか
+				    if ( _client_data[ 0 ].getRecvData( ).changed_scene == true ) {
+					    _host_data.setSendChangeFieldScene( false );
+				    }
+				    // player側のフェイズ変更が完了したかどうか
+				    if ( _client_data[ 0 ].getRecvData( ).changed_phase == true ) {
+					    _host_data.setSendChangeFieldPhase( false );
+				    }
+                    // player側のシーン変更が完了したかどうか
+			        if ( _client_data[ 1 ].getRecvData( ).changed_scene == true ) {
+				        _host_data.setSendChangeFieldScene( false );
+			        }
+                    // player側のフェイズ変更が完了したかどうか
+			        if ( _client_data[ 1 ].getRecvData( ).changed_phase == true ) {
+				        _host_data.setSendChangeFieldPhase( false );
+			        }
+                }
             }
  		}
 	}
@@ -651,7 +655,11 @@ public class ApplicationManager : Manager< ApplicationManager > {
         if ( _mode != PROGRAM_MODE.MODE_NO_CONNECT ) {
             // 戦闘結果を送信
             if ( _host_data.getRecvData( ).send_result == false ) {
-                _host_data.setSendBattleResult( _player_manager.getPlayerResult( 0 ), _player_manager.getPlayerResult( 1 ), true );
+                _connect_wait_time++;
+                if ( _connect_wait_time > CONNECT_WAIT_TIME ) {
+                    _connect_wait_time = 0;
+                    _host_data.setSendBattleResult( _player_manager.getPlayerResult( 0 ), _player_manager.getPlayerResult( 1 ), true );
+                }
             }
         }
 

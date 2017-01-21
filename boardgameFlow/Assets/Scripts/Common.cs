@@ -5,6 +5,12 @@ using System.IO;
 using System;
 
 namespace Common {
+    public enum PROGRAM_MODE {
+		MODE_NO_CONNECT,
+        MODE_ONE_CONNECT,
+		MODE_TWO_CONNECT,
+    };
+
 	/// <summary>
 	/// ホストかクライアントか
 	/// </summary>

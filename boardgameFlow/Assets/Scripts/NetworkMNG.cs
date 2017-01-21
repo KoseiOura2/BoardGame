@@ -10,6 +10,8 @@ public class NetworkMNG : NetworkManager  {
 
 	//ファイヤーウォールを無効化してテスト
 	//ファイヤーウォールの接続を許可すること.
+    [ SerializeField ]
+    PROGRAM_MODE _mode = PROGRAM_MODE.MODE_NO_CONNECT;
 	[ SerializeField ]
 	private static IPAddress _ip_address;
 	private GameObject _object_prefab;
@@ -20,6 +22,7 @@ public class NetworkMNG : NetworkManager  {
 	private string _port = "5037";
 	private bool _connected = false;
     private int _player_num = 0;
+
 	void Awake( ) {
 		try {
 			_object_prefab   = ( GameObject )Resources.Load( "Prefabs/Player1" );
@@ -42,13 +45,25 @@ public class NetworkMNG : NetworkManager  {
 		}
 	}
 
+    public void setProgramMode( PROGRAM_MODE mode ) {
+        _mode = mode;
+    }
+
 	// Update is called once per frame
 	void Update( ) {
         if ( _host_obj == null ) {
             _host_obj = GameObject.FindWithTag( "HostObj" );
         }
 
-		if ( _client_obj.Count < 1 ) { // 後でなおすToDo
+        int num = 0;
+
+        if ( _mode == PROGRAM_MODE.MODE_ONE_CONNECT ) {
+            num = 1;
+        } else if ( _mode == PROGRAM_MODE.MODE_TWO_CONNECT ) {
+            num = 2;
+        }
+
+		if ( _client_obj.Count < num ) { // 後でなおすToDo
 			foreach( GameObject obj in GameObject.FindGameObjectsWithTag( "ClientObj" ) ) {
 				if ( !_client_obj.Contains( obj ) ) {
 					_client_obj.Add( obj );
