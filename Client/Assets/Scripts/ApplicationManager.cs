@@ -4,7 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Common;
 
-public class ApplicationManager : MonoBehaviour {
+public class ApplicationManager : Manager< ApplicationManager > {
 
 	enum PROGRAM_MODE {
 		MODE_NO_CONNECT,
@@ -24,6 +24,10 @@ public class ApplicationManager : MonoBehaviour {
 	private CardManager _card_manager;
 	[ SerializeField ]
 	private ClientPlayerManager _player_manager;
+	[ SerializeField ]
+	private FileManager _file_manager;
+	[ SerializeField ]
+	private MapManager _map_manager;
 	[ SerializeField ]
 	private NetworkGUIControll _network_gui_controll;
 	[ SerializeField ]
@@ -58,15 +62,81 @@ public class ApplicationManager : MonoBehaviour {
 
 	public Text _scene_text;
 
-	void Awake( ) {
-		DontDestroyOnLoad( this.gameObject );
+	// Awake関数の代わり
+	protected override void initialize( ) {
+		init( );
 	}
+
+    void init( ) {
+        if ( isError( ) ) {
+            return;
+        }
+
+		referManager( );
+	}
+
+    
+    bool isError( ) {
+        bool error = false;
+
+        if ( !_file_manager ) {
+            try {
+                error = true;
+                _file_manager = FileManager.getInstance( );
+            } catch {
+                Debug.LogError( "ファイルマネージャーのインスタンスが取得できませんでした。" );
+            }
+        }
+
+        return error;
+    }
 
 	// Use this for initialization
 	void Start( ) {
+
+        referManager( );
+
+        try {
+            _card_manager.init( );
+        }
+        catch {
+            Debug.Log( "Failure Init CardManager..." );
+        }
+        
+        try {
+            _map_manager.init( );
+			//マスの生成
+			for( int i = 0; i < _file_manager.getMassCount( ); i++ ) {
+				int num = _map_manager.getMassCount( );
+                try {
+				    _map_manager.createMassObj( num, _file_manager.getFileData( ).mass[ num ].type, _file_manager.getMassCoordinate( num ) );
+				    _map_manager.increaseMassCount( );
+                }
+                catch {
+                    Debug.Log( "Failure Create Mass..." );
+                }
+			}
+            _map_manager.createMiniMass( );
+        }
+        catch {
+            Debug.Log( "Failure Init MapManager..." );
+        }
+
+        try {
+            _light_off_pref = Resources.Load< GameObject >( "Prefabs/Background/LightOff" );
+        }
+        catch {
+            Debug.Log( "Failure Load LightOffObj..." );
+        }
+	}
+
+    private void referManager( ) {
 		try {
 			if ( _network_manager == null ) {
 				_network_manager = GameObject.Find( "NetworkManager" ).GetComponent< NetworkMNG >( );
+			}
+			if ( _network_gui_controll == null ) {
+				_network_gui_controll = GameObject.Find( "NetworkManager" ).GetComponent< NetworkGUIControll >( );
 			}
 			if ( _phase_manager == null ) {
 				_phase_manager = GameObject.Find( "PhaseManager" ).GetComponent< PhaseManager >( );
@@ -77,28 +147,14 @@ public class ApplicationManager : MonoBehaviour {
 			if ( _player_manager == null ) {
 				_player_manager = GameObject.Find( "ClientPlayerManager" ).GetComponent< ClientPlayerManager >( );
 			}
-			if ( _network_gui_controll == null ) {
-				_network_gui_controll = GameObject.Find( "NetworkManager" ).GetComponent< NetworkGUIControll >( );
+			if ( _map_manager == null ) {
+				_map_manager = GameObject.Find( "MapManager" ).GetComponent< MapManager >( );
 			}
 		}
 		catch {
 			Debug.Log( "参照に失敗しました。" );
 		}
-
-        try {
-            _card_manager.init( );
-        }
-        catch {
-            Debug.Log( "Failure Init CardManager..." );
-        }
-
-        try {
-            _light_off_pref = Resources.Load< GameObject >( "Prefabs/Background/LightOff" );
-        }
-        catch {
-            Debug.Log( "Failure Load LightOffObj..." );
-        }
-	}
+    }
 
 	// Update is called once per frame
 	void FixedUpdate( ) {
