@@ -10,10 +10,17 @@ public class MapManager : MonoBehaviour {
     private GameObject[ ] _mass_pref = new GameObject[ MASS_TYPE_NUM ];
     private GameObject _base_point;
     private List< GameObject > _mass_obj = new List< GameObject >( );
+    private Vector3 _player_point;
+    private int _target_mass_id;
     //private List< Vector3 > _mass_pos = new List< Vector3 >( );
     private int _create_mass_count = 0;
+    private int _player_pos_num = 0;
     [ SerializeField ]
     private float _adjust_mass_pos = 3.0f;
+    private float _purpose_distance_x = 0.0f;
+    private float _purpose_distance_y = 0.0f;
+    private float _move_speed = 0.3f;
+    private bool _move = false;
 
 	// Use this for initialization
 	void Start( ) {
@@ -25,6 +32,10 @@ public class MapManager : MonoBehaviour {
 
         if ( _base_point == null ) {
             _base_point = GameObject.Find( "MassBasePoint" );
+        }
+
+        if ( _player_point == null ) {
+            _player_point = GameObject.Find( "PlayerPoint" ).transform.position;
         }
     }
     
@@ -60,7 +71,7 @@ public class MapManager : MonoBehaviour {
         obj.GetComponent< RectTransform >( ).localScale = new Vector3( 0.2f, 0.2f, 1 );
 
         float x = _adjust_mass_pos * pos.x;
-        float y = _adjust_mass_pos * pos.y;
+        float y = _adjust_mass_pos * pos.z;
         Vector3 adjust_pos = new Vector3( x, y, pref.transform.position.z );
         obj.GetComponent< RectTransform >( ).localPosition = adjust_pos;
         
@@ -97,6 +108,86 @@ public class MapManager : MonoBehaviour {
 	
 	}
 
+    /// <summary>
+    /// ターゲットの設定
+    /// </summary>
+    /// <param name="player_pos"></param>
+    public void dicisionMoveTarget( int player_pos ) {
+        _purpose_distance_x = _mass_obj[ _player_pos_num ].transform.position.x - _mass_obj[ player_pos ].transform.position.x;
+        _purpose_distance_y = _mass_obj[ _player_pos_num ].transform.position.y - _mass_obj[ player_pos ].transform.position.y;
+        _player_pos_num = player_pos;
+        _move = true;
+    }
+
+    public void massMove( ) {
+        bool x_finish = false;
+        bool y_finish = false;
+        float[ ] x = new float[ _mass_obj.Count ];
+        float[ ] y = new float[ _mass_obj.Count ];
+
+        // x座標を動かす
+        if ( _purpose_distance_x < 0 ) {
+            if ( _mass_obj[ _player_pos_num ].transform.position.x >= _player_point.x ) {
+                for ( int i = 0; i < _mass_obj.Count; i++ ) {
+                    x[ i ] = _mass_obj[ i ].transform.position.x;
+                }
+                x_finish = true;
+            } else {
+                for ( int i = 0; i < _mass_obj.Count; i++ ) {
+                    x[ i ] = _mass_obj[ i ].transform.position.x;
+                    x[ i ] += _move_speed;
+                }
+            }
+        } else {
+            if ( _mass_obj[ _player_pos_num ].transform.position.x <= _player_point.x ) {
+                for ( int i = 0; i < _mass_obj.Count; i++ ) {
+                    x[ i ] = _mass_obj[ i ].transform.position.x;
+                }
+                x_finish = true;
+            } else {
+                for ( int i = 0; i < _mass_obj.Count; i++ ) {
+                    x[ i ] = _mass_obj[ i ].transform.position.x;
+                    x[ i ] -= _move_speed;
+                }
+            }
+        }
+        // y座標を動かす
+        if ( _purpose_distance_y < 0 ) {
+            if ( _mass_obj[ _player_pos_num ].transform.position.y >= _player_point.y ) {
+                for ( int i = 0; i < _mass_obj.Count; i++ ) {
+                    y[ i ] = _mass_obj[ i ].transform.position.y;
+                }
+                y_finish = true;
+            } else {
+                for ( int i = 0; i < _mass_obj.Count; i++ ) {
+                    y[ i ] = _mass_obj[ i ].transform.position.y;
+                    y[ i ] += _move_speed;
+                }
+            }
+        } else {
+            if ( _mass_obj[ _player_pos_num ].transform.position.y <= _player_point.y ) {
+                for ( int i = 0; i < _mass_obj.Count; i++ ) {
+                    y[ i ] = _mass_obj[ i ].transform.position.y;
+                }
+                y_finish = true;
+            } else {
+                for ( int i = 0; i < _mass_obj.Count; i++ ) {
+                    y[ i ] = _mass_obj[ i ].transform.position.y;
+                    y[ i ] -= _move_speed;
+                }
+            }
+        }
+
+        // 座標の設定
+        for ( int i = 0; i < _mass_obj.Count; i++ ) {
+            _mass_obj[ i ].transform.position = new Vector3( x[ i ], y[ i ], _mass_obj[ i ].transform.position.z );
+        }
+
+        if ( x_finish && y_finish ) {
+            _move = false;
+        }
+    }
+
 	public void increaseMassCount( ) {
 		_create_mass_count++;
 	}
@@ -104,4 +195,12 @@ public class MapManager : MonoBehaviour {
 	public int getMassCount( ) {
 		return _create_mass_count;
 	}
+
+    public int getPlayerPosNum( ) {
+        return _player_pos_num;
+    }
+
+    public bool isMassMove( ) {
+        return _move;
+    }
 }

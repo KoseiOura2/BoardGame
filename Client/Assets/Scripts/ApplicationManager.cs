@@ -45,6 +45,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
     private GameObject _light_off_pref;
     private GameObject _light_off_obj;
     private Sprite _game_scene_back_ground;
+    private GameObject _back_ground_obj;
     private GameObject _game_scene_select_area_pref;
     private GameObject _game_scene_select_area_obj;
 	[ SerializeField ]
@@ -105,18 +106,6 @@ public class ApplicationManager : Manager< ApplicationManager > {
         
         try {
             _map_manager.init( );
-			//マスの生成
-			for( int i = 0; i < _file_manager.getMassCount( ); i++ ) {
-				int num = _map_manager.getMassCount( );
-                try {
-				    _map_manager.createMassObj( num, _file_manager.getFileData( ).mass[ num ].type, _file_manager.getMassCoordinate( num ) );
-				    _map_manager.increaseMassCount( );
-                }
-                catch {
-                    Debug.Log( "Failure Create Mass..." );
-                }
-			}
-            _map_manager.createMiniMass( );
         }
         catch {
             Debug.Log( "Failure Init MapManager..." );
@@ -150,6 +139,9 @@ public class ApplicationManager : Manager< ApplicationManager > {
 			if ( _map_manager == null ) {
 				_map_manager = GameObject.Find( "MapManager" ).GetComponent< MapManager >( );
 			}
+            if ( _back_ground_obj == null ) {
+                _back_ground_obj = GameObject.Find( "BackGround" );
+            }
 		}
 		catch {
 			Debug.Log( "参照に失敗しました。" );
@@ -236,6 +228,20 @@ public class ApplicationManager : Manager< ApplicationManager > {
             if ( Input.GetKeyDown( KeyCode.A ) ) {
 			    _scene = SCENE.SCENE_GAME;
 			    _scene_text.text = _scene.ToString( );
+			    //マスの生成
+			    for( int i = 0; i < _file_manager.getMassCount( ); i++ ) {
+				    int num = _map_manager.getMassCount( );
+                    try {
+				        _map_manager.createMassObj( num, _file_manager.getFileData( ).mass[ num ].type, _file_manager.getMassCoordinate( num ) );
+				        _map_manager.increaseMassCount( );
+                    }
+                    catch {
+                        Debug.Log( "Failure Create Mass..." );
+                    }
+			    }
+                _map_manager.createMiniMass( );
+
+                _init = false;
             } 
         }
 	}
@@ -306,6 +312,16 @@ public class ApplicationManager : Manager< ApplicationManager > {
 			//GUIにカード情報表示用
 			Debug.Log( _player_manager.getSelectCard( ).name );
 		}
+
+        // ターゲットの設定
+        if ( _map_manager.getPlayerPosNum( ) != _host_data.getRecvData( ).mass_count[ ( int )_player_num ] ) {
+            _map_manager.dicisionMoveTarget( _host_data.getRecvData( ).mass_count[ ( int )_player_num ] );
+        }
+
+        // マスの移動
+        if ( _map_manager.isMassMove( ) ) {
+            _map_manager.massMove( );
+        }
 	}
 
 	/// <summary>
@@ -339,7 +355,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
                     _game_scene_back_ground = Resources.Load< Sprite >( "Graphics/Background/bg_P2" );
                     break;
             }
-            GameObject.Find( "Canvas" ).GetComponent< Image >( ).sprite = _game_scene_back_ground;
+            //_back_ground_obj.GetComponent< Image >( ).sprite = _game_scene_back_ground;
 
             createSelectArea( "MapBackground" );
 
@@ -746,6 +762,11 @@ public class ApplicationManager : Manager< ApplicationManager > {
         _game_scene_select_area_obj.GetComponent< RectTransform >( ).anchoredPosition = new Vector3( 0, 0, 0 );
         _game_scene_select_area_obj.GetComponent< RectTransform >( ).localScale = new Vector3( 1, 1, 1 );
         _game_scene_select_area_obj.GetComponent< RectTransform >( ).localPosition = pos;
+
+        int num = GameObject.Find( "MassBasePoint" ).transform.GetSiblingIndex( );
+        _game_scene_select_area_obj.transform.SetSiblingIndex( num );
+
+        //_back_ground_obj.transform.SetSiblingIndex( _game_scene_select_area_obj.transform.GetSiblingIndex( ) + 2 );
     }
 
     /// <summary>

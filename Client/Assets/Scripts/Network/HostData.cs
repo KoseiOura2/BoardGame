@@ -34,34 +34,41 @@ public class HostData : NetworkBehaviour {
 	public bool _network_send_card_one;
 	[ SyncVar ]
 	public bool _network_send_card_two;
+	[ SyncVar ]
+	public int _network_mass_count_one;
+	[ SyncVar ]
+	public int _network_mass_count_two;
 
     private NETWORK_FIELD_DATA _field_data;
 
     public int DISTRIBUT_CARD_NUM = 3;
 
     void Awake ( ) {
-        _network_player_num = -1;
-        _network_scene_data = 0;
-        _network_phase_data = 0;
-        _network_change_scene = false;
-        _network_change_phase = false;
+        _network_player_num        = -1;
+        _network_scene_data        = 0;
+        _network_phase_data        = 0;
+        _network_change_scene      = false;
+        _network_change_phase      = false;
         _network_battle_result_one = 0;
         _network_battle_result_two = 0;
-        _network_send_result = false;
-		_network_send_card_one = false;
-		_network_send_card_two = false;
+        _network_send_result       = false;
+		_network_send_card_one     = false;
+		_network_send_card_two     = false;
+        _network_mass_count_one    = 0;
+        _network_mass_count_two    = 0;
 
-        _field_data.player_num = -1;
-        _field_data.scene = ( SCENE )_network_scene_data;
-        _field_data.main_game_phase = ( MAIN_GAME_PHASE )_network_phase_data;
-        _field_data.change_scene = _network_change_scene;
-        _field_data.change_phase = _network_change_phase;
-        _field_data.card_list_one = new int[ DISTRIBUT_CARD_NUM ];
-        _field_data.card_list_two = new int[ DISTRIBUT_CARD_NUM ];
+        _field_data.player_num        = _network_player_num;
+        _field_data.scene             = ( SCENE )_network_scene_data;
+        _field_data.main_game_phase   = ( MAIN_GAME_PHASE )_network_phase_data;
+        _field_data.change_scene      = _network_change_scene;
+        _field_data.change_phase      = _network_change_phase;
+        _field_data.card_list_one     = new int[ DISTRIBUT_CARD_NUM ];
+        _field_data.card_list_two     = new int[ DISTRIBUT_CARD_NUM ];
         _field_data.result_player_one = ( BATTLE_RESULT )_network_battle_result_one;
         _field_data.result_player_two = ( BATTLE_RESULT )_network_battle_result_two;
-        _field_data.send_result = _network_send_result;
-		_field_data.send_card = new bool[ ]{ false, false };
+        _field_data.send_result       = _network_send_result;
+		_field_data.send_card         = new bool[ ]{ _network_send_card_one, _network_send_card_two };
+        _field_data.mass_count        = new int[ ]{ _network_mass_count_one, _network_mass_count_two };
     }
 
     // Use this for initialization
@@ -183,7 +190,7 @@ public class HostData : NetworkBehaviour {
     /// <param name="result_two"></param>
     /// <param name="result"></param>
 	[ Server ]
-    public void setSendBattleResult ( BATTLE_RESULT result_one, BATTLE_RESULT result_two, bool result ) {
+    public void setSendBattleResult( BATTLE_RESULT result_one, BATTLE_RESULT result_two, bool result ) {
         _field_data.result_player_one = result_one;
         _field_data.result_player_two = result_two;
         _field_data.send_result = result;
@@ -191,24 +198,39 @@ public class HostData : NetworkBehaviour {
         _network_battle_result_two = ( int )result_two;
         _network_send_result = result;
     }
+    
+    /// <summary>
+    /// 現在のマスを送る
+    /// </summary>
+    /// <param name="player_num"></param>
+    /// <param name="count"></param>
+	[ Server ]
+    public void setSendMassCount( PLAYER_ORDER player_num, int count ) {
+        if ( player_num == PLAYER_ORDER.PLAYER_ONE ) {
+            _field_data.mass_count[ 0 ] = count;
+            _network_mass_count_one     = count;
+        } else if ( player_num == PLAYER_ORDER.PLAYER_TWO ) {
+            _field_data.mass_count[ 1 ] = count;
+            _network_mass_count_two     = count;
+        }
+    }
 
     [ Client ]
     public NETWORK_FIELD_DATA getRecvData ( ) {
-        _field_data.player_num = _network_player_num;
-        _field_data.scene = ( SCENE )_network_scene_data;
-        _field_data.main_game_phase = ( MAIN_GAME_PHASE )_network_phase_data;
-        _field_data.change_scene = _network_change_scene;
-        _field_data.change_phase = _network_change_phase;
+        _field_data.player_num        = _network_player_num;
+        _field_data.scene             = ( SCENE )_network_scene_data;
+        _field_data.main_game_phase   = ( MAIN_GAME_PHASE )_network_phase_data;
+        _field_data.change_scene      = _network_change_scene;
+        _field_data.change_phase      = _network_change_phase;
         _field_data.result_player_one = ( BATTLE_RESULT )_network_battle_result_one;
         _field_data.result_player_two = ( BATTLE_RESULT )_network_battle_result_two;
-        _field_data.send_result = _network_send_result;
-		_field_data.send_card[ 0 ] = _network_send_card_one;
-		_field_data.send_card[ 1 ] = _network_send_card_two;
+        _field_data.send_result       = _network_send_result;
+		_field_data.send_card[ 0 ]    = _network_send_card_one;
+		_field_data.send_card[ 1 ]    = _network_send_card_two;
+        _field_data.mass_count[ 0 ]   = _network_mass_count_one;
+        _field_data.mass_count[ 1 ]   = _network_mass_count_two;
 
 		for ( int i = 0; i < _network_card_list_0.Count; i++ ) {
-            if ( _field_data.card_list_one.Length < _network_card_list_0.Count ) {
-                Debug.Log( _network_card_list_0.Count );
-            }
             _field_data.card_list_one[ i ] = _network_card_list_0[ i ];
         }
         for ( int i = 0; i < _network_card_list_1.Count; i++ ) {

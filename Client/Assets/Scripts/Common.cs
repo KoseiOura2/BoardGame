@@ -127,6 +127,7 @@ namespace Common {
 		public BATTLE_RESULT result_player_one;
 		public BATTLE_RESULT result_player_two;
 		public bool send_result;
+        public int[ ] mass_count;
 	};
 
 	/// <summary>
