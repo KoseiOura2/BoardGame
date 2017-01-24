@@ -45,6 +45,8 @@ public class PlayerManager : MonoBehaviour {
 	private bool[ ] _event_start = new bool[ ]{ false, false };
 	[ SerializeField ]
 	private bool[ ] _event_finish = new bool[ ]{ false, false };
+	[ SerializeField ]
+	private bool[ ] _change_count = new bool[ ]{ false, false };
     private bool _advance_flag = true;   	//前に進むか後ろに戻るか
     
     private bool _accel_init = false;
@@ -158,7 +160,6 @@ public class PlayerManager : MonoBehaviour {
             } else if ( _limit_value == 0 ) {
                 //playerPostionAdjustment( ref target_pos );
                 //playerAdjustment( );
-                Debug.Log("aaa");
                 if( _adjustment_flag == false ) {
                     _move_finish[ _player_id ] = true;
                     _limit_value--;
@@ -296,8 +297,10 @@ public class PlayerManager : MonoBehaviour {
             _limit_value--;
 			if ( _advance_flag ) {
 				_players[ _player_id ].advance_count++;
+                _change_count[ _player_id ] = true;
 			} else {
 				_players[ _player_id ].advance_count--;
+                _change_count[ _player_id ] = true;
 			}
             _move_flag = false;
             _target    = null;
@@ -537,6 +540,15 @@ public class PlayerManager : MonoBehaviour {
             _move_finish[ i ] = false;
             _move_start[ i ] = false;
         }
+    }
+
+    public bool isChangeCount( ) {
+        if ( _change_count[ _player_id ] ) {
+            _change_count[ _player_id ] = false;
+            return true;
+        }
+
+        return false;
     }
 
     public void setMoveFinish( int id, bool flag ) {

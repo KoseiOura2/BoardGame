@@ -168,6 +168,10 @@ public class ApplicationManager : Manager< ApplicationManager > {
 				    if ( _client_data[ 0 ].getRecvData( ).changed_phase == true ) {
 					    _host_data.setSendChangeFieldPhase( false );
 				    }
+
+                    if ( _client_data[ 0 ].getRecvData( ).connect_ready ) {
+                        _host_data.send( );
+                    }
                 }
 			} else if ( _mode == PROGRAM_MODE.MODE_TWO_CONNECT ) {
                 if ( _client_data[ 0 ] != null && _client_data[ 1 ] != null ) {
@@ -175,7 +179,6 @@ public class ApplicationManager : Manager< ApplicationManager > {
 				    if ( _client_data[ 0 ].getRecvData( ).changed_scene == true ) {
 					    _host_data.setSendChangeFieldScene( false );
 				    }
-				    // player側のフェイズ変更が完了したかどうか
 				    if ( _client_data[ 0 ].getRecvData( ).changed_phase == true ) {
 					    _host_data.setSendChangeFieldPhase( false );
 				    }
@@ -183,10 +186,13 @@ public class ApplicationManager : Manager< ApplicationManager > {
 			        if ( _client_data[ 1 ].getRecvData( ).changed_scene == true ) {
 				        _host_data.setSendChangeFieldScene( false );
 			        }
-                    // player側のフェイズ変更が完了したかどうか
 			        if ( _client_data[ 1 ].getRecvData( ).changed_phase == true ) {
 				        _host_data.setSendChangeFieldPhase( false );
 			        }
+
+                    if ( _client_data[ 0 ].getRecvData( ).connect_ready && _client_data[ 1 ].getRecvData( ).connect_ready ) {
+                        _host_data.send( );
+                    }
                 }
             }
  		}
@@ -464,7 +470,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
 					_player_manager.setPlayerID( 0 );
 					_player_manager.setLimitValue( _dice_value[ 0 ] );
 					_player_manager.setAdvanceFlag( true );
-				}else {
+				} else {
 					_player_manager.setPlayerOnMove( 0, true );
 				}
 				_event_count[ 1 ] = 0;
@@ -480,10 +486,18 @@ public class ApplicationManager : Manager< ApplicationManager > {
 				_event_count[ 1 ] = 0;
             }
 		}
-		
+
 		_player_manager.movePhaseUpdate( getResideCount( ),
             _stage_manager.getTargetMass( _player_manager.getTargetMassID( _stage_manager.getMassCount( ) ) ) );
         
+        if ( _player_manager.isChangeCount( ) ) {
+            if ( _mode == PROGRAM_MODE.MODE_ONE_CONNECT ) {
+                _host_data.setSendMassCount( PLAYER_ORDER.PLAYER_ONE, _player_manager.getPlayerCount( 0, _stage_manager.getMassCount( ) ) );
+            } else if ( _mode == PROGRAM_MODE.MODE_TWO_CONNECT ) {
+                _host_data.setSendMassCount( PLAYER_ORDER.PLAYER_ONE, _player_manager.getPlayerCount( _player_manager.getPlayerID( ),
+                                                                                                      _stage_manager.getMassCount( ) ) );
+            }
+        }
        
         // ゴールまでの残りマスを表示
 		resideCount( );
@@ -529,9 +543,6 @@ public class ApplicationManager : Manager< ApplicationManager > {
 				_host_data.refreshCardList( 1 );
                 _host_data.setSendCardlist( ( int )PLAYER_ORDER.PLAYER_TWO, card_list );
             }
-
-            // ドローカード処理を追加
-
             // 両方の準備が終わったら次のフェイズへ
 			if ( _client_data[ 0 ].getRecvData( ).ready == true && _client_data[ 1 ].getRecvData( ).ready == true ) {
 				if ( _connect_wait_time >= CONNECT_WAIT_TIME && !_refresh_card_list ) {
@@ -559,20 +570,30 @@ public class ApplicationManager : Manager< ApplicationManager > {
 				_host_data.refreshCardList( 0 );
                 _host_data.setSendCardlist( ( int )PLAYER_ORDER.PLAYER_ONE, card_list );
             }
-            
-            // ドローカード処理を追加
 
+            //Debug.Log( _client_data[ 0 ].getRecvData( ).ready );
             // 準備が終わったら次のフェイズへ
 			if ( _client_data[ 0 ].getRecvData( ).ready == true ) {
 				if ( _connect_wait_time >= CONNECT_WAIT_TIME && !_refresh_card_list ) {
-					_host_data.refreshCardList( 0 );
-					_refresh_card_list = true;
+                    try {
+					    _host_data.refreshCardList( 0 );
+					    _refresh_card_list = true;
+                    }
+                    catch {
+                        Debug.Log( "Failure Refresh CardList..." );
+                    }
 				}
 				_connect_wait_time++;
 				if ( _connect_wait_time >= SECOND_CONNECT_WAIT_TIME ) {
-					_phase_manager.changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_BATTLE, "BattlePhase" );
-					_connect_wait_time = 0;
-					_refresh_card_list = false;
+                    try {
+					    _phase_manager.changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_BATTLE, "BattlePhase" );
+					    _connect_wait_time = 0;
+					    _refresh_card_list = false;
+                    }
+                    catch {
+                        Debug.Log( "Failure ChangePhase" );
+                    }
+					
 				}
             }
 		} else if ( _mode == PROGRAM_MODE.MODE_NO_CONNECT ) {
