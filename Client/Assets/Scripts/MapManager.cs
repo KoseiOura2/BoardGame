@@ -2,16 +2,18 @@
 using UnityEngine.UI;
 using System.Collections;
 using System.Collections.Generic;
+using Common;
 
 public class MapManager : MonoBehaviour {
 
     private const int MASS_TYPE_NUM = 5;
-
+    
+    private Sprite _player_icon;
     private GameObject[ ] _mass_pref = new GameObject[ MASS_TYPE_NUM ];
     private GameObject _base_point;
     private List< GameObject > _mass_obj = new List< GameObject >( );
     private List< Vector3 > _mass_pos = new List< Vector3 >( );
-    private Vector3 _player_point;
+    private GameObject _player_point;
     private int _target_mass_id;
     //private List< Vector3 > _mass_pos = new List< Vector3 >( );
     private int _create_mass_count = 0;
@@ -36,7 +38,7 @@ public class MapManager : MonoBehaviour {
         }
 
         if ( _player_point == null ) {
-            _player_point = GameObject.Find( "PlayerPoint" ).transform.position;
+            _player_point = GameObject.Find( "PlayerPoint" );
         }
     }
     
@@ -130,7 +132,7 @@ public class MapManager : MonoBehaviour {
 
         // x座標を動かす
         if ( _purpose_distance_x > 0 ) {
-            if ( _mass_obj[ _player_pos_num ].transform.position.x >= _player_point.x ) {
+            if ( _mass_obj[ _player_pos_num ].transform.position.x >= _player_point.transform.position.x ) {
                 for ( int i = 0; i < _mass_obj.Count; i++ ) {
                     x[ i ] = _mass_obj[ i ].transform.position.x;
                 }
@@ -142,7 +144,7 @@ public class MapManager : MonoBehaviour {
                 }
             }
         } else if ( _purpose_distance_x < 0 ) {
-            if ( _mass_obj[ _player_pos_num ].transform.position.x <= _player_point.x ) {
+            if ( _mass_obj[ _player_pos_num ].transform.position.x <= _player_point.transform.position.x ) {
                 for ( int i = 0; i < _mass_obj.Count; i++ ) {
                     x[ i ] = _mass_obj[ i ].transform.position.x;
                 }
@@ -161,7 +163,7 @@ public class MapManager : MonoBehaviour {
         }
         // y座標を動かす
         if ( _purpose_distance_y > 0 ) {
-            if ( _mass_obj[ _player_pos_num ].transform.position.y >= _player_point.y ) {
+            if ( _mass_obj[ _player_pos_num ].transform.position.y >= _player_point.transform.position.y ) {
                 for ( int i = 0; i < _mass_obj.Count; i++ ) {
                     y[ i ] = _mass_obj[ i ].transform.position.y;
                 }
@@ -173,7 +175,7 @@ public class MapManager : MonoBehaviour {
                 }
             }
         } else if ( _purpose_distance_y < 0 ) {
-            if ( _mass_obj[ _player_pos_num ].transform.position.y <= _player_point.y ) {
+            if ( _mass_obj[ _player_pos_num ].transform.position.y <= _player_point.transform.position.y ) {
                 for ( int i = 0; i < _mass_obj.Count; i++ ) {
                     y[ i ] = _mass_obj[ i ].transform.position.y;
                 }
@@ -204,8 +206,8 @@ public class MapManager : MonoBehaviour {
 
     public void massPosAdustBasePos( ) {
         // 移動量を計算
-        float distance_x = _player_point.x - _mass_pos[ _player_pos_num ].x;
-        float distance_y = _player_point.y - _mass_pos[ _player_pos_num ].y;
+        float distance_x = _player_point.transform.position.x - _mass_pos[ _player_pos_num ].x;
+        float distance_y = _player_point.transform.position.y - _mass_pos[ _player_pos_num ].y;
 
         // 座標を修正
         for ( int i = 0; i < _mass_obj.Count; i++ ) {
@@ -213,6 +215,57 @@ public class MapManager : MonoBehaviour {
                                                              _mass_pos[ i ].y + distance_y,
                                                              _mass_obj[ i ].transform.position.z );
         }
+    }
+
+    public void allMassReject( ) {
+        for ( int i = 0; i < _mass_obj.Count; i++ ) {
+            _mass_obj[ i ].GetComponent< Mass >( ).changeReject( true );
+        }
+    }
+
+    public void setMassNotReject( int id ) {
+        _mass_obj[ id ].GetComponent< Mass >( ).changeReject( false );
+    }
+
+    public void setMassColor( int id, Color color ) {
+        _mass_obj[ id ].GetComponent< Image >( ).color = color;
+    }
+
+    public void allMassVisible( bool flag ) {
+        for ( int i = 0; i < _mass_obj.Count; i++ ) {
+            _mass_obj[ i ].GetComponent< Image >( ).enabled  = flag;
+            _mass_obj[ i ].GetComponent< Button >( ).enabled = flag;
+            try {
+                /*
+                _mass_obj[ i ].GetComponentInChildren< Image >( false ).enabled = flag;
+                bool a = _mass_obj[ i ].GetComponentInChildren< Image >( ).enabled;
+                string b = _mass_obj[ i ].GetComponentInChildren< Image >( ).gameObject.name;
+                */
+                if ( i != _mass_obj.Count - 1 ) {
+                    _mass_obj[ i ].transform.GetChild( 0 ).gameObject.GetComponent< Image >( ).enabled = flag;
+                }
+            }
+            catch {
+                Debug.Log( "Missing Image.." );
+            }
+        }
+    }
+
+    public void bindSprite( PLAYER_ORDER player_num ) {
+        if ( player_num == PLAYER_ORDER.PLAYER_ONE ) {
+            _player_icon = Resources.Load< Sprite >( "Graphics/UI/Player/ui_location_player_1P" );
+        } else if ( player_num == PLAYER_ORDER.PLAYER_TWO ) {
+            _player_icon = Resources.Load< Sprite >( "Graphics/UI/Player/ui_location_player_2P" );
+        }
+
+        _player_point.transform.GetChild( 0 ).gameObject.GetComponent< Image >( ).sprite = _player_icon;
+
+        _player_point.transform.GetChild( 0 ).gameObject.GetComponent< Image >( ).SetNativeSize( );
+        _player_point.transform.GetChild( 0 ).gameObject.GetComponent< Image >( ).color = new Color( 1, 1, 1, 1 );
+    }
+
+    public void setVisibleSprite( bool flag ) {
+        _player_point.transform.GetChild( 0 ).gameObject.GetComponent< Image >( ).enabled = flag;
     }
 
 	public void increaseMassCount( ) {
@@ -229,5 +282,18 @@ public class MapManager : MonoBehaviour {
 
     public bool isMassMove( ) {
         return _move;
+    }
+
+    public int isSelect( ) {
+        int num = -1;
+
+        for ( int i = 0; i < _mass_obj.Count; i++ ) {
+            if ( _mass_obj[ i ].GetComponent< Mass >( ).isSelected( ) ) {
+                num = i;
+                return num;
+            }
+        } 
+
+        return num;
     }
 }

@@ -5,6 +5,7 @@ public class Mass : MonoBehaviour {
     
     [ SerializeField ]
     private bool _selected = false;
+    private bool _reject   = false;
 
 	// Use this for initialization
 	void Start( ) {
@@ -17,7 +18,9 @@ public class Mass : MonoBehaviour {
 	}
 
     public void selectedOnClick( ) {
-        _selected = true;
+        if ( !_reject ) {
+            _selected = true;
+        }
     }
 
     public bool isSelected( ) {
@@ -27,5 +30,9 @@ public class Mass : MonoBehaviour {
         }
 
         return false;
+    }
+
+    public void changeReject( bool flag ) {
+        _reject = flag;
     }
 }

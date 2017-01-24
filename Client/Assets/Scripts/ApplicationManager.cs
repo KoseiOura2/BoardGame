@@ -25,6 +25,8 @@ public class ApplicationManager : Manager< ApplicationManager > {
 	[ SerializeField ]
 	private ClientPlayerManager _player_manager;
 	[ SerializeField ]
+	private BattleManager _battle_manager;
+	[ SerializeField ]
 	private FileManager _file_manager;
 	[ SerializeField ]
 	private MapManager _map_manager;
@@ -62,11 +64,11 @@ public class ApplicationManager : Manager< ApplicationManager > {
     private bool _scene_init = false;
     private bool _phase_init = false;
     private bool _reject = false;
-    private bool _complete = false;
 	[ SerializeField ]
     private int _debug_player_num = 0;
 	[ SerializeField ]
     private bool _debug_player_move = false;
+    BATTLE_RESULT _debug_result;
 
 	public Text _scene_text;
 
@@ -139,6 +141,9 @@ public class ApplicationManager : Manager< ApplicationManager > {
 			}
 			if ( _card_manager == null ) {
 				_card_manager = GameObject.Find( "CardManager" ).GetComponent< CardManager >( );
+			}
+			if ( _battle_manager == null ) {
+				_battle_manager = GameObject.Find( "BattleManager" ).GetComponent< BattleManager >( );
 			}
 			if ( _player_manager == null ) {
 				_player_manager = GameObject.Find( "ClientPlayerManager" ).GetComponent< ClientPlayerManager >( );
@@ -255,6 +260,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
 			    }
                 _map_manager.createMiniMass( );
                 _map_manager.massPosAdustBasePos( );
+                _map_manager.allMassReject( );
 
                 _scene_init = false;
             } 
@@ -278,28 +284,33 @@ public class ApplicationManager : Manager< ApplicationManager > {
 	/// </summary>
 	private void updateGameScene( ) {
         if ( !_scene_init ) {
-            _client_data.CmdSetSendConnectReady( false );
-			//マスの生成
-			for( int i = 0; i < _file_manager.getMassCount( ); i++ ) {
-				int num = _map_manager.getMassCount( );
-                try {
-				    _map_manager.createMassObj( num, _file_manager.getFileData( ).mass[ num ].type, _file_manager.getMassCoordinate( num ) );
-                    //Debug.Log( "Clear Create Mass..." );
-				    _map_manager.increaseMassCount( );
-                }
-                catch {
-                    Debug.Log( "Failure Create Mass..." );
-                }
-			}
-            _map_manager.createMiniMass( );
-            _map_manager.massPosAdustBasePos( );
-            _client_data.CmdSetSendConnectReady( true );
+            if ( _mode == PROGRAM_MODE.MODE_CONNECT ) {
+                _client_data.CmdSetSendConnectReady( false );
+			    //マスの生成
+			    for( int i = 0; i < _file_manager.getMassCount( ); i++ ) {
+				    int num = _map_manager.getMassCount( );
+                    try {
+				        _map_manager.createMassObj( num, _file_manager.getFileData( ).mass[ num ].type, _file_manager.getMassCoordinate( num ) );
+                        //Debug.Log( "Clear Create Mass..." );
+				        _map_manager.increaseMassCount( );
+                    }
+                    catch {
+                        Debug.Log( "Failure Create Mass..." );
+                    }
+			    }
+                _map_manager.createMiniMass( );
+                _map_manager.massPosAdustBasePos( );
+                _map_manager.allMassReject( );
+                _client_data.CmdSetSendConnectReady( true );
 
+                
+            }
+            _map_manager.bindSprite( _player_num );
             _scene_init = true;
         }
 
 		// フェイズごとの更新
-        if ( _play_mode == GAME_PLAY_MODE.MODE_NORMAL_PLAY ) { 
+        if ( _play_mode == GAME_PLAY_MODE.MODE_NORMAL_PLAY ) {
 		    switch( _phase_manager.getMainGamePhase( ) ) {
 		    case MAIN_GAME_PHASE.GAME_PHASE_NO_PLAY:
 			    updateNoPlayPhase( );
@@ -468,6 +479,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
 			}
 		} else if ( _mode == PROGRAM_MODE.MODE_NO_CONNECT ) {
             _phase_manager.setPhase( MAIN_GAME_PHASE.GAME_PHASE_DRAW_CARD );
+            _map_manager.dicisionMoveTarget( _map_manager.getPlayerPosNum( ) + _player_manager.getDiceValue( ) );
         }
 	}
 
@@ -617,29 +629,22 @@ public class ApplicationManager : Manager< ApplicationManager > {
             destroySelectArea( );
             createSelectArea( "BattleCardBackground" );
             createCompleteButton( );
+            _map_manager.allMassVisible( false );
+            _map_manager.setVisibleSprite( false );
+            _battle_manager.refreshBattleTime( );
             _phase_init = true;
         }
 
-		if ( _mode == PROGRAM_MODE.MODE_CONNECT ) {
-			if ( _client_data.getRecvData( ).ready == true ) {
-				// 準備完了を初期化
-				_client_data.CmdSetSendReady( false );
-				_client_data.setReady( false );
-			}
-		}
+        _battle_manager.battleTimeCount( );
 
-		if ( _complete ) {
+		if ( _battle_manager.isComplete( ) ) {
             destroyCompleteButton( );
-            _complete = false;
 			if (  _mode == PROGRAM_MODE.MODE_CONNECT) {
 				// 選択結果を送る
 				int player_status = _player_manager.getPlayerData( ).power;
-				int[ ] card_list = _player_manager.dicisionSelectCard( );
+				int[ ] card_list = _battle_manager.resultSelectCard( _player_manager.dicisionSelectCard( ) );
 				int[ ] turned_card_list = new int[ ]{ 0, 1, 2 };
-                if ( card_list.Length > MAX_SEND_CARD_NUM ) {
-                    _player_manager.refreshSelectCard( );
-                    return;
-                }
+
 				_client_data.CmdSetSendBattleData( true, player_status, card_list, turned_card_list );
 				_client_data.setBattleData( true, player_status, card_list, turned_card_list );
                 _player_manager.refreshSelectCard( );
@@ -656,6 +661,14 @@ public class ApplicationManager : Manager< ApplicationManager > {
                 _phase_init = false;
             } 
         }
+
+		if ( _mode == PROGRAM_MODE.MODE_CONNECT ) {
+			if ( _client_data.getRecvData( ).ready == true ) {
+				// 準備完了を初期化
+				_client_data.CmdSetSendReady( false );
+				_client_data.setReady( false );
+			}
+		}
 	}
 
 	/// <summary>
@@ -666,6 +679,14 @@ public class ApplicationManager : Manager< ApplicationManager > {
         if ( !_phase_init ) {
             destroySelectArea( );
             createSelectArea( "MapBackground" );
+            _map_manager.allMassVisible( true );
+            
+            for ( int i = 0; i < _map_manager.getMassCount( ); i++ ) {
+                _map_manager.setMassColor( i, new Color( 0.5f, 0.5f, 0.5f ) );
+                _map_manager.allMassReject( );
+            }
+            _map_manager.setVisibleSprite( true );
+            _debug_result = ( BATTLE_RESULT )( ( int )Random.Range( 1, 3 ) );
             _phase_init = true;
         }
 
@@ -689,37 +710,102 @@ public class ApplicationManager : Manager< ApplicationManager > {
 			} else if ( _player_num == PLAYER_ORDER.PLAYER_TWO ) {
 				battle_result = _host_data.getBattleResultTwo( );
 			}
+
 			// 勝ちか引き分け時
 			if ( battle_result == ( int )BATTLE_RESULT.WIN ||
 				battle_result == ( int )BATTLE_RESULT.DRAW ) {
+                for ( int i = 0; i < _map_manager.getMassCount( ); i++ ) {
+                    if ( i >= _map_manager.getPlayerPosNum( ) - 1 && i <= _map_manager.getPlayerPosNum( ) + 1 ) {
+                        _map_manager.setMassColor( i, Color.white );
+                        _map_manager.setMassNotReject( i );
+                    }
+                }
+
 				// マス調整の処理
-				if ( Input.GetKey( KeyCode.A ) ) {
+                int num = _map_manager.isSelect( );
+
+				if ( num == _map_manager.getPlayerPosNum( ) + 1 ) {
 					adjust = MASS_ADJUST.ADVANCE;
 					flag = true;
-				} else if ( Input.GetKey( KeyCode.S ) ) {
+                    for ( int i = 0; i < _map_manager.getMassCount( ); i++ ) {
+                        _map_manager.setMassColor( i, new Color( 0.5f, 0.5f, 0.5f ) );
+                        _map_manager.allMassReject( );
+                    }
+				} else if ( num == _map_manager.getPlayerPosNum( ) - 1 ) {
 					adjust = MASS_ADJUST.BACK;
 					flag = true;
-				} else if ( Input.GetKey( KeyCode.D ) ) {
+                    for ( int i = 0; i < _map_manager.getMassCount( ); i++ ) {
+                        _map_manager.setMassColor( i, new Color( 0.5f, 0.5f, 0.5f ) );
+                        _map_manager.allMassReject( );
+                    }
+				} else if ( num == _map_manager.getPlayerPosNum( ) ) {
 					adjust = MASS_ADJUST.NO_ADJUST;
 					flag = true;
+                    for ( int i = 0; i < _map_manager.getMassCount( ); i++ ) {
+                        _map_manager.setMassColor( i, new Color( 0.5f, 0.5f, 0.5f ) );
+                        _map_manager.allMassReject( );
+                    }
 				}
 			} else if ( battle_result == ( int )BATTLE_RESULT.LOSE ) {
 				// 負けた場合マス調整不能
 				adjust = MASS_ADJUST.NO_ADJUST;
-				if ( Input.GetKey( KeyCode.A ) ) {
-					flag = true;
-				}
+				flag = true;
 			}
 
 			// マスを進ませるかどうかを送信
 			if ( flag ) {
 				_client_data.CmdSetSendMassAdjust( true, adjust );
 				_client_data.setMassAdjust( true, adjust );
+                _map_manager.allMassReject( );
+                _phase_init = false;
 			}
 		} else if ( _mode == PROGRAM_MODE.MODE_NO_CONNECT ) {
-			if ( Input.GetKeyDown( KeyCode.A ) ) {
-				_phase_manager.setPhase( MAIN_GAME_PHASE.GAME_PHASE_EVENT );
+			bool flag = false;
+            int num = 0;
+
+            if ( _debug_result == BATTLE_RESULT.WIN || _debug_result == BATTLE_RESULT.DRAW ) {
+                for ( int i = 0; i < _map_manager.getMassCount( ); i++ ) {
+                    if ( i >= _map_manager.getPlayerPosNum( ) - 1 && i <= _map_manager.getPlayerPosNum( ) + 1 ) {
+                        _map_manager.setMassColor( i, Color.white );
+                        _map_manager.setMassNotReject( i );
+                    }
+                }
+
+                // マス調整の処理
+                num = _map_manager.isSelect( );
+
+				if ( num == _map_manager.getPlayerPosNum( ) + 1 ) {
+                    for ( int i = 0; i < _map_manager.getMassCount( ); i++ ) {
+                        _map_manager.setMassColor( i, new Color( 0.5f, 0.5f, 0.5f ) );
+                        _map_manager.allMassReject( );
+                        flag = true;
+                    }
+				} else if ( num == _map_manager.getPlayerPosNum( ) - 1 ) {
+                    for ( int i = 0; i < _map_manager.getMassCount( ); i++ ) {
+                        _map_manager.setMassColor( i, new Color( 0.5f, 0.5f, 0.5f ) );
+                        _map_manager.allMassReject( );
+                        flag = true;
+                    }
+				} else if ( num == _map_manager.getPlayerPosNum( ) ) {
+                    for ( int i = 0; i < _map_manager.getMassCount( ); i++ ) {
+                        _map_manager.setMassColor( i, new Color( 0.5f, 0.5f, 0.5f ) );
+                        _map_manager.allMassReject( );
+                        flag = true;
+                    }
+				}
+            } else if ( _debug_result == BATTLE_RESULT.LOSE ) {
+				// 負けた場合マス調整不能
+				flag = true;
 			}
+
+            if ( flag ) {
+                if ( _debug_result != BATTLE_RESULT.LOSE ) {
+                    _map_manager.dicisionMoveTarget( num );
+                }
+			    _phase_manager.setPhase( MAIN_GAME_PHASE.GAME_PHASE_EVENT );
+                _map_manager.allMassReject( );
+                _phase_init = false;
+            }
 		}
 	}
 
@@ -727,6 +813,15 @@ public class ApplicationManager : Manager< ApplicationManager > {
 	/// EventPhaseの更新
 	/// </summary>
 	private void updateEventPhase( ) {
+        // 初期化処理
+        if ( !_phase_init ) {
+            for ( int i = 0; i < _map_manager.getMassCount( ); i++ ) {
+                _map_manager.setMassColor( i, Color.white );
+            }
+
+            _phase_init = true;
+        }
+
 		if ( _mode == PROGRAM_MODE.MODE_CONNECT ) {
 			if ( _client_data.getRecvData( ).ready == true ) {
 				// 準備完了を初期化
@@ -765,7 +860,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
         Vector3 pos = _complete_button_pref.GetComponent< RectTransform >( ).localPosition;
         _complete_button_obj.GetComponent< RectTransform >( ).localPosition = pos;
             
-        _complete_button_obj.GetComponent< Button >( ).onClick.AddListener( readyComplete );
+        _complete_button_obj.GetComponent< Button >( ).onClick.AddListener( _battle_manager.readyComplete );
     }
     
     /// <summary>
@@ -864,9 +959,5 @@ public class ApplicationManager : Manager< ApplicationManager > {
 	public SCENE getScene( ) {
 		return _scene;
 	}
-
-    public void readyComplete( ) {
-        _complete = true;
-    }
 
 }

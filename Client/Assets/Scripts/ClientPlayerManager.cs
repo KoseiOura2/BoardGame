@@ -10,6 +10,7 @@ public class ClientPlayerManager : MonoBehaviour {
 	private const float MIN_DICE_VALUE   = 1.0f;
 	private const int INIT_PLAYER_POWER  = 10;
     private const int MAX_PLAYER_CARD_NUM = 6;
+	private const int MAX_SEND_CARD_NUM = 4;
 
 	/// <summary>
 	/// プレイヤーの持つカードのデータ
@@ -301,6 +302,7 @@ public class ClientPlayerManager : MonoBehaviour {
 			if ( hit.collider.gameObject.name == "Card(Clone)" ) {
 				Card card = hit.collider.gameObject.GetComponent< Card >( );
 				card_data = card.getCardData( );
+
                 if ( _player_card.select_list.Count >= MAX_PLAYER_CARD_NUM &&
                      !card.getSelectFlag( ) ) {
 				    return card_data;
@@ -357,7 +359,7 @@ public class ClientPlayerManager : MonoBehaviour {
 			}
 		}
         
-        if ( _player_card.select_list.Count <= 4 ) {
+        if ( _player_card.select_list.Count <= MAX_PLAYER_CARD_NUM ) {
             int count = 0;
 		    for ( int i = 0; i < card_num.Count; i++ ) {
 			    // 選択したカードを削除
