@@ -57,9 +57,16 @@ public class ApplicationManager : Manager< ApplicationManager > {
     private GameObject _complete_button_obj;
     private GameObject _complete_button_pref;
 
-    private bool _init = false;
+    private int _change_scene_count = 0;
+    private int _change_phase_count = 0;
+    private bool _scene_init = false;
+    private bool _phase_init = false;
     private bool _reject = false;
     private bool _complete = false;
+	[ SerializeField ]
+    private int _debug_player_num = 0;
+	[ SerializeField ]
+    private bool _debug_player_move = false;
 
 	public Text _scene_text;
 
@@ -152,11 +159,14 @@ public class ApplicationManager : Manager< ApplicationManager > {
 	void FixedUpdate( ) {
 		if ( _mode == PROGRAM_MODE.MODE_CONNECT ) {
 			if ( _host_data == null && _network_manager.getHostObj( ) != null ) {
-				_host_data = _network_manager.getHostObj ( ).GetComponent<HostData> ( );
+				_host_data = _network_manager.getHostObj ( ).GetComponent< HostData >( );
 			}
 
 			if ( _client_data == null && _network_manager.getClientObj( ) != null ) {
 				_client_data = _network_manager.getClientObj( ).GetComponent< ClientData >( );
+                if ( _client_data != null ) {
+                    _client_data.CmdSetSendConnectReady( true );
+                }
 			}
 
 			if ( _host_data != null && _client_data != null ) {
@@ -170,6 +180,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
 				if ( _client_data.getRecvData( ).changed_scene == true && _host_data.getRecvData( ).change_scene == false ) {
 					_client_data.CmdSetSendChangedScene( false );
 					_client_data.setChangedScene( false );
+                    _change_scene_count = 0;
 				}
 			}
 		} 
@@ -194,15 +205,18 @@ public class ApplicationManager : Manager< ApplicationManager > {
 	/// シーンの切り替え
 	/// </summary>
 	private void sceneChange( ) { 
-		if ( _host_data.isChangeFieldScene( ) ) {
+		if ( _host_data.getRecvData( ).change_scene && _change_scene_count == 0 ) {
+            _client_data.CmdSetSendConnectReady( false );
 			_scene = _host_data.getRecvData( ).scene;
 			_scene_text.text = _scene.ToString( );
 			_client_data.CmdSetSendChangedScene( true );
 			_client_data.setChangedScene( true );
-            _init = false;
+            _scene_init = false;
             if ( _scene == SCENE.SCENE_TITLE ) {
                 _network_gui_controll.setShowGUI( false );
             }
+            _client_data.CmdSetSendConnectReady( true );
+            _change_scene_count = 1;
 		}
 	}
 
@@ -240,8 +254,9 @@ public class ApplicationManager : Manager< ApplicationManager > {
                     }
 			    }
                 _map_manager.createMiniMass( );
+                _map_manager.massPosAdustBasePos( );
 
-                _init = false;
+                _scene_init = false;
             } 
         }
 	}
@@ -262,6 +277,26 @@ public class ApplicationManager : Manager< ApplicationManager > {
 	/// GameSceneの更新
 	/// </summary>
 	private void updateGameScene( ) {
+        if ( !_scene_init ) {
+            _client_data.CmdSetSendConnectReady( false );
+			//マスの生成
+			for( int i = 0; i < _file_manager.getMassCount( ); i++ ) {
+				int num = _map_manager.getMassCount( );
+                try {
+				    _map_manager.createMassObj( num, _file_manager.getFileData( ).mass[ num ].type, _file_manager.getMassCoordinate( num ) );
+                    //Debug.Log( "Clear Create Mass..." );
+				    _map_manager.increaseMassCount( );
+                }
+                catch {
+                    Debug.Log( "Failure Create Mass..." );
+                }
+			}
+            _map_manager.createMiniMass( );
+            _map_manager.massPosAdustBasePos( );
+            _client_data.CmdSetSendConnectReady( true );
+
+            _scene_init = true;
+        }
 
 		// フェイズごとの更新
         if ( _play_mode == GAME_PLAY_MODE.MODE_NORMAL_PLAY ) { 
@@ -304,6 +339,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
 				if ( _client_data.getRecvData( ).changed_phase == true && _host_data.getRecvData( ).change_phase == false ) {
 					_client_data.CmdSetSendChangedPhase( false );
 					_client_data.setChangedPhase( false );
+                    _change_phase_count = 0;
 				}
 			}
 		}
@@ -314,8 +350,15 @@ public class ApplicationManager : Manager< ApplicationManager > {
 		}
 
         // ターゲットの設定
-        if ( _map_manager.getPlayerPosNum( ) != _host_data.getRecvData( ).mass_count[ ( int )_player_num ] ) {
-            _map_manager.dicisionMoveTarget( _host_data.getRecvData( ).mass_count[ ( int )_player_num ] );
+        if ( _mode == PROGRAM_MODE.MODE_CONNECT ) {
+            if ( _map_manager.getPlayerPosNum( ) != _host_data.getRecvData( ).mass_count[ ( int )_player_num ] ) {
+                _map_manager.dicisionMoveTarget( _host_data.getRecvData( ).mass_count[ ( int )_player_num ] );
+            }
+        }
+
+        if ( _debug_player_move ) {
+            _debug_player_move = false;
+            _map_manager.dicisionMoveTarget( _debug_player_num );
         }
 
         // マスの移動
@@ -328,16 +371,19 @@ public class ApplicationManager : Manager< ApplicationManager > {
 	/// フェイズの切り替え
 	/// </summary>
 	private void phaseChange( ) { 
-		if ( _host_data.isChangeFieldPhase( ) ) {
+		if ( _host_data.getRecvData( ).change_phase && _change_phase_count == 0 ) {
 			try {
 				_phase_manager.setPhase( _host_data.getRecvData( ).main_game_phase );
 			}
 			catch {
 				Debug.Log( "ゲームフェイズの取得に失敗しまし" );
 			}
+            _client_data.CmdSetSendConnectReady( true );
 			_client_data.CmdSetSendChangedPhase( true );
 			_client_data.setChangedPhase( true );
-            _init = false;
+            _phase_init = false;
+            Debug.Log( "GamePhase Change..." );
+            _change_phase_count = 1;
 		}
 	}
 
@@ -346,7 +392,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
 	/// </summary>
 	private void updateNoPlayPhase( ) {
         // 初期化処理
-        if ( !_init ) {
+        if ( !_phase_init ) {
             switch ( _player_num ) {
                 case PLAYER_ORDER.PLAYER_ONE:
                     _game_scene_back_ground = Resources.Load< Sprite >( "Graphics/Background/bg_P1" );
@@ -359,13 +405,13 @@ public class ApplicationManager : Manager< ApplicationManager > {
 
             createSelectArea( "MapBackground" );
 
-            _init = true;
+            _phase_init = true;
         }
 
         if ( _mode == PROGRAM_MODE.MODE_NO_CONNECT ) {
             if ( Input.GetKeyDown( KeyCode.A ) ) {
 			    _phase_manager.setPhase( MAIN_GAME_PHASE.GAME_PHASE_DICE );
-                _init = false;
+                _phase_init = false;
             } 
         }
 	}
@@ -375,7 +421,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
 	/// </summary>
 	private void updateDicePhase( ) {
 		int value = 0;
-        if ( !_init ) {
+        if ( !_phase_init ) {
             createLightOffObj( false );
 
             _dice_button_pref = Resources.Load< GameObject >( "Prefabs/UI/DiceButton" );
@@ -388,7 +434,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
 
             _dice_button_obj.GetComponent< Button >( ).onClick.AddListener( _player_manager.dicisionDiceValue );
 
-            _init = true;
+            _phase_init = true;
         }
 
 		if ( _player_manager.isDiceRoll( ) ) {
@@ -430,8 +476,15 @@ public class ApplicationManager : Manager< ApplicationManager > {
 	/// </summary>
 	private void updateDrawPhase( ) {
 		if ( _mode == PROGRAM_MODE.MODE_CONNECT ) {
+            int length = 0;
+            if ( _player_num == PLAYER_ORDER.PLAYER_ONE ) {
+                length = _host_data.getRecvData( ).card_list_one.Length;
+            } else if ( _player_num == PLAYER_ORDER.PLAYER_TWO ) {
+                length = _host_data.getRecvData( ).card_list_two.Length;
+            }
+
 			// カードデータを受診したら
-			if ( _host_data.getCardListNum( _player_num ) == MAX_DRAW_NUM - _player_manager.getDiceValue( ) &&
+			if ( _host_data.getCardListNum( _player_num ) == length &&
 			     _client_data.getRecvData( ).ready == false ) {
                 //一度画面上に配置しているカードオブジェクトを削除
                  _player_manager.allDeletePlayerCard();
@@ -439,6 +492,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
 					if ( _host_data.getCardList( _player_num )[ i ] < 1 ) {
 						continue;
 					}
+
 					// カードデータを登録
 					_player_manager.addPlayerCard( _host_data.getCardList( _player_num )[ i ] );
 				}
@@ -454,9 +508,14 @@ public class ApplicationManager : Manager< ApplicationManager > {
                     return;
                 }
 
-				// サーバーに準備完了を送信
-				_client_data.CmdSetSendReady( true );
-				_client_data.setReady( true );
+                try {
+				    // サーバーに準備完了を送信
+				    _client_data.CmdSetSendReady( true );
+				    _client_data.setReady( true );
+                }
+                catch {
+                    Debug.Log( "Failure Connect..." );
+                }
 			}
 		} else if ( _mode == PROGRAM_MODE.MODE_NO_CONNECT ) {
 			if ( Input.GetKeyDown( KeyCode.A ) ) {
@@ -470,7 +529,6 @@ public class ApplicationManager : Manager< ApplicationManager > {
                         _card_manager.createDeck( );
                     }
 					card_list.Add( _card_manager.distributeCard( ).id );
-                    Debug.Log( "カードリスト" + i + ":" + card_list[ i ] );
 				}
 
                 // カード配布
@@ -488,11 +546,11 @@ public class ApplicationManager : Manager< ApplicationManager > {
                     _play_mode = GAME_PLAY_MODE.MODE_PLAYER_SELECT;
                     _player_manager.setPlayMode( _play_mode );
 				    _player_manager.initAllPlayerCard( );
-                    _init = false;
+                    _phase_init = false;
                     return;
                 }
 
-                _init = false;
+                _phase_init = false;
                 _phase_manager.setPhase( MAIN_GAME_PHASE.GAME_PHASE_BATTLE );
 
 			}
@@ -501,7 +559,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
 
     public void updateSelectPlayerCard( ) {
         // 初期化処理
-        if ( !_init ) {
+        if ( !_phase_init ) {
             createLightOffObj( true );
             _select_throw_area_pref = Resources.Load< GameObject >( "Prefabs/Background/SelectThrowArea" );
             Vector3 pos = _select_throw_area_pref.GetComponent< RectTransform >( ).localPosition;
@@ -513,7 +571,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
             _select_throw_area_obj.GetComponent< RectTransform >( ).localPosition = pos;
 
             _select_throw_area_obj.GetComponentInChildren< Button >( ).onClick.AddListener( _player_manager.dicisionSelectThrowCard );
-            _init = true;
+            _phase_init = true;
         }
 
 		if ( _mode == PROGRAM_MODE.MODE_CONNECT ) {
@@ -541,7 +599,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
 				_phase_manager.setPhase( MAIN_GAME_PHASE.GAME_PHASE_BATTLE );
                 Destroy( _select_throw_area_obj );
                 _select_throw_area_pref = null;
-                _init = false;
+                _phase_init = false;
                 destroyLightOffObj( );
                 _player_manager.refreshSelectCard( );
                 _player_manager.setPlayMode( _play_mode );
@@ -555,11 +613,11 @@ public class ApplicationManager : Manager< ApplicationManager > {
 	/// </summary>
 	private void updateButtlePhase( ) {
         // 初期化処理
-        if ( !_init ) {
+        if ( !_phase_init ) {
             destroySelectArea( );
             createSelectArea( "BattleCardBackground" );
             createCompleteButton( );
-            _init = true;
+            _phase_init = true;
         }
 
 		if ( _mode == PROGRAM_MODE.MODE_CONNECT ) {
@@ -595,7 +653,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
                 }
                 _player_manager.refreshSelectCard( );
 			    _phase_manager.setPhase( MAIN_GAME_PHASE.GAME_PHASE_RESULT );
-                _init = false;
+                _phase_init = false;
             } 
         }
 	}
@@ -605,10 +663,10 @@ public class ApplicationManager : Manager< ApplicationManager > {
 	/// </summary>
 	private void updateResultPhase( ) {
         // 初期化処理
-        if ( !_init ) {
+        if ( !_phase_init ) {
             destroySelectArea( );
             createSelectArea( "MapBackground" );
-            _init = true;
+            _phase_init = true;
         }
 
 		if ( _mode == PROGRAM_MODE.MODE_CONNECT ) {
@@ -678,10 +736,10 @@ public class ApplicationManager : Manager< ApplicationManager > {
 		} else if ( _mode == PROGRAM_MODE.MODE_NO_CONNECT ) {
 			if ( Input.GetKeyDown( KeyCode.A ) ) {
 				_phase_manager.setPhase( MAIN_GAME_PHASE.GAME_PHASE_DICE );
-                _init = false;
+                _phase_init = false;
 			} else if ( Input.GetKeyDown( KeyCode.B ) ) {
 				_phase_manager.setPhase( MAIN_GAME_PHASE.GAME_PHASE_FINISH );
-                _init = false;
+                _phase_init = false;
 			}
 		} 
 	}

@@ -10,6 +10,7 @@ public class MapManager : MonoBehaviour {
     private GameObject[ ] _mass_pref = new GameObject[ MASS_TYPE_NUM ];
     private GameObject _base_point;
     private List< GameObject > _mass_obj = new List< GameObject >( );
+    private List< Vector3 > _mass_pos = new List< Vector3 >( );
     private Vector3 _player_point;
     private int _target_mass_id;
     //private List< Vector3 > _mass_pos = new List< Vector3 >( );
@@ -73,6 +74,8 @@ public class MapManager : MonoBehaviour {
         float x = _adjust_mass_pos * pos.x;
         float y = _adjust_mass_pos * pos.z;
         Vector3 adjust_pos = new Vector3( x, y, pref.transform.position.z );
+        _mass_pos.Add( adjust_pos );
+
         obj.GetComponent< RectTransform >( ).localPosition = adjust_pos;
         
         obj.GetComponent< Button >( ).onClick.AddListener( obj.GetComponent< Mass >( ).selectedOnClick );
@@ -126,7 +129,7 @@ public class MapManager : MonoBehaviour {
         float[ ] y = new float[ _mass_obj.Count ];
 
         // x座標を動かす
-        if ( _purpose_distance_x < 0 ) {
+        if ( _purpose_distance_x > 0 ) {
             if ( _mass_obj[ _player_pos_num ].transform.position.x >= _player_point.x ) {
                 for ( int i = 0; i < _mass_obj.Count; i++ ) {
                     x[ i ] = _mass_obj[ i ].transform.position.x;
@@ -138,7 +141,7 @@ public class MapManager : MonoBehaviour {
                     x[ i ] += _move_speed;
                 }
             }
-        } else {
+        } else if ( _purpose_distance_x < 0 ) {
             if ( _mass_obj[ _player_pos_num ].transform.position.x <= _player_point.x ) {
                 for ( int i = 0; i < _mass_obj.Count; i++ ) {
                     x[ i ] = _mass_obj[ i ].transform.position.x;
@@ -150,9 +153,14 @@ public class MapManager : MonoBehaviour {
                     x[ i ] -= _move_speed;
                 }
             }
+        } else if ( _purpose_distance_x == 0 ) {
+            for ( int i = 0; i < _mass_obj.Count; i++ ) {
+                x[ i ] = _mass_obj[ i ].transform.position.x;
+            }
+            x_finish = true;
         }
         // y座標を動かす
-        if ( _purpose_distance_y < 0 ) {
+        if ( _purpose_distance_y > 0 ) {
             if ( _mass_obj[ _player_pos_num ].transform.position.y >= _player_point.y ) {
                 for ( int i = 0; i < _mass_obj.Count; i++ ) {
                     y[ i ] = _mass_obj[ i ].transform.position.y;
@@ -164,7 +172,7 @@ public class MapManager : MonoBehaviour {
                     y[ i ] += _move_speed;
                 }
             }
-        } else {
+        } else if ( _purpose_distance_y < 0 ) {
             if ( _mass_obj[ _player_pos_num ].transform.position.y <= _player_point.y ) {
                 for ( int i = 0; i < _mass_obj.Count; i++ ) {
                     y[ i ] = _mass_obj[ i ].transform.position.y;
@@ -176,6 +184,11 @@ public class MapManager : MonoBehaviour {
                     y[ i ] -= _move_speed;
                 }
             }
+        } else if ( _purpose_distance_y == 0 ) {
+            for ( int i = 0; i < _mass_obj.Count; i++ ) {
+                y[ i ] = _mass_obj[ i ].transform.position.y;
+            }
+            y_finish = true;
         }
 
         // 座標の設定
@@ -185,6 +198,20 @@ public class MapManager : MonoBehaviour {
 
         if ( x_finish && y_finish ) {
             _move = false;
+            massPosAdustBasePos( );
+        }
+    }
+
+    public void massPosAdustBasePos( ) {
+        // 移動量を計算
+        float distance_x = _player_point.x - _mass_pos[ _player_pos_num ].x;
+        float distance_y = _player_point.y - _mass_pos[ _player_pos_num ].y;
+
+        // 座標を修正
+        for ( int i = 0; i < _mass_obj.Count; i++ ) {
+            _mass_obj[ i ].transform.position = new Vector3( _mass_pos[ i ].x + distance_x,
+                                                             _mass_pos[ i ].y + distance_y,
+                                                             _mass_obj[ i ].transform.position.z );
         }
     }
 

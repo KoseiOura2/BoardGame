@@ -5,6 +5,11 @@ using System.IO;
 using System;
 
 namespace Common {
+    public enum PROGRAM_MODE {
+		MODE_NO_CONNECT,
+        MODE_ONE_CONNECT,
+		MODE_TWO_CONNECT,
+    };
     
 	public enum GAME_PLAY_MODE {
 		MODE_NORMAL_PLAY,
@@ -112,6 +117,14 @@ namespace Common {
         EVENT_GOAL
     }
 
+	public enum FIELD_ENVIRONMENT {
+		SHOAL_FIELD,
+		OPEN_SEA_FIELD,
+		DEEP_SEA_FIELD,
+		FIELD_ENVIRONMENT_NUM,
+		NO_FIELD,
+	};
+
     /// <summary>
     /// 通信で送受信するフィールド側のデータ
     /// </summary>
@@ -143,6 +156,7 @@ namespace Common {
 		public int[ ] turned_card_list;
 		public bool battle_ready;
 		public MASS_ADJUST mass_adjust;
+        public bool connect_ready;
 	};
 
 	/// <summary>

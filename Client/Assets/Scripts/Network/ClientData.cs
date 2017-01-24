@@ -14,15 +14,16 @@ public class ClientData : NetworkBehaviour {
     public int MAX_CARD_NUM = 6;
 
     void Awake( ) {
-		_player_data.changed_scene = false;
-        _player_data.changed_phase = false;
-        _player_data.dice_value = -1;
-        _player_data.ready = false;
+		_player_data.changed_scene    = false;
+        _player_data.changed_phase    = false;
+        _player_data.dice_value       = -1;
+        _player_data.ready            = false;
 		_player_data.used_card_list   = new int[ MAX_CARD_NUM ];
 		_player_data.turned_card_list = new int[ MAX_CARD_NUM ];
-        _player_data.player_status = 0;
-        _player_data.battle_ready = false;
-        _player_data.mass_adjust = MASS_ADJUST.NO_ADJUST;
+        _player_data.player_status    = 0;
+        _player_data.battle_ready     = false;
+        _player_data.mass_adjust      = MASS_ADJUST.NO_ADJUST;
+        _player_data.connect_ready    = false;
     }
 
 	// Use this for initialization
@@ -38,6 +39,15 @@ public class ClientData : NetworkBehaviour {
 	void Update( ) {
 	
 	}
+    
+    /// <summary>
+    /// 通信準備完了かどうかを送る
+    /// </summary>
+    /// <param name="flag"></param>
+	[ Command ]
+    public void CmdSetSendConnectReady( bool flag ) { 
+		_player_data.connect_ready = flag;
+    }
 
     /// <summary>
     /// シーンが変化したかどうかを設定
@@ -46,13 +56,11 @@ public class ClientData : NetworkBehaviour {
 	[ Command ]
     public void CmdSetSendChangedScene( bool flag ) { 
 		_player_data.changed_scene = flag;
-
     }
     
 	[ Client ]
     public void setChangedScene( bool flag ) { 
 		_player_data.changed_scene = flag;
-
     }
     
     /// <summary>
