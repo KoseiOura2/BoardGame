@@ -43,6 +43,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
     private bool _network_init = false;
     [SerializeField]
     private bool _animation_running = false;
+    private bool _animation_end = false;
     private const int CONNECT_WAIT_TIME = 120;
 	private const int SECOND_CONNECT_WAIT_TIME = 180;
 	private const int MAX_DRAW_VALUE = 4;
@@ -844,10 +845,10 @@ public class ApplicationManager : Manager< ApplicationManager > {
 	/// </summary>
 	private void updateEventPhase( ) {
         _connect_wait_time++;
-		if ( _player_manager.isEventStart( 0 ) == false ) {
+		if ( _player_manager.isEventStart( 0 ) == false  && _player_manager.isEventFinish( 0 ) == false ) {
 			massEvent( _player_manager.getPlayerCount( 0, _stage_manager.getMassCount( ) ), 0 );
-            Debug.Log( "aa" );
-		} else if ( _player_manager.isEventFinish( 0 ) == true && _player_manager.isEventStart( 1 ) == false ) {
+		} else if ( _player_manager.isEventFinish( 0 ) == true && _player_manager.isEventStart( 1 ) == false && _player_manager.isEventFinish( 1 ) == false ) {
+            Debug.Log( "P2" );
 			massEvent (_player_manager.getPlayerCount( 1, _stage_manager.getMassCount( ) ), 1 );
 		}
 
@@ -887,33 +888,37 @@ public class ApplicationManager : Manager< ApplicationManager > {
 	/// </summary>
 	/// <param name="i">The index.</param>
 	public void massEvent( int i, int id ) {
-		_player_manager.setEventStart( id, true );
-        _animation_running = false;
+		//_player_manager.setEventStart( id, true );
 
         switch ( _file_manager.getFileData( ).mass[ i ].type ) {
         case "draw":
             int value = _file_manager.getMassValue( i )[ 0 ];
             List<int> card_list = new List<int>( );
 
-            Debug.Log( "カード" + value + "ドロー" );
-            for ( int j = 0; j < value; j++ ) {
-                // デッキのカード数が０になったらリフレッシュ
-                if ( _card_manager.getDeckCardNum( ) <= 0 ) {
-                    _card_manager.createDeck( );
+            if ( !_animation_running ) {
+                Debug.Log( "カード" + value + "ドロー" );
+                for ( int j = 0; j < value; j++ ) {
+                    // デッキのカード数が０になったらリフレッシュ
+                    if ( _card_manager.getDeckCardNum( ) <= 0 ) {
+                        _card_manager.createDeck( );
+                    }
+                    card_list.Add( _card_manager.distributeCard( ).id );
                 }
-                card_list.Add( _card_manager.distributeCard( ).id );
-            }
-            if ( _mode != PROGRAM_MODE.MODE_NO_CONNECT ) {
-                _host_data.refreshCardList( id );
-                _host_data.setSendCardlist( id, card_list );
-            }
-            //while ( !_animation_running ) {
+                if ( _mode != PROGRAM_MODE.MODE_NO_CONNECT ) {
+                    _host_data.refreshCardList( id );
+                    _host_data.setSendCardlist( id, card_list );
+                }
                 StartCoroutine( massAnimation( i, card_list ) );
-            //}
+                _animation_running = true;
+            }
             // カードリストを初期化
-            card_list.Clear( );
-            _player_manager.setEventFinish( id, true );
-            _player_manager.setEventType( id, EVENT_TYPE.EVENT_DRAW );
+            if ( _animation_end ) {
+                card_list.Clear( );
+                _player_manager.setEventFinish( id, true );
+                _player_manager.setEventType( id, EVENT_TYPE.EVENT_DRAW );
+                _animation_end = false;
+                _animation_running = false;
+            }
 			break;
 		case "trap1":
 			Debug.Log ("トラップ発動");
@@ -994,9 +999,9 @@ public class ApplicationManager : Manager< ApplicationManager > {
                 Destroy( card );
                 j++;
             }
-            _animation_running = true;
             break;
         }
+        _animation_end = true;
     }
 
     /// <summary>
