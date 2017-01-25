@@ -744,34 +744,35 @@ public class ApplicationManager : Manager< ApplicationManager > {
 	/// EventPhaseの更新
 	/// </summary>
 	private void updateEventPhase( ) {
-        if ( _player_manager.isEventStart ( 0 ) == false ) {
-            massEvent ( _player_manager.getPlayerCount ( 0, _stage_manager.getMassCount ( ) ), 0 );
-        } else if ( _player_manager.isEventFinish ( 0 ) == true && _player_manager.isEventStart ( 1 ) == false ) {
-            if ( _reset_mass_update[ 0 ] ) {
-                _stage_manager.resetMassColor ( _player_manager.getPlayerCount ( 0, _stage_manager.getMassCount ( ) ), ref _reset_mass_update[ 0 ] );
-            } else {
-                massEvent ( _player_manager.getPlayerCount ( 1, _stage_manager.getMassCount ( ) ), 1 );
-            }
-        }
+		if ( _player_manager.isEventFinish( 0 ) == false ) {
+			massEvent( _player_manager.getPlayerCount( 0, _stage_manager.getMassCount( ) ), 0 );
+		} else if ( _player_manager.isEventFinish( 0 ) == true && _player_manager.isEventStart( 1 ) == false ) {
+				if ( _reset_mass_update[ 0 ] ) {
+					_stage_manager.resetMassColor( _player_manager.getPlayerCount( 0, _stage_manager.getMassCount( ) ), ref _reset_mass_update[ 0 ] );
+				} else {
+					massEvent( _player_manager.getPlayerCount( 1, _stage_manager.getMassCount( ) ), 1 );
+				}
+			}
         
-        // マス移動終了時にイベントフラグをfalseにしてもう一度イベントが発生するようにする
-        for ( int i = 0; i < ( int )PLAYER_ORDER.MAX_PLAYER_NUM; i++ ) {
-            if ( _player_manager.getEventType ( i ) == EVENT_TYPE.EVENT_MOVE ) {
-                if ( _player_manager.isPlayerMoveFinish ( i ) == true && _player_manager.isAdjsutmentStart ( ) == false ) {
-                    if ( _reset_mass_update[ i ] ) {
-                        _stage_manager.resetMassColor ( _before_player_count, ref _reset_mass_update[ i ] );
-                    } else {
-                        _player_manager.setEventStart ( i, false );
-                        _player_manager.movedRefresh ( );
-                    }
-                }
-            } else {
-                if ( _reset_mass_update[ i ] ) {
-                    _stage_manager.resetMassColor ( _player_manager.getPlayerCount ( i, _stage_manager.getMassCount ( ) ), ref _reset_mass_update[ i ] );
-                }
-            }
-        
-        }
+		// マス移動終了時にイベントフラグをfalseにしてもう一度イベントが発生するようにする
+		for ( int i = 0; i < ( int )PLAYER_ORDER.MAX_PLAYER_NUM; i++ ) {
+			if ( _player_manager.getEventType( i ) == EVENT_TYPE.EVENT_MOVE ) {
+				if ( _player_manager.isPlayerMoveFinish( i ) == true && _player_manager.isAdjsutmentStart( ) == false ) {
+					if ( _reset_mass_update[ i ] ) {
+						_stage_manager.resetMassColor( _before_player_count, ref _reset_mass_update[ i ] );
+					} else {
+						_player_manager.setEventStart( i, false );
+						_player_manager.movedRefresh( );
+					}
+				}
+			} else if ( _player_manager.getEventType( i ) == EVENT_TYPE.EVENT_WORP || _player_manager.getEventType( i ) == EVENT_TYPE.EVENT_CHANGE ) {
+				_stage_manager.resetMassColor( _before_player_count, ref _reset_mass_update[ i ] );
+			} else {
+				if ( _reset_mass_update[ i ] ) {
+					_stage_manager.resetMassColor( _player_manager.getPlayerCount( i, _stage_manager.getMassCount( ) ), ref _reset_mass_update[ i ] );
+				}
+			}
+		}
         if ( _player_manager.getPlayerID ( ) > -1 ) {
             _player_manager.movePhaseUpdate ( getResideCount ( ), _stage_manager.getTargetMass ( _player_manager.getTargetMassID ( _stage_manager.getMassCount ( ) ) ) );
         }
@@ -797,7 +798,8 @@ public class ApplicationManager : Manager< ApplicationManager > {
 	/// <param name="i">The index.</param>
 	public void massEvent( int i, int id ) {
         _stage_manager.getTargetMass ( i ).GetComponent<Renderer> ( ).material.SetColor ( "_Color", Color.white);
-        if ( _stage_manager.getTargetMass ( i ).transform.localScale.x < 0.5f || _stage_manager.getTargetMass ( i ).transform.localScale.z < 0.5f ) {
+        if ( _stage_manager.getTargetMass ( i ).transform.localScale.x < 0.5f || _stage_manager.getTargetMass ( i ).transform.localScale.z < 0.5f
+			&& _player_manager.isEventStart ( id ) == false ) {
             _stage_manager.getTargetMass ( i ).transform.localScale =
                 new Vector3 ( _stage_manager.getTargetMass ( i ).transform.localScale.x + 0.02f,
                 _stage_manager.getTargetMass ( i ).transform.localScale.y,
@@ -904,6 +906,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
                     break;
                 case "change":
                     Debug.Log ( "チェンジ" );
+					_before_player_count = _player_manager.getPlayerCount ( id, _stage_manager.getMassCount ( ) );
                     int count_tmp;
                     Vector3 vector_tmp;
                     count_tmp = _player_manager.getPlayerCount ( id, _stage_manager.getMassCount ( ) );
@@ -928,6 +931,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
                 case "worp":
                     Debug.Log ( "ワープ" );
                     int worp_position = 15;
+					_before_player_count = _player_manager.getPlayerCount ( id, _stage_manager.getMassCount ( ) );
                     _player_manager.setPlayerCount ( id, worp_position );
                     _player_manager.setPlayerPosition ( id, _stage_manager.getTargetMass ( worp_position ).transform.localPosition );
                     _player_manager.setEventFinish ( id, true );

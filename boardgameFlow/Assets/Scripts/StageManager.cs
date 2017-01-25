@@ -16,7 +16,7 @@ public class StageManager : MonoBehaviour {
 			_mass_prefab = ( GameObject )Resources.Load( "Prefabs/masu_mini" );
 			Vector3 pos = Vector3.Lerp( _mass_list[ i ].transform.localPosition, _mass_list[ i + 1 ].transform.localPosition, 0.5f );
 			GameObject obj = ( GameObject )Instantiate( _mass_prefab, pos, _mass_prefab.transform.localRotation );
-			obj.transform.parent = _mass_list[ i ].transform;
+			obj.transform.parent = transform;
 		}
         
 	}
@@ -75,12 +75,12 @@ public class StageManager : MonoBehaviour {
 	}
 
     public void resetMassColor ( int i, ref bool flag ) {
-        if ( getTargetMass ( i ).transform.localScale.x >= 0.3f || getTargetMass ( i ).transform.localScale.z >= 0.3f ) {
+        if ( getTargetMass ( i ).transform.localScale.x > 0.3f || getTargetMass ( i ).transform.localScale.z > 0.3f ) {
             getTargetMass ( i ).GetComponent<Renderer> ( ).material.SetColor ( "_Color", new Color ( 0.4f, 0.4f, 0.4f, 1f ) );
             getTargetMass ( i ).transform.localScale =
-            new Vector3 ( getTargetMass ( i ).transform.localScale.x - 0.02f,
+            new Vector3 ( getTargetMass ( i ).transform.localScale.x - 0.05f,
             getTargetMass ( i ).transform.localScale.y,
-            getTargetMass ( i ).transform.localScale.z - 0.02f );
+            getTargetMass ( i ).transform.localScale.z - 0.05f );
         } else {
             getTargetMass ( i ).transform.localScale =
             new Vector3 ( 0.3f, getTargetMass ( i ).transform.localScale.y, 0.3f );

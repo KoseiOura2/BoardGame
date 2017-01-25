@@ -7,7 +7,7 @@ using Common;
 public class PlayerManager : MonoBehaviour {
     
     public float ADJUST_FIRST_PLAYER_Y_POS = 0.3f;          // プレイヤー初期生成時の修正Y座標
-    public float ADJUST_PLAYER_POS = 0.6f;          // プレイヤー初期生成時の修正Z座標
+    public float ADJUST_PLAYER_POS = 15f;          // プレイヤー初期生成時の修正Z座標
 
     [ SerializeField ]
     private PLAYER_ORDER _player_order;     // どのプレイヤーが行動中か
@@ -35,6 +35,8 @@ public class PlayerManager : MonoBehaviour {
 	private int _defalut_power = 0;
 	private int _plus_draw;
 	private int _plus_power;
+	private float _speed = 1f;
+	private Vector3 _speedvec;
     private float _time = 0.3f;
     private Vector3 _velocity = Vector3.zero;
     private float[] _startTime = new float[2];
@@ -54,7 +56,6 @@ public class PlayerManager : MonoBehaviour {
     
     private bool _accel_init = false;
     private float _accel = 0.0f;
-    private float _speed = 0.0f;
     private float _first_speed = 0.0f;
     [ SerializeField ]
     private bool _adjustment_flag = false;
@@ -158,7 +159,7 @@ public class PlayerManager : MonoBehaviour {
                 if ( !_move_flag ) {
                     setTargetPos( 0, _player_id, ref target_pos );
                 } else {
-                    playerMove( 0, _player_id );
+                    //playerMove( 0, _player_id );
                 }
             } else if ( _limit_value == 0 ) {
                 _move_finish[ _player_id ] = true;
@@ -303,6 +304,8 @@ public class PlayerManager : MonoBehaviour {
         _target[i] = target_pos;
         _end_position[i] = _target[i].transform.localPosition;
 
+
+
         Vector3 direc = Vector3.Cross(_start_position[i], _end_position[i]).normalized;
         switch (_player_id)
         {
@@ -323,8 +326,37 @@ public class PlayerManager : MonoBehaviour {
     /// </summary>
     private void playerMove( int i, int id ) {
         var diff = Time.timeSinceLevelLoad - _startTime[ i ];
-        float distance = Vector3.Distance( _players[ id ].obj.transform.position, _end_position[ i ] );
-		if ( diff > _time * 3.5f ) {
+		Vector3 distance = ( _end_position[ i ] - _players[ id ].obj.transform.position ) / Vector3.Distance(_players[ id ].obj.transform.position, _end_position[ i ] );
+		_time = Time.deltaTime * 3;
+		if ( _time > 1 )
+			_time = 1;
+
+		_speedvec = ( distance * _speed ) * _time + _speedvec * ( 1 - _time );
+		_players[ id ].obj.GetComponent<CharacterController>().Move(_players[ id ].obj.transform.position + ( _speedvec * Time.deltaTime ) * Time.deltaTime);
+		if ( _players[ id ].obj.transform.position == _end_position[ i ] ) {
+			_players[ id ].obj.transform.position = _end_position[ i ];
+			_accel_init = false;
+
+			if( _current_flag ) {
+				if ( _advance_flag ) {
+					_players[ id ].advance_count += _limit_value;
+				} else {
+					_players[ id ].advance_count -= _limit_value;
+				}
+				_limit_value = 0;
+			} else {
+				if ( _advance_flag ) {
+					_players[ id ].advance_count++;
+				} else {
+					_players[ id ].advance_count--;
+				}
+				_limit_value--;
+			}
+			_current_flag = false;
+			_move_flag = false;
+			return;
+		}
+		/*if ( diff > _time * 3.5f ) {
 			_players[ id ].obj.transform.position = _end_position[ i ];
             _accel_init = false;
             
@@ -347,8 +379,13 @@ public class PlayerManager : MonoBehaviour {
             _move_flag = false;
             return;
         }
+
+		Quaternion newDir = Quaternion.LookRotation( distance );
+		_players[ id ].obj.transform.rotation = Quaternion.SlerpUnclamped( _players[ id ].obj.transform.rotation, newDir, _time );
+
         _players[ id ].obj.transform.position = Vector3.SmoothDamp(_players[id].obj.transform.position, _end_position[i], ref _velocity , _time);//Vector3.Lerp ( _start_position[ i ], _end_position[ i ], rate );
-    }
+		*/
+	}
     
 	/// <summary>
 	/// ランク付け関数
@@ -569,6 +606,7 @@ public class PlayerManager : MonoBehaviour {
         for ( int i = 0; i < ( int )PLAYER_ORDER.MAX_PLAYER_NUM; i++ ) {
             _move_finish[ i ] = false;
             _move_start[ i ] = false;
+			_players[ i ].event_type = EVENT_TYPE.EVENT_NONE;
         }
     }
 
@@ -624,10 +662,12 @@ public class PlayerManager : MonoBehaviour {
         if ( id == 0 ) {
             position.x -= ADJUST_PLAYER_POS;
             position.z += ADJUST_PLAYER_POS;
+			position.y += ADJUST_FIRST_PLAYER_Y_POS;
             _players[ id ].obj.transform.localPosition = position;
         } else if( id == 1 ) {
             position.x += ADJUST_PLAYER_POS;
             position.z -= ADJUST_PLAYER_POS;
+			position.y += ADJUST_FIRST_PLAYER_Y_POS;
             _players[ id ].obj.transform.localPosition = position;
         }
     }
