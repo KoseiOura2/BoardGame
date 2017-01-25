@@ -9,15 +9,17 @@ public class MapManager : MonoBehaviour {
     private const int MASS_TYPE_NUM = 5;
     
     private Sprite _player_icon;
+	private Sprite[ ] _small_num = new Sprite[ 10 ];
     private GameObject[ ] _mass_pref = new GameObject[ MASS_TYPE_NUM ];
-    private GameObject _base_point;
+	private GameObject _base_point;
+	private GameObject _player_point;
     private List< GameObject > _mass_obj = new List< GameObject >( );
     private List< Vector3 > _mass_pos = new List< Vector3 >( );
-    private GameObject _player_point;
     private int _target_mass_id;
-    //private List< Vector3 > _mass_pos = new List< Vector3 >( );
     private int _create_mass_count = 0;
-    private int _player_pos_num = 0;
+	private int _player_pos_num = 0;
+	[ SerializeField ]
+	private int _sea_deep = 0;
     [ SerializeField ]
     private float _adjust_mass_pos = 3.0f;
     private float _purpose_distance_x = 0.0f;
@@ -32,6 +34,8 @@ public class MapManager : MonoBehaviour {
 
     public void init( ) {
         loadMapGraphic( );
+		loadNumGraphics( );
+		initSeaDeep( );
 
         if ( _base_point == null ) {
             _base_point = GameObject.Find( "MassBasePoint" );
@@ -107,6 +111,12 @@ public class MapManager : MonoBehaviour {
             _mass_pref[ i ] = Resources.Load< GameObject >( "Prefabs/UI/Mass/ui_map_mass" + i );
         }
     }
+
+	private void loadNumGraphics( ) {
+		for ( int i = 0; i < _small_num.Length; i++ ) {
+			_small_num[ i ] = Resources.Load< Sprite >( "Graphics/Number/number_status_" + i );
+		}
+	}
 	
 	// Update is called once per frame
 	void Update( ) {
@@ -217,6 +227,14 @@ public class MapManager : MonoBehaviour {
         }
     }
 
+	public void initSeaDeep( ) {
+		_sea_deep = 0;
+	}
+
+	public void adbanceSea( ) {
+		_sea_deep = _player_pos_num * 10;
+	}
+
     public void allMassReject( ) {
         for ( int i = 0; i < _mass_obj.Count; i++ ) {
             _mass_obj[ i ].GetComponent< Mass >( ).changeReject( true );
@@ -263,6 +281,37 @@ public class MapManager : MonoBehaviour {
         _player_point.transform.GetChild( 0 ).gameObject.GetComponent< Image >( ).SetNativeSize( );
         _player_point.transform.GetChild( 0 ).gameObject.GetComponent< Image >( ).color = new Color( 1, 1, 1, 1 );
     }
+
+	public void changeGoalImageNum( GameObject ten_digit, GameObject digit ) {
+		// ゴールまでの残りマス
+		int num = _create_mass_count - _player_pos_num;
+
+		// 10の位を求める
+		int ten = ( int )( num / 10 );
+		ten = ten % 10;
+		// 1の位を求める
+		int one = num % 10;
+
+		// イメージのSpriteを変える
+		ten_digit.GetComponent< Image >( ).sprite = _small_num[ ten ];
+		digit.GetComponent< Image >( ).sprite     = _small_num[ one ];
+	}
+
+	public void changeSeaDeepNum( GameObject hundred_digit, GameObject ten_digit, GameObject digit ) {
+		// 100の位を求める
+		int hundred = ( int )( _sea_deep / 100 );
+		hundred = hundred % 10;
+		// 10の位を求める
+		int ten = ( int )( _sea_deep / 10 );
+		ten = ten % 10;
+		// 1の位を求める
+		int one = _sea_deep % 10;
+
+		// イメージのSpriteを変える
+		hundred_digit.GetComponent< Image >( ).sprite = _small_num[ hundred ];
+		ten_digit.GetComponent< Image >( ).sprite     = _small_num[ ten ];
+		digit.GetComponent< Image >( ).sprite         = _small_num[ one ];
+	}
 
     public void setVisibleSprite( bool flag ) {
         _player_point.transform.GetChild( 0 ).gameObject.GetComponent< Image >( ).enabled = flag;

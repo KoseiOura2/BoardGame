@@ -57,12 +57,17 @@ public class ApplicationManager : Manager< ApplicationManager > {
     private GameObject _dice_button_obj;
     private GameObject _dice_button_pref;
     private GameObject _complete_button_obj;
-    private GameObject _complete_button_pref;
+	private GameObject _complete_button_pref;
+	[ SerializeField ]
+	private GameObject[ ] _battle_time_image     = new GameObject[ 2 ];
+	private GameObject[ ] _sea_deep_count_image  = new GameObject[ 3 ];
+	private GameObject[ ] _goal_count_image      = new GameObject[ 2 ];
 
     private int _change_scene_count = 0;
     private int _change_phase_count = 0;
-    private bool _scene_init = false;
-    private bool _phase_init = false;
+    private bool _scene_init  = false;
+    private bool _phase_init  = false;
+	private bool _result_init = false;
     private bool _reject = false;
 	[ SerializeField ]
     private int _debug_player_num = 0;
@@ -112,7 +117,14 @@ public class ApplicationManager : Manager< ApplicationManager > {
         catch {
             Debug.Log( "Failure Init CardManager..." );
         }
-        
+
+		try {
+			_battle_manager.init( );
+		}
+		catch {
+			Debug.Log( "Failure Init BattleManager..." );
+		}
+
         try {
             _map_manager.init( );
         }
@@ -376,6 +388,16 @@ public class ApplicationManager : Manager< ApplicationManager > {
         if ( _map_manager.isMassMove( ) ) {
             _map_manager.massMove( );
         }
+
+		if ( _goal_count_image[ 0 ] != null && _goal_count_image[ 1 ] != null ) {
+			_map_manager.changeGoalImageNum( _goal_count_image[ 0 ], _goal_count_image[ 1 ] );
+		}
+
+		_map_manager.adbanceSea( );
+
+		if ( _sea_deep_count_image[ 0 ] != null && _sea_deep_count_image[ 1 ] != null && _sea_deep_count_image[ 2 ] != null ) {
+			_map_manager.changeSeaDeepNum( _sea_deep_count_image[ 2 ], _sea_deep_count_image[ 0 ], _sea_deep_count_image[ 1 ] );
+		}
 	}
 
 	/// <summary>
@@ -416,6 +438,8 @@ public class ApplicationManager : Manager< ApplicationManager > {
 
             createSelectArea( "MapBackground" );
 
+			bindMapCountImage( );
+			_map_manager.changeGoalImageNum( _goal_count_image[ 0 ], _goal_count_image[ 1 ] );
             _phase_init = true;
         }
 
@@ -627,7 +651,9 @@ public class ApplicationManager : Manager< ApplicationManager > {
         // 初期化処理
         if ( !_phase_init ) {
             destroySelectArea( );
+			freeMapCountImage( );
             createSelectArea( "BattleCardBackground" );
+			bindBattleTimeImage( );
             createCompleteButton( );
             _map_manager.allMassVisible( false );
             _map_manager.setVisibleSprite( false );
@@ -635,6 +661,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
             _phase_init = true;
         }
 
+		_battle_manager.changeBattleTimeImageNum( _battle_time_image[ 0 ], _battle_time_image[ 1 ] );
         _battle_manager.battleTimeCount( );
 
 		if ( _battle_manager.isComplete( ) ) {
@@ -678,7 +705,10 @@ public class ApplicationManager : Manager< ApplicationManager > {
         // 初期化処理
         if ( !_phase_init ) {
             destroySelectArea( );
-            createSelectArea( "MapBackground" );
+			freeBattleTimeImage( );
+			createSelectArea( "MapBackground" );
+			bindMapCountImage( );
+			_map_manager.changeGoalImageNum( _goal_count_image[ 0 ], _goal_count_image[ 1 ] );
             _map_manager.allMassVisible( true );
             
             for ( int i = 0; i < _map_manager.getMassCount( ); i++ ) {
@@ -687,7 +717,8 @@ public class ApplicationManager : Manager< ApplicationManager > {
             }
             _map_manager.setVisibleSprite( true );
             _debug_result = ( BATTLE_RESULT )( ( int )Random.Range( 1, 3 ) );
-            _phase_init = true;
+            _phase_init  = true;
+			_result_init = false;
         }
 
 		if ( _mode == PROGRAM_MODE.MODE_CONNECT ) {
@@ -711,45 +742,62 @@ public class ApplicationManager : Manager< ApplicationManager > {
 				battle_result = _host_data.getBattleResultTwo( );
 			}
 
-			// 勝ちか引き分け時
-			if ( battle_result == ( int )BATTLE_RESULT.WIN ||
-				battle_result == ( int )BATTLE_RESULT.DRAW ) {
-                for ( int i = 0; i < _map_manager.getMassCount( ); i++ ) {
-                    if ( i >= _map_manager.getPlayerPosNum( ) - 1 && i <= _map_manager.getPlayerPosNum( ) + 1 ) {
-                        _map_manager.setMassColor( i, Color.white );
-                        _map_manager.setMassNotReject( i );
-                    }
-                }
+			if ( !_result_init && battle_result != 0 ) {
+				createLightOffObj( false );
+				_battle_manager.createResultImage( ( BATTLE_RESULT )battle_result );
+				_result_init = true;
+			}
 
-				// マス調整の処理
-                int num = _map_manager.isSelect( );
+			// 左クリックでResultを消す
+			if ( Input.GetMouseButtonDown( 1 ) ) {
+				_battle_manager.clearResult( );
+				_battle_manager.deleteResultImage( );
+				destroyLightOffObj( );
 
-				if ( num == _map_manager.getPlayerPosNum( ) + 1 ) {
-					adjust = MASS_ADJUST.ADVANCE;
-					flag = true;
-                    for ( int i = 0; i < _map_manager.getMassCount( ); i++ ) {
-                        _map_manager.setMassColor( i, new Color( 0.5f, 0.5f, 0.5f ) );
-                        _map_manager.allMassReject( );
-                    }
-				} else if ( num == _map_manager.getPlayerPosNum( ) - 1 ) {
-					adjust = MASS_ADJUST.BACK;
-					flag = true;
-                    for ( int i = 0; i < _map_manager.getMassCount( ); i++ ) {
-                        _map_manager.setMassColor( i, new Color( 0.5f, 0.5f, 0.5f ) );
-                        _map_manager.allMassReject( );
-                    }
-				} else if ( num == _map_manager.getPlayerPosNum( ) ) {
+				// 前後一マス以内のマスを明るくする
+				for ( int i = 0; i < _map_manager.getMassCount( ); i++ ) {
+					if ( i >= _map_manager.getPlayerPosNum( ) - 1 && i <= _map_manager.getPlayerPosNum( ) + 1 ) {
+						_map_manager.setMassColor( i, Color.white );
+						_map_manager.setMassNotReject( i );
+					}
+				}
+			}
+
+			// リザルト画面が消えていたら実行できる
+			if ( !_battle_manager.isResultOpen( ) ) {
+				// 勝ちか引き分け時
+				if ( battle_result == ( int )BATTLE_RESULT.WIN ||
+				    battle_result == ( int )BATTLE_RESULT.DRAW ) {
+					// マス調整の処理
+					int num = _map_manager.isSelect( );
+
+					if ( num == _map_manager.getPlayerPosNum( ) + 1 ) {
+						adjust = MASS_ADJUST.ADVANCE;
+						flag = true;
+						for ( int i = 0; i < _map_manager.getMassCount( ); i++ ) {
+							_map_manager.setMassColor( i, new Color( 0.5f, 0.5f, 0.5f ) );
+							_map_manager.allMassReject( );
+						}
+					} else if ( num == _map_manager.getPlayerPosNum( ) - 1 ) {
+						adjust = MASS_ADJUST.BACK;
+						flag = true;
+						for ( int i = 0; i < _map_manager.getMassCount( ); i++ ) {
+							_map_manager.setMassColor( i, new Color( 0.5f, 0.5f, 0.5f ) );
+							_map_manager.allMassReject( );
+						}
+					} else if ( num == _map_manager.getPlayerPosNum( ) ) {
+						adjust = MASS_ADJUST.NO_ADJUST;
+						flag = true;
+						for ( int i = 0; i < _map_manager.getMassCount( ); i++ ) {
+							_map_manager.setMassColor( i, new Color( 0.5f, 0.5f, 0.5f ) );
+							_map_manager.allMassReject( );
+						}
+					}
+				} else if ( battle_result == ( int )BATTLE_RESULT.LOSE ) {
+					// 負けた場合マス調整不能
 					adjust = MASS_ADJUST.NO_ADJUST;
 					flag = true;
-                    for ( int i = 0; i < _map_manager.getMassCount( ); i++ ) {
-                        _map_manager.setMassColor( i, new Color( 0.5f, 0.5f, 0.5f ) );
-                        _map_manager.allMassReject( );
-                    }
 				}
-			} else if ( battle_result == ( int )BATTLE_RESULT.LOSE ) {
-				// 負けた場合マス調整不能
-				adjust = MASS_ADJUST.NO_ADJUST;
-				flag = true;
 			}
 
 			// マスを進ませるかどうかを送信
@@ -763,39 +811,56 @@ public class ApplicationManager : Manager< ApplicationManager > {
 			bool flag = false;
             int num = 0;
 
-            if ( _debug_result == BATTLE_RESULT.WIN || _debug_result == BATTLE_RESULT.DRAW ) {
-                for ( int i = 0; i < _map_manager.getMassCount( ); i++ ) {
-                    if ( i >= _map_manager.getPlayerPosNum( ) - 1 && i <= _map_manager.getPlayerPosNum( ) + 1 ) {
-                        _map_manager.setMassColor( i, Color.white );
-                        _map_manager.setMassNotReject( i );
-                    }
-                }
+			if ( !_result_init ) {
+				createLightOffObj( false );
+				_battle_manager.createResultImage( _debug_result );
+				_result_init = true;
+			}
 
-                // マス調整の処理
-                num = _map_manager.isSelect( );
+			// 左クリックでResultを消す
+			if ( Input.GetMouseButtonDown( 0 ) ) {
+				_battle_manager.clearResult( );
+				_battle_manager.deleteResultImage( );
+				destroyLightOffObj( );
 
-				if ( num == _map_manager.getPlayerPosNum( ) + 1 ) {
-                    for ( int i = 0; i < _map_manager.getMassCount( ); i++ ) {
-                        _map_manager.setMassColor( i, new Color( 0.5f, 0.5f, 0.5f ) );
-                        _map_manager.allMassReject( );
-                        flag = true;
-                    }
-				} else if ( num == _map_manager.getPlayerPosNum( ) - 1 ) {
-                    for ( int i = 0; i < _map_manager.getMassCount( ); i++ ) {
-                        _map_manager.setMassColor( i, new Color( 0.5f, 0.5f, 0.5f ) );
-                        _map_manager.allMassReject( );
-                        flag = true;
-                    }
-				} else if ( num == _map_manager.getPlayerPosNum( ) ) {
-                    for ( int i = 0; i < _map_manager.getMassCount( ); i++ ) {
-                        _map_manager.setMassColor( i, new Color( 0.5f, 0.5f, 0.5f ) );
-                        _map_manager.allMassReject( );
-                        flag = true;
-                    }
+				// 前後一マス以内のマスを明るくする
+				for ( int i = 0; i < _map_manager.getMassCount( ); i++ ) {
+					if ( i >= _map_manager.getPlayerPosNum( ) - 1 && i <= _map_manager.getPlayerPosNum( ) + 1 ) {
+						_map_manager.setMassColor( i, Color.white );
+						_map_manager.setMassNotReject( i );
+					}
 				}
-            } else if ( _debug_result == BATTLE_RESULT.LOSE ) {
-				// 負けた場合マス調整不能
-				flag = true;
+			}
+
+			// リザルト画面が消えていたら実行できる
+			if ( !_battle_manager.isResultOpen( ) ) {
+				if ( _debug_result == BATTLE_RESULT.WIN || _debug_result == BATTLE_RESULT.DRAW ) {
+					// マス調整の処理
+					num = _map_manager.isSelect( );
+
+					if ( num == _map_manager.getPlayerPosNum( ) + 1 ) {
+						for ( int i = 0; i < _map_manager.getMassCount( ); i++ ) {
+							_map_manager.setMassColor( i, new Color( 0.5f, 0.5f, 0.5f ) );
+							_map_manager.allMassReject( );
+							flag = true;
+						}
+					} else if ( num == _map_manager.getPlayerPosNum( ) - 1 ) {
+						for ( int i = 0; i < _map_manager.getMassCount( ); i++ ) {
+							_map_manager.setMassColor( i, new Color( 0.5f, 0.5f, 0.5f ) );
+							_map_manager.allMassReject( );
+							flag = true;
+						}
+					} else if ( num == _map_manager.getPlayerPosNum( ) ) {
+						for ( int i = 0; i < _map_manager.getMassCount( ); i++ ) {
+							_map_manager.setMassColor( i, new Color( 0.5f, 0.5f, 0.5f ) );
+							_map_manager.allMassReject( );
+							flag = true;
+						}
+					}
+				} else if ( _debug_result == BATTLE_RESULT.LOSE ) {
+					// 負けた場合マス調整不能
+					flag = true;
+				}
 			}
 
             if ( flag ) {
@@ -930,6 +995,48 @@ public class ApplicationManager : Manager< ApplicationManager > {
         _game_scene_select_area_obj = null;
         _game_scene_select_area_pref = null;
     }
+
+	private void bindMapCountImage( ) {
+		if ( _goal_count_image[ 0 ] == null ) {
+			_goal_count_image[ 0 ] = GameObject.Find( "mass_ten_digit" );
+		}
+		if ( _goal_count_image[ 1 ] == null ) {
+			_goal_count_image[ 1 ] = GameObject.Find( "mass_digit" );
+		}
+		if ( _sea_deep_count_image[ 0 ] == null ) {
+			_sea_deep_count_image[ 0 ] = GameObject.Find( "deep_hudred_digit" );
+		}
+		if ( _sea_deep_count_image[ 1 ] == null ) {
+			_sea_deep_count_image[ 1 ] = GameObject.Find( "deep_ten_digit" );
+		}
+		if ( _sea_deep_count_image[ 2 ] == null ) {
+			_sea_deep_count_image[ 2 ] = GameObject.Find( "deep_digit" );
+		}
+	}
+
+	private void freeMapCountImage( ) {
+		for ( int i = 0; i < _goal_count_image.Length; i++ ) {
+			_goal_count_image[ i ] = null;
+		}
+		for ( int i = 0; i < _sea_deep_count_image.Length; i++ ) {
+			_sea_deep_count_image[ i ] = null;
+		}
+	}
+
+	private void bindBattleTimeImage( ) {
+		if ( _battle_time_image[ 0 ] == null ) {
+			_battle_time_image[ 0 ] = GameObject.Find( "ten_time_digit" );
+		}
+		if ( _battle_time_image[ 1 ] == null ) {
+			_battle_time_image[ 1 ] = GameObject.Find( "time_digit" );
+		}
+	}
+
+	private void freeBattleTimeImage( ) {
+		for ( int i = 0; i < _battle_time_image.Length; i++ ) {
+			_battle_time_image[ i ] = null;
+		}
+	}
 
 	public void OnGUI( ) {
 		if ( _scene == SCENE.SCENE_CONNECT && _host_data != null ) {

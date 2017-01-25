@@ -117,7 +117,7 @@ public class CardManager : MonoBehaviour {
 						string[ ] values_1 = str_1.Split( ',' );
 
 						CARD_DATA data = new CARD_DATA( int.Parse( values_1[ 0 ] ), values_1[ 1 ], values_1[ 2 ],
-							int.Parse( values_1[ 3 ] ), int.Parse( values_1[ 4 ] ), int.Parse( values_1[ 5 ] ) );
+														int.Parse( values_1[ 3 ] ), int.Parse( values_1[ 4 ] ), int.Parse( values_1[ 5 ] ) );
 						_card_datas.Add( data );
 						_card_num_for_name.Add( 0 );
 					}
