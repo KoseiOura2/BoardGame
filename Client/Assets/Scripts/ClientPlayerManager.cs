@@ -12,6 +12,13 @@ public class ClientPlayerManager : MonoBehaviour {
     private const int MAX_PLAYER_CARD_NUM = 6;
 	private const int MAX_SEND_CARD_NUM = 4;
 
+    public enum DRAW_CARD_ACTION {
+        ACTION_NONE,
+        MOVE_FOR_GET_ACTION,
+        ROTATE_ACTION,
+        MOVE_FOR_HAND_ACTION,
+    }
+
 	/// <summary>
 	/// プレイヤーの持つカードのデータ
 	/// </summary>
@@ -22,12 +29,38 @@ public class ClientPlayerManager : MonoBehaviour {
 		public List< CARD_DATA >  select_list;
 	}
 
+    private struct DRAW_CARD_DATA {
+        public CARD_DATA card_data;
+        public GameObject obj;
+        public Vector3 pos;
+        public float angle;
+        public bool move;
+        public bool rotate;
+
+        public DRAW_CARD_DATA( CARD_DATA card_data, GameObject obj, Vector3 pos,
+                               float angle, bool move, bool rotate ) {
+            this.card_data = card_data;
+            this.obj       = obj;
+            this.pos       = pos;
+            this.angle     = angle;
+            this.move      = move;
+            this.rotate    = rotate;
+        }
+    };
+
 	[ SerializeField ]
 	private CardManager _card_manager;
 	[ SerializeField ]
 	private PLAYER_CARD_DATA _player_card = new PLAYER_CARD_DATA( );
 	private PLAYER_DATA _player_data;
-
+    private List< DRAW_CARD_DATA > _draw_card_list = new List< DRAW_CARD_DATA >( );
+    
+	private GameObject _profile_card_pref;
+	private GameObject _profile_card_obj;
+	private GameObject _profile_card_area;
+    [ SerializeField ]
+    private GameObject _create_draw_card_pos;
+    private GameObject _draw_card_area;
 	private GameObject _player_card_area_base;
 	private GameObject _select_area_base;
     private Vector3[ ] _select_area = new Vector3[ MAX_PLAYER_CARD_NUM ];
@@ -35,11 +68,16 @@ public class ClientPlayerManager : MonoBehaviour {
 	private GameObject _select_throw_area_base;
     private Vector3[ ] _select_throw_area = new Vector3[ MAX_PLAYER_CARD_NUM ];
 
-    private GAME_PLAY_MODE _play_mode = GAME_PLAY_MODE.MODE_NORMAL_PLAY;
+    private GAME_PLAY_MODE _play_mode          = GAME_PLAY_MODE.MODE_NORMAL_PLAY;
+    private DRAW_CARD_ACTION _draw_card_action = DRAW_CARD_ACTION.ACTION_NONE;
 
-    private float _card_width = 3.0f;
-
+    private List< bool > _arrived_list = new List< bool >( );
+    private List< bool > _rotate_list  = new List< bool >( );
 	private int _dice_value = 0;
+    private float _card_width = 3.0f;
+    private float _draw_card_pos_x_adjust = 0.5f;
+    private float _draw_card_move_speed = 0.5f;
+    private bool _draw_card = false;
 	private bool _dice_roll = false;
     private bool _select_throw_complete = false;
 
@@ -58,6 +96,15 @@ public class ClientPlayerManager : MonoBehaviour {
 
 	// Use this for initialization
 	void Start( ) {
+		if ( _profile_card_area == null ) {
+			_profile_card_area = GameObject.Find( "PlayerCardArea" );
+		}
+		if ( _create_draw_card_pos == null ) {
+			_create_draw_card_pos = GameObject.Find( "CreateDrawCardPos" );
+		}
+		if ( _draw_card_area == null ) {
+			_draw_card_area = GameObject.Find( "DrawCardArea" );
+		}
 		if ( _player_card_area_base == null ) {
 			_player_card_area_base = GameObject.Find( "HandArea" );
 		}
@@ -121,6 +168,7 @@ public class ClientPlayerManager : MonoBehaviour {
     /// </summary>
 	#if UNITY_EDITOR
 	void Update( ) {
+        /*
         // カードデータの追加
 		if ( Input.GetKeyDown( KeyCode.X ) || _auto_inst_flag ) {
 			//適当に追加　ToDoランダムに手札を追加する機能
@@ -133,6 +181,7 @@ public class ClientPlayerManager : MonoBehaviour {
 			addPlayerCard( 1 );
 			_debug_inst_flag = true;
 		}
+        */
 
 		if ( Input.GetKeyDown( KeyCode.U ) && _debug_inst_flag || _auto_inst_flag && _debug_inst_flag ) {
 			// カードオブジェクトの更新処理
@@ -147,15 +196,194 @@ public class ClientPlayerManager : MonoBehaviour {
 	}
 	#endif
 
+    public void createProfileCard( ) {
+        _profile_card_pref = Resources.Load< GameObject >( "Prefabs/PlayerCard" );
+
+        _profile_card_obj = Instantiate( _profile_card_pref );
+        _profile_card_obj.transform.position = _profile_card_area.transform.position;
+    }
+
+    public void destroyProfileCard( ) {
+        Destroy( _profile_card_obj );
+        _profile_card_obj  = null;
+        _profile_card_pref = null;
+    }
+    
     /// <summary>
-	/// 手札にカードを追加する処理(追加用のカードIDを登録)
+    /// ドローしたカードを保持
     /// </summary>
     /// <param name="get_card_id"></param>
-	public void addPlayerCard( int get_card_id ) {
-		CARD_DATA card;
+    /// <param name="num"></param>
+	public void addDrawCard( int get_card_id, int num, int length ) {
+        _draw_card_action = DRAW_CARD_ACTION.MOVE_FOR_GET_ACTION;
 
 		//IDのカードデータを取得
-		card = _card_manager.getCardData( get_card_id );
+		CARD_DATA card_data = _card_manager.getCardData( get_card_id );
+        // オブジェクトの生成
+        GameObject obj = Instantiate( _card_obj,
+                                      _create_draw_card_pos.transform.position,
+                                      Quaternion.LookRotation( Vector3.back ) ) as GameObject;
+        obj.GetComponent< Card >( ).setCardData( card_data );
+
+        // ポジションの決定
+        Vector3 pos = _draw_card_area.transform.position;
+        float pos_x = _draw_card_area.transform.position.x;
+        if ( length % 2 == 0 ) {
+            float count = ( ( float  )length + 1 ) / 2 - ( num + 1 );
+
+            if ( count > 0 ) {
+                count += 0.5f;
+            } else if ( count < 0 ) {
+                count -= 0.5f;
+            }
+            pos_x = _draw_card_area.transform.position.x - count * ( _card_width + _draw_card_pos_x_adjust );
+        } else {
+            int count = ( length + 1 ) / 2 - ( num + 1 );
+            if ( count == 0 ) {
+                pos_x = _draw_card_area.transform.position.x;
+            } else {
+                pos_x = _draw_card_area.transform.position.x - count * ( _card_width + _draw_card_pos_x_adjust );
+            }
+        }
+        pos = new Vector3( pos_x, pos.y, pos.z );
+
+        float angle = -180.0f;
+
+        // フラグの初期化
+        bool move = true;
+        //bool move = false;
+        bool rotate = false;
+        
+		DRAW_CARD_DATA card = new DRAW_CARD_DATA( card_data, obj, pos, angle, move, rotate );
+		//カードを追加
+        _draw_card_list.Add( card );
+    }
+
+    public void moveStartDrawCard( int id ) {
+        bool move = true;
+        
+
+        _draw_card_list[ id ] = new DRAW_CARD_DATA( _draw_card_list[ id ].card_data, _draw_card_list[ id ].obj,
+                                                    _draw_card_list[ id ].pos, _draw_card_list[ id ].angle, 
+                                                    move, _draw_card_list[ id ].rotate );
+    }
+
+    public void setDrawCardMoveTarget( int id, Vector3 pos ) {
+        _draw_card_list[ id ] = new DRAW_CARD_DATA( _draw_card_list[ id ].card_data, _draw_card_list[ id ].obj,
+                                                    pos, _draw_card_list[ id ].angle, 
+                                                    _draw_card_list[ id ].move, _draw_card_list[ id ].rotate );
+    }
+
+    public void moveDrawCard( int id ) {
+        if ( _draw_card_list[ id ].move ) {
+            // 目的地までのベクトルを出す
+            Vector3 velocity = _draw_card_list[ id ].pos - _draw_card_list[ id ].obj.transform.position;
+            // ベクトルを単位化
+            velocity = velocity.normalized;
+            // カードの移動
+            _draw_card_list[ id ].obj.transform.position += velocity * _draw_card_move_speed;
+
+            float distance = Vector3.Distance( _draw_card_list[ id ].obj.transform.position, _draw_card_list[ id ].pos );
+            // 目的地までの距離が微小になったら
+            if ( distance < _draw_card_move_speed ) {
+                bool move   = false;
+                // 座標の修正
+                _draw_card_list[ id ].obj.transform.position = _draw_card_list[ id ].pos;
+
+                _draw_card_list[ id ] = new DRAW_CARD_DATA( _draw_card_list[ id ].card_data, _draw_card_list[ id ].obj,
+                                                            _draw_card_list[ id ].pos, _draw_card_list[ id ].angle,
+                                                            move, _draw_card_list[ id ].rotate );
+                _arrived_list.Add( true );
+            }
+        }
+    }
+
+    public bool isArrivedAllDrawCard( ) {
+        // 全てのカードが到着したら
+        if ( _arrived_list.Count == _draw_card_list.Count ) {
+            if ( _draw_card_action == DRAW_CARD_ACTION.MOVE_FOR_GET_ACTION ) {
+                _draw_card_action = DRAW_CARD_ACTION.ROTATE_ACTION;
+                // 回転スタート
+                for ( int i = 0; i < _draw_card_list.Count; i++ ) {
+                    rotateStartDrawCard( i );
+                }
+            } else if ( _draw_card_action == DRAW_CARD_ACTION.MOVE_FOR_HAND_ACTION ) {
+                _draw_card_action = DRAW_CARD_ACTION.ACTION_NONE;
+                
+                for ( int i = 0; i < _draw_card_list.Count; i++ ) {
+                    // ハンドに追加
+                    addPlayerCard( _draw_card_list[ i ].card_data );
+                    // オブジェクトの削除
+                    Destroy( _draw_card_list[ i ].obj );
+                }
+                
+                // リフレッシュ
+                _draw_card_list.Clear( );
+            }
+
+            _arrived_list.Clear( );
+
+            return true;
+        }
+
+        return false;
+    }
+    
+    public void rotateStartDrawCard( int id ) {
+        bool rotate = true;
+
+        _draw_card_list[ id ] = new DRAW_CARD_DATA( _draw_card_list[ id ].card_data, _draw_card_list[ id ].obj,
+                                                    _draw_card_list[ id ].pos, _draw_card_list[ id ].angle, 
+                                                    _draw_card_list[ id ].move, rotate );
+    }
+
+    public void rotateDrawCard( int id ) {
+        if ( _draw_card_list[ id ].rotate ) {
+            float angle = _draw_card_list[ id ].angle;
+            angle += 10f;
+
+            if ( angle >= 0 ) {
+                // 誤差修正
+                _draw_card_list[ id ].obj.transform.rotation = Quaternion.Euler( 0, 0, 0 );
+                
+                bool rotate = false;
+                _draw_card_list[ id ] = new DRAW_CARD_DATA( _draw_card_list[ id ].card_data, _draw_card_list[ id ].obj,
+                                                            _draw_card_list[ id ].pos, _draw_card_list[ id ].angle, 
+                                                            _draw_card_list[ id ].move, rotate );
+                _rotate_list.Add( true );
+
+                return;
+            }
+
+            // 回転
+            _draw_card_list[ id ].obj.transform.rotation = Quaternion.Euler( 0, angle, 0 );
+
+            _draw_card_list[ id ] = new DRAW_CARD_DATA( _draw_card_list[ id ].card_data, _draw_card_list[ id ].obj,
+                                                        _draw_card_list[ id ].pos, angle, 
+                                                        _draw_card_list[ id ].move, _draw_card_list[ id ].rotate );
+        }
+    }
+    
+    public bool isFinishRotateAllDrawCard( ) {
+        // 全てのカードが回転したら
+        if ( _rotate_list.Count == _draw_card_list.Count ) {
+            _draw_card_action = DRAW_CARD_ACTION.MOVE_FOR_HAND_ACTION;
+            // 移動スタート
+            for ( int i = 0; i < _draw_card_list.Count; i++ ) {
+                moveStartDrawCard( i );
+            }
+            _rotate_list.Clear( );
+            return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+	/// 手札にカードを追加する処理
+    /// </summary>
+    /// <param name="card"></param>
+	public void addPlayerCard( CARD_DATA card ) {
 		//カードを手札に追加
 		_player_card.hand_list.Add( card );
     }
@@ -177,9 +405,6 @@ public class ClientPlayerManager : MonoBehaviour {
 			//プレハブを生成してリストのオブジェクトに入れる
 			_player_card.hand_obj_list.Add( ( GameObject )Instantiate( _card_obj ) );
 			//カードデータ設定
-            if ( _player_card.hand_list[ i ].id < 0 ) {
-                Debug.Log( "korosu" );
-            }
 			_player_card.hand_obj_list[ i ].GetComponent< Card >( ).setCardData( _player_card.hand_list[ i ] );
 			_player_card.hand_obj_list[ i ].GetComponent< Card >( ).changeHandNum( i );
             if ( _play_mode == GAME_PLAY_MODE.MODE_NORMAL_PLAY ) {
@@ -406,6 +631,26 @@ public class ClientPlayerManager : MonoBehaviour {
 		_player_card.select_list.Clear( );
 	}
 
+    public bool isDrawCard( ) {
+        return _draw_card;
+    }
+
+    public int getDrawCardNum( ) {
+        return _draw_card_list.Count;
+    }
+
+    public GameObject getPlayerCardArea( ) {
+        return _player_card_area_base;
+    }
+
+    public float getCardWidth( ) {
+        return _card_width;
+    }
+
+    public void setDrawCardFlag( bool flag ) {
+        _draw_card = flag;
+    }
+
 	/// <summary>
 	/// ダイスの目を返す
 	/// </summary>
@@ -423,6 +668,10 @@ public class ClientPlayerManager : MonoBehaviour {
 
     public void setPlayMode( GAME_PLAY_MODE mode ) {
         _play_mode = mode;
+    }
+
+    public DRAW_CARD_ACTION getDrawCardAction( ) {
+        return _draw_card_action;
     }
 
 	public PLAYER_DATA getPlayerData( ) {

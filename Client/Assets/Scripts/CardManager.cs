@@ -165,7 +165,6 @@ public class CardManager : MonoBehaviour {
 	/// 第一引数ID 返り値カードデータ　失敗した場合ダミーデータ
 	/// </summary>
 	public CARD_DATA getCardData( int id ) {
-		Debug.Log( id );
 		try {
 			return _card_datas[ id ];
 		} catch {

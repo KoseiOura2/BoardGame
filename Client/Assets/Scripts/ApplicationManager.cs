@@ -43,22 +43,31 @@ public class ApplicationManager : Manager< ApplicationManager > {
 	private PROGRAM_MODE _mode = PROGRAM_MODE.MODE_NO_CONNECT;
 	[ SerializeField ]
 	private GAME_PLAY_MODE _play_mode = GAME_PLAY_MODE.MODE_NORMAL_PLAY;
+
+    private GameObject _event_system;
     
     private GameObject _light_off_pref;
     private GameObject _light_off_obj;
+    private GameObject _flush_pref;
+    private GameObject _flush_obj;
     private Sprite _game_scene_back_ground;
     private GameObject _back_ground_obj;
     private GameObject _game_scene_select_area_pref;
     private GameObject _game_scene_select_area_obj;
-	[ SerializeField ]
+    private GameObject _map_info_pref;
+    private GameObject _map_info_obj;
+    private GameObject _wait_picture_pref;
+    private GameObject _wait_picture_obj;
     private GameObject _select_throw_area_pref;
-	[ SerializeField ]
     private GameObject _select_throw_area_obj;
+    [ SerializeField ]
     private GameObject _dice_button_obj;
+    [ SerializeField ]
     private GameObject _dice_button_pref;
     private GameObject _complete_button_obj;
 	private GameObject _complete_button_pref;
-	[ SerializeField ]
+
+    // 時間テキスト
 	private GameObject[ ] _battle_time_image     = new GameObject[ 2 ];
 	private GameObject[ ] _sea_deep_count_image  = new GameObject[ 3 ];
 	private GameObject[ ] _goal_count_image      = new GameObject[ 2 ];
@@ -68,7 +77,8 @@ public class ApplicationManager : Manager< ApplicationManager > {
     private bool _scene_init  = false;
     private bool _phase_init  = false;
 	private bool _result_init = false;
-    private bool _reject = false;
+    private bool _reject      = false;
+    private bool _wait_play   = false;
 	[ SerializeField ]
     private int _debug_player_num = 0;
 	[ SerializeField ]
@@ -138,6 +148,13 @@ public class ApplicationManager : Manager< ApplicationManager > {
         catch {
             Debug.Log( "Failure Load LightOffObj..." );
         }
+
+        try {
+            _flush_pref = Resources.Load< GameObject >( "Prefabs/UI/Flush" );
+        }
+        catch {
+            Debug.Log( "Failure Load FlushObj..." );
+        }
 	}
 
     private void referManager( ) {
@@ -163,6 +180,9 @@ public class ApplicationManager : Manager< ApplicationManager > {
 			if ( _map_manager == null ) {
 				_map_manager = GameObject.Find( "MapManager" ).GetComponent< MapManager >( );
 			}
+            if ( _event_system == null ) {
+                _event_system = GameObject.Find( "EventSystem" );
+            }
             if ( _back_ground_obj == null ) {
                 _back_ground_obj = GameObject.Find( "BackGround" );
             }
@@ -317,8 +337,16 @@ public class ApplicationManager : Manager< ApplicationManager > {
 
                 
             }
+            // プレイヤーカードの生成
+            _player_manager.createProfileCard( );
             _map_manager.bindSprite( _player_num );
             _scene_init = true;
+        }
+
+        if ( _wait_play ) {
+            _event_system.SetActive( false );
+        } else { 
+            _event_system.SetActive( true );
         }
 
 		// フェイズごとの更新
@@ -365,11 +393,6 @@ public class ApplicationManager : Manager< ApplicationManager > {
                     _change_phase_count = 0;
 				}
 			}
-		}
-
-		if ( _player_manager.mouseClick( ) ) {
-			//GUIにカード情報表示用
-			Debug.Log( _player_manager.getSelectCard( ).name );
 		}
 
         // ターゲットの設定
@@ -434,9 +457,10 @@ public class ApplicationManager : Manager< ApplicationManager > {
                     _game_scene_back_ground = Resources.Load< Sprite >( "Graphics/Background/bg_P2" );
                     break;
             }
-            //_back_ground_obj.GetComponent< Image >( ).sprite = _game_scene_back_ground;
+            _back_ground_obj.GetComponent< Image >( ).sprite = _game_scene_back_ground;
 
             createSelectArea( "MapBackground" );
+            createMapInfo( );
 
 			bindMapCountImage( );
 			_map_manager.changeGoalImageNum( _goal_count_image[ 0 ], _goal_count_image[ 1 ] );
@@ -457,6 +481,11 @@ public class ApplicationManager : Manager< ApplicationManager > {
 	private void updateDicePhase( ) {
 		int value = 0;
         if ( !_phase_init ) {
+
+            if ( _wait_play ) {
+                destroyWaitImage( );
+            }
+
             createLightOffObj( false );
 
             _dice_button_pref = Resources.Load< GameObject >( "Prefabs/UI/DiceButton" );
@@ -472,23 +501,29 @@ public class ApplicationManager : Manager< ApplicationManager > {
             _phase_init = true;
         }
 
-		if ( _player_manager.isDiceRoll( ) ) {
-			// ダイスの目を決定
-			value = _player_manager.getDiceValue( );
-
-			// サーバーにダイスの目を送信
-			if ( _mode == PROGRAM_MODE.MODE_CONNECT ) {
-				_client_data.CmdSetSendDiceValue( value );
-				_client_data.setDiceValue( value );
-			} else if ( _mode == PROGRAM_MODE.MODE_NO_CONNECT ) {
-                _phase_manager.setPhase( MAIN_GAME_PHASE.GAME_PHASE_MOVE_CHARACTER );
-            }
+        if ( _player_manager.isDiceRoll( ) ) {
 
             // ダイスオブジェ削除
             Destroy( _dice_button_obj );
             _dice_button_pref = null;
+            _dice_button_obj  = null;
             destroyLightOffObj( );
-		}
+
+            createWaitImage( "InductionOver" );
+
+            // ダイスの目を決定
+            value = _player_manager.getDiceValue( );
+
+            // サーバーにダイスの目を送信
+            if ( _mode == PROGRAM_MODE.MODE_CONNECT ) {
+                _client_data.CmdSetSendDiceValue( value );
+                _client_data.setDiceValue(value);
+            }  else if ( _mode == PROGRAM_MODE.MODE_NO_CONNECT ) {
+                _phase_manager.setPhase( MAIN_GAME_PHASE.GAME_PHASE_MOVE_CHARACTER );
+
+                _phase_init = false;
+            }
+        }
 	}
 
 	/// <summary>
@@ -511,6 +546,12 @@ public class ApplicationManager : Manager< ApplicationManager > {
 	/// DrawPhaseの更新
 	/// </summary>
 	private void updateDrawPhase( ) {
+        if ( !_phase_init ) {
+            destroyWaitImage( );
+            createLightOffObj( true );
+            _phase_init = true;
+        }
+
 		if ( _mode == PROGRAM_MODE.MODE_CONNECT ) {
             int length = 0;
             if ( _player_num == PLAYER_ORDER.PLAYER_ONE ) {
@@ -522,42 +563,50 @@ public class ApplicationManager : Manager< ApplicationManager > {
 			// カードデータを受診したら
 			if ( _host_data.getCardListNum( _player_num ) == length &&
 			     _client_data.getRecvData( ).ready == false ) {
-                //一度画面上に配置しているカードオブジェクトを削除
-                 _player_manager.allDeletePlayerCard();
-				for ( int i = 0; i < _host_data.getCardListNum( _player_num ); i++ ) {
-					if ( _host_data.getCardList( _player_num )[ i ] < 1 ) {
-						continue;
-					}
+                if ( !_player_manager.isDrawCard( ) ) {
+				    for ( int i = 0; i < _host_data.getCardListNum( _player_num ); i++ ) {
+					    if ( _host_data.getCardList( _player_num )[ i ] < 1 ) {
+						    continue;
+					    }
 
-					// カードデータを登録
-					_player_manager.addPlayerCard( _host_data.getCardList( _player_num )[ i ] );
-				}
-
-				// ダイスの目を初期化
-				_player_manager.initDiceValue( );
-				// カードを生成
-				_player_manager.initAllPlayerCard( );
-
-                if ( _player_manager.getPlayerCardNum( ) > _player_manager.getMaxPlayerCardNum( ) ) {
-                    _play_mode = GAME_PLAY_MODE.MODE_PLAYER_SELECT;
-                    _player_manager.setPlayMode( _play_mode );
-                    return;
+					    // カードデータを登録
+					    _player_manager.addDrawCard( _host_data.getCardList( _player_num )[ i ], i, _host_data.getCardListNum( _player_num ) );
+				    }
+                    _player_manager.setDrawCardFlag( true );
+                } else {
+                    drawProductionUpdate( );
                 }
+            }
 
-                try {
-				    // サーバーに準備完了を送信
-				    _client_data.CmdSetSendReady( true );
-				    _client_data.setReady( true );
+            // カードが送られて来たら
+            if ( _player_manager.getDrawCardAction( ) == ClientPlayerManager.DRAW_CARD_ACTION.MOVE_FOR_GET_ACTION ) {
+                if ( _player_manager.isArrivedAllDrawCard( ) ) {
+                    createFlushObj( );
                 }
-                catch {
-                    Debug.Log( "Failure Connect..." );
+            }
+
+            // カードの回転が終わったら
+            if ( _player_manager.isFinishRotateAllDrawCard( ) ) {
+                finishRotateCard( );
+                destroyFlushObj( );
+            }
+
+            if ( _player_manager.getDrawCardAction( ) == ClientPlayerManager.DRAW_CARD_ACTION.MOVE_FOR_HAND_ACTION ) {
+                if ( _player_manager.isArrivedAllDrawCard( ) ) {
+                    finishDrawUpdate( );
+
+                    try {
+				        // サーバーに準備完了を送信
+				        _client_data.CmdSetSendReady( true );
+				        _client_data.setReady( true );
+                    }
+                    catch {
+                        Debug.Log( "Failure Connect..." );
+                    }
                 }
-			}
+            }
 		} else if ( _mode == PROGRAM_MODE.MODE_NO_CONNECT ) {
-			if ( Input.GetKeyDown( KeyCode.A ) ) {
-                //一度画面上に配置しているカードオブジェクトを削除
-                _player_manager.allDeletePlayerCard( );
-
+            if ( !_player_manager.isDrawCard( ) ) {
                 // 配するカードを決定
                 List< int > card_list = new List< int >( );
                 for ( int i = 0; i < 4 - _player_manager.getDiceValue( ); i++ ) {
@@ -570,32 +619,99 @@ public class ApplicationManager : Manager< ApplicationManager > {
                 // カード配布
 				for ( int i = 0; i < card_list.Count; i++ ) {
 					// カードデータを登録
-					_player_manager.addPlayerCard( card_list[ i ] );
+					_player_manager.addDrawCard( card_list[ i ], i, card_list.Count );
+                    //_player_manager.moveStartDrawCard( i );
 				}
-
-				// ダイスの目を初期化
-				_player_manager.initDiceValue( );
-				// カードを生成
-				_player_manager.initAllPlayerCard( );
-
-                if ( _player_manager.getPlayerCardNum( ) > _player_manager.getMaxPlayerCardNum( ) ) {
-                    _play_mode = GAME_PLAY_MODE.MODE_PLAYER_SELECT;
-                    _player_manager.setPlayMode( _play_mode );
-				    _player_manager.initAllPlayerCard( );
-                    _phase_init = false;
-                    return;
+                _player_manager.setDrawCardFlag( true );
+            } else {
+                drawProductionUpdate( );
+            }
+            // カードが送られて来たら
+            if ( _player_manager.getDrawCardAction( ) == ClientPlayerManager.DRAW_CARD_ACTION.MOVE_FOR_GET_ACTION ) {
+                if ( _player_manager.isArrivedAllDrawCard( ) ) {
+                    createFlushObj( );
                 }
+            }
 
-                _phase_init = false;
-                _phase_manager.setPhase( MAIN_GAME_PHASE.GAME_PHASE_BATTLE );
-
-			}
+            // カードの回転が終わったら
+            if ( _player_manager.isFinishRotateAllDrawCard( ) ) {
+                finishRotateCard( );
+                destroyFlushObj( );
+            }
+            if ( _player_manager.getDrawCardAction( ) == ClientPlayerManager.DRAW_CARD_ACTION.MOVE_FOR_HAND_ACTION ) {
+                if ( _player_manager.isArrivedAllDrawCard( ) ) {
+                    finishDrawUpdate( );
+                    
+                    _phase_init = false;
+                    _phase_manager.setPhase( MAIN_GAME_PHASE.GAME_PHASE_BATTLE );
+                    
+                }
+            }
 		}
 	}
 
-    public void updateSelectPlayerCard( ) {
+    /// <summary>
+    /// DrawPhaseの演出処理
+    /// </summary>
+    private void drawProductionUpdate( ) {
+        for ( int i = 0; i < _player_manager.getDrawCardNum( ); i++ ) {
+            if ( _player_manager.getDrawCardAction( ) == ClientPlayerManager.DRAW_CARD_ACTION.MOVE_FOR_GET_ACTION ||
+                    _player_manager.getDrawCardAction( ) == ClientPlayerManager.DRAW_CARD_ACTION.MOVE_FOR_HAND_ACTION ) {
+                _player_manager.moveDrawCard( i );
+            } else if ( _player_manager.getDrawCardAction( ) == ClientPlayerManager.DRAW_CARD_ACTION.ROTATE_ACTION ) {
+                _player_manager.rotateDrawCard( i );
+            } 
+        }
+    }
+
+    /// <summary>
+    /// DrawUpdate終了処理
+    /// </summary>
+    private void finishDrawUpdate( ) {
+        //一度画面上に配置しているカードオブジェクトを削除
+        _player_manager.allDeletePlayerCard( );
+        // ダイスの目を初期化
+        _player_manager.initDiceValue( );
+        // カードを生成
+        _player_manager.initAllPlayerCard( );
+
+        if ( _player_manager.getPlayerCardNum( ) > _player_manager.getMaxPlayerCardNum( ) ) {
+            _play_mode = GAME_PLAY_MODE.MODE_PLAYER_SELECT;
+            _player_manager.setPlayMode( _play_mode );
+            _player_manager.initAllPlayerCard( );
+            _phase_init = false;
+            return;
+        }
+    }
+
+    /// <summary>
+    /// カードの回転終了処理
+    /// </summary>
+    private void finishRotateCard( ) {
+        Vector3 target_pos = new Vector3( 0, 0, 0 );
+		float hand_area_postion_y = 0.0f;
+		float hand_area_postion_z = 0.0f;
+        GameObject area = _player_manager.getPlayerCardArea( );
+		float start_card_point = area.transform.position.x - area.transform.localScale.x / 2;
+		float card_potision_x = 0.0f;
+		hand_area_postion_y = area.transform.position.y;
+		hand_area_postion_z = area.transform.position.z;
+                
+
+        for ( int i = 0; i < _player_manager.getDrawCardNum( ); i++ ) {
+            card_potision_x = start_card_point + _player_manager.getCardWidth( ) * ( _player_manager.getPlayerCardNum( ) - 1 + i + 1 );
+            //位置を設定する
+		    target_pos = new Vector3( card_potision_x,  hand_area_postion_y, hand_area_postion_z );
+
+            _player_manager.setDrawCardMoveTarget( i, target_pos );
+        }
+    }
+
+    private void updateSelectPlayerCard( ) {
         // 初期化処理
         if ( !_phase_init ) {
+            _player_manager.setDrawCardFlag( false );
+            destroyLightOffObj( );
             createLightOffObj( true );
             _select_throw_area_pref = Resources.Load< GameObject >( "Prefabs/Background/SelectThrowArea" );
             Vector3 pos = _select_throw_area_pref.GetComponent< RectTransform >( ).localPosition;
@@ -609,6 +725,11 @@ public class ApplicationManager : Manager< ApplicationManager > {
             _select_throw_area_obj.GetComponentInChildren< Button >( ).onClick.AddListener( _player_manager.dicisionSelectThrowCard );
             _phase_init = true;
         }
+
+        if ( _player_manager.mouseClick( ) && !_wait_play ) {
+			//GUIにカード情報表示用
+			Debug.Log( _player_manager.getSelectCard( ).name );
+		}
 
 		if ( _mode == PROGRAM_MODE.MODE_CONNECT ) {
             if ( _player_manager.isSelectThrowComplete( ) ) {
@@ -650,7 +771,10 @@ public class ApplicationManager : Manager< ApplicationManager > {
 	private void updateButtlePhase( ) {
         // 初期化処理
         if ( !_phase_init ) {
+            _player_manager.setDrawCardFlag( false );
+            destroyLightOffObj( );
             destroySelectArea( );
+            destroyMapInfo( );
 			freeMapCountImage( );
             createSelectArea( "BattleCardBackground" );
 			bindBattleTimeImage( );
@@ -661,10 +785,17 @@ public class ApplicationManager : Manager< ApplicationManager > {
             _phase_init = true;
         }
 
+        if ( _player_manager.mouseClick( ) && !_wait_play ) {
+			//GUIにカード情報表示用
+			Debug.Log( _player_manager.getSelectCard( ).name );
+		}
+
+        // 時間更新
 		_battle_manager.changeBattleTimeImageNum( _battle_time_image[ 0 ], _battle_time_image[ 1 ] );
         _battle_manager.battleTimeCount( );
 
 		if ( _battle_manager.isComplete( ) ) {
+            createWaitImage( "WaitOpponent" );
             destroyCompleteButton( );
 			if (  _mode == PROGRAM_MODE.MODE_CONNECT) {
 				// 選択結果を送る
@@ -707,6 +838,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
             destroySelectArea( );
 			freeBattleTimeImage( );
 			createSelectArea( "MapBackground" );
+            createMapInfo( );
 			bindMapCountImage( );
 			_map_manager.changeGoalImageNum( _goal_count_image[ 0 ], _goal_count_image[ 1 ] );
             _map_manager.allMassVisible( true );
@@ -743,13 +875,14 @@ public class ApplicationManager : Manager< ApplicationManager > {
 			}
 
 			if ( !_result_init && battle_result != 0 ) {
+                destroyWaitImage( );
 				createLightOffObj( false );
 				_battle_manager.createResultImage( ( BATTLE_RESULT )battle_result );
 				_result_init = true;
 			}
 
 			// 左クリックでResultを消す
-			if ( Input.GetMouseButtonDown( 1 ) ) {
+			if ( Input.GetMouseButtonDown( 0 ) ) {
 				_battle_manager.clearResult( );
 				_battle_manager.deleteResultImage( );
 				destroyLightOffObj( );
@@ -805,13 +938,14 @@ public class ApplicationManager : Manager< ApplicationManager > {
 				_client_data.CmdSetSendMassAdjust( true, adjust );
 				_client_data.setMassAdjust( true, adjust );
                 _map_manager.allMassReject( );
-                _phase_init = false;
+                createWaitImage( "WaitOpponent" );
 			}
 		} else if ( _mode == PROGRAM_MODE.MODE_NO_CONNECT ) {
 			bool flag = false;
             int num = 0;
 
 			if ( !_result_init ) {
+                destroyWaitImage( );
 				createLightOffObj( false );
 				_battle_manager.createResultImage( _debug_result );
 				_result_init = true;
@@ -869,6 +1003,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
                 }
 			    _phase_manager.setPhase( MAIN_GAME_PHASE.GAME_PHASE_EVENT );
                 _map_manager.allMassReject( );
+                createWaitImage( "WaitOpponent" );
                 _phase_init = false;
             }
 		}
@@ -883,7 +1018,8 @@ public class ApplicationManager : Manager< ApplicationManager > {
             for ( int i = 0; i < _map_manager.getMassCount( ); i++ ) {
                 _map_manager.setMassColor( i, Color.white );
             }
-
+            destroyWaitImage( );
+            createWaitImage( "InductionOver" );
             _phase_init = true;
         }
 
@@ -963,8 +1099,29 @@ public class ApplicationManager : Manager< ApplicationManager > {
     /// </summary>
     private void destroyLightOffObj( ) {
         Destroy( _light_off_obj );
-        _light_off_obj = null;
+        _light_off_obj  = null;
         _reject = false;
+    }
+    
+    /// <summary>
+    /// フラッシュ画像を作成
+    /// </summary>
+    private void createFlushObj( ) {
+        Vector3 pos = _flush_pref.GetComponent< RectTransform >( ).localPosition;
+            
+        _flush_obj = ( GameObject )Instantiate( _flush_pref );
+        _flush_obj.transform.SetParent( GameObject.Find( "Canvas" ).transform );
+        _flush_obj.GetComponent< RectTransform >( ).localScale = new Vector3( 1, 1, 1 );
+        _flush_obj.GetComponent< RectTransform >( ).localPosition = pos;
+
+    }
+    
+    /// <summary>
+    /// フラッシュ画像を削除
+    /// </summary>
+    private void destroyFlushObj( ) {
+        Destroy( _flush_obj );
+        _flush_obj  = null;
     }
 
     /// <summary>
@@ -984,7 +1141,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
         int num = GameObject.Find( "MassBasePoint" ).transform.GetSiblingIndex( );
         _game_scene_select_area_obj.transform.SetSiblingIndex( num );
 
-        //_back_ground_obj.transform.SetSiblingIndex( _game_scene_select_area_obj.transform.GetSiblingIndex( ) + 2 );
+        _back_ground_obj.transform.SetSiblingIndex( _game_scene_select_area_obj.transform.GetSiblingIndex( ) + 2 );
     }
 
     /// <summary>
@@ -994,6 +1151,60 @@ public class ApplicationManager : Manager< ApplicationManager > {
         Destroy( _game_scene_select_area_obj );
         _game_scene_select_area_obj = null;
         _game_scene_select_area_pref = null;
+    }
+    
+    /// <summary>
+    /// マップ情報の生成
+    /// </summary>
+    private void createMapInfo( ) {
+        _map_info_pref = Resources.Load< GameObject >( "Prefabs/Background/MapInfo" );
+        Vector3 pos = _game_scene_select_area_pref.GetComponent< RectTransform >( ).localPosition;
+            
+        _map_info_obj = ( GameObject )Instantiate( _map_info_pref );
+        _map_info_obj.transform.SetParent( GameObject.Find( "Canvas" ).transform );
+        _map_info_obj.GetComponent< RectTransform >( ).anchoredPosition = new Vector3( 0, 0, 0 );
+        _map_info_obj.GetComponent< RectTransform >( ).localScale = new Vector3( 1, 1, 1 );
+        _map_info_obj.GetComponent< RectTransform >( ).localPosition = pos;
+    }
+
+    /// <summary>
+    /// マップ情報の削除
+    /// </summary>
+    private void destroyMapInfo( ) {
+        Destroy( _map_info_obj );
+        _map_info_obj = null;
+        _map_info_pref = null;
+    }
+
+    /// <summary>
+    /// 待機画面の作成
+    /// </summary>
+    /// <param name="data_path"></param>
+    private void createWaitImage( string data_path ) {
+        createLightOffObj( false );
+
+        _wait_picture_pref = Resources.Load< GameObject >( "Prefabs/UI/" + data_path );
+        Vector3 pos = _wait_picture_pref.GetComponent< RectTransform >( ).localPosition;
+            
+        _wait_picture_obj = ( GameObject )Instantiate( _wait_picture_pref );
+        _wait_picture_obj.transform.SetParent( GameObject.Find( "Canvas" ).transform );
+        _wait_picture_obj.GetComponent< RectTransform >( ).anchoredPosition = new Vector3( 0, 0, 0 );
+        _wait_picture_obj.GetComponent< RectTransform >( ).localScale = new Vector3( 1, 1, 1 );
+        _wait_picture_obj.GetComponent< RectTransform >( ).localPosition = pos;
+
+        _wait_play = true;
+    }
+
+    /// <summary>
+    /// 待機画面の削除
+    /// </summary>
+    private void destroyWaitImage( ) {
+        destroyLightOffObj( );
+        Destroy( _wait_picture_obj );
+        _wait_picture_obj = null;
+        _wait_picture_pref = null;
+
+        _wait_play = false;
     }
 
 	private void bindMapCountImage( ) {

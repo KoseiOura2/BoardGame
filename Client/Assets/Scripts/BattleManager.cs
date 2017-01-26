@@ -97,8 +97,8 @@ public class BattleManager : MonoBehaviour {
 		_result_obj = ( GameObject )Instantiate( _result_pref );
 		_result_obj.transform.SetParent( GameObject.Find( "Canvas" ).transform );
 		_result_obj.GetComponent< RectTransform >( ).anchoredPosition = new Vector3( 0, 0, 0 );
-		_result_obj.GetComponent< RectTransform >( ).localScale = new Vector3( 1, 1, 1 );
-		_result_obj.GetComponent< RectTransform >( ).localPosition = pos;
+		_result_obj.GetComponent< RectTransform >( ).localScale = new Vector3( 0.15f, 0.15f, 0.15f );
+		_result_obj.GetComponent< RectTransform >( ).localPosition = new Vector3( 0, 10, -550 );
 
 		_result_open = true;
 	}

@@ -24,7 +24,7 @@ public class MapManager : MonoBehaviour {
     private float _adjust_mass_pos = 3.0f;
     private float _purpose_distance_x = 0.0f;
     private float _purpose_distance_y = 0.0f;
-    private float _move_speed = 0.3f;
+    private float _move_speed = 1.0f;
     private bool _move = false;
 
 	// Use this for initialization
@@ -84,7 +84,12 @@ public class MapManager : MonoBehaviour {
 
         obj.GetComponent< RectTransform >( ).localPosition = adjust_pos;
         
-        obj.GetComponent< Button >( ).onClick.AddListener( obj.GetComponent< Mass >( ).selectedOnClick );
+        try {
+            obj.GetComponent< Button >( ).onClick.AddListener( obj.GetComponent< Mass >( ).selectedOnClick );
+        }
+        catch {
+            Debug.Log( "Can't Add Event" );
+        }
 
         _mass_obj.Add( obj );
     }
