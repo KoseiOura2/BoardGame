@@ -11,9 +11,11 @@ public class ObjectTest : MonoBehaviour {
 	private Material _target_material;		//変更するテクスチャ
 
 	[SerializeField]
-	public int _target_mass = 0;			//どのマスで反応をするか設定
+	public int _target_mass = 0;            //どのマスで反応をするか設定
+    [SerializeField]
+    public bool _player_approach_flag = false;    //転倒するかどうか
 
-	private PlayerManager _player_manager;
+    private PlayerManager _player_manager;
 
 
 	// Use this for initialization
@@ -22,24 +24,35 @@ public class ObjectTest : MonoBehaviour {
 		_default_material = GetComponent< Renderer >( ).material;
 		_target_material = ( Material )Resources.Load( "Materials/TestMaterial" );
 
-		//プレイヤーの取得
-		_player_manager = GameObject.Find( "PlayerManager" ).GetComponent< PlayerManager >( );
+        //オブジェクト名をオブジェクト：IDになるように名前を変更
+        string objectName = this.gameObject.name;
+        gameObject.name = objectName + ":" + _target_mass;
+
+        //プレイヤーの取得
+        _player_manager = GameObject.Find( "PlayerManager" ).GetComponent< PlayerManager >( );
 
 	}
 	
 	// Update is called once per frame
-	void Update () {
-		//プレイヤーを取得
-		PLAYER_DATA _player1 = _player_manager.GetComponent< PlayerManager >( ).getTopPlayer( PLAYER_RANK.RANK_FIRST );
-		PLAYER_DATA _player2 = _player_manager.GetComponent< PlayerManager >( ).getTopPlayer( PLAYER_RANK.RANK_SECOND );
+	void Update ( ) {
 
-		//プレイヤーが設定したマスにいるならマテリアルを変える
-		if ( _player1.obj != null || _player2.obj != null ) {
-			if ( _player1.advance_count == _target_mass || _player2.advance_count == _target_mass ) {
-				gameObject.GetComponent< Renderer >( ).material = _target_material;
-			} else {					 		     
-				gameObject.GetComponent< Renderer >( ).material = _default_material;
-			}
-		}
 	}
+
+    void playerApproach( ) {
+        if ( _player_approach_flag ) {
+            //プレイヤーを取得
+            PLAYER_DATA _player1 = _player_manager.GetComponent<PlayerManager>( ).getTopPlayer( PLAYER_RANK.RANK_FIRST );
+            PLAYER_DATA _player2 = _player_manager.GetComponent<PlayerManager>( ).getTopPlayer( PLAYER_RANK.RANK_SECOND );
+
+            //プレイヤーが設定したマスにいるならマテリアルを変える
+            if ( _player1.obj != null || _player2.obj != null ) {
+                if ( _player1.advance_count == _target_mass || _player2.advance_count == _target_mass ) {
+                    gameObject.GetComponent<Renderer>( ).material = _target_material;
+                }
+                else {
+                    gameObject.GetComponent<Renderer>( ).material = _default_material;
+                }
+            }
+        }
+    }
 }

@@ -846,7 +846,8 @@ public class ApplicationManager : Manager< ApplicationManager > {
 	private void updateEventPhase( ) {
         _connect_wait_time++;
 		if ( _player_manager.isEventStart( 0 ) == false  && _player_manager.isEventFinish( 0 ) == false ) {
-			massEvent( _player_manager.getPlayerCount( 0, _stage_manager.getMassCount( ) ), 0 );
+            Debug.Log( "P1" );
+            massEvent( _player_manager.getPlayerCount( 0, _stage_manager.getMassCount( ) ), 0 );
 		} else if ( _player_manager.isEventFinish( 0 ) == true && _player_manager.isEventStart( 1 ) == false && _player_manager.isEventFinish( 1 ) == false ) {
             Debug.Log( "P2" );
 			massEvent (_player_manager.getPlayerCount( 1, _stage_manager.getMassCount( ) ), 1 );
@@ -908,7 +909,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
                     _host_data.refreshCardList( id );
                     _host_data.setSendCardlist( id, card_list );
                 }
-                StartCoroutine( massAnimation( i, card_list ) );
+                StartCoroutine( massAnimation( i, id, card_list ) );
                 _animation_running = true;
             }
             // カードリストを初期化
@@ -984,18 +985,26 @@ public class ApplicationManager : Manager< ApplicationManager > {
     /// <summary>
     /// マス効果のコルーチン
     /// </summary>
-    IEnumerator massAnimation( int i, List<int> card_list ) {
+    IEnumerator massAnimation( int i, int id, List<int> card_list ) {
         switch ( _file_manager.getFileData( ).mass[ i ].type ) {
         case "draw":
             int j = 0;
             while( j < card_list.Count ) {
                 GameObject card = Instantiate( ( GameObject )Resources.Load( "Prefabs/AnimationCard" ) );
-                GameObject treasure_chest = GameObject.Find( "TreasureChest" );
-                card.GetComponent<Card>( ).setCardData( _card_manager.getCardData( card_list[ j ] ) );
+                GameObject treasure_chest = GameObject.Find( "TreasureChest:" + i );
+                Vector3 returnScale = card.transform.localScale;
+                card.GetComponent< Card >( ).setCardData( _card_manager.getCardData( card_list[ j ] ) );
                 card.transform.parent = treasure_chest.transform;
-                card.transform.position = Vector3.zero;
+                card.transform.position = treasure_chest.transform.position;
                 yield return new WaitForSeconds( 3.0f );
-
+                card.GetComponent< Animator >( ).SetTrigger( "_popup_end" );
+                yield return new WaitForSeconds( 0.2f );
+                //カメラの前に表示
+                card.transform.rotation = Camera.main.transform.rotation;
+                card.transform.parent = Camera.main.transform;
+                yield return new WaitForSeconds( 3.0f );
+                card.GetComponent< Animator >( ).SetInteger( "_player_id", id );
+                yield return new WaitForSeconds( 2.0f );
                 Destroy( card );
                 j++;
             }
