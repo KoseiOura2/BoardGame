@@ -81,7 +81,9 @@ public class CardManager : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update( ) {
-	
+	    if ( Input.GetKey( KeyCode.Escape ) ) {
+            Application.Quit( );
+        }
 	}
 
     void OnGUI( ) {
@@ -201,7 +203,7 @@ public class CardManager : MonoBehaviour {
 		        string str_1 = sr.ReadLine( );
 		        string[ ] values_1 = str_1.Split( ',' );
 
-				_card_datas.Add( values_1[ 0 ] );
+				_card_datas.Add( values_1[ 1 ] );
                 _card_num_for_name.Add( 0 );
             }
             sr.Close( );
