@@ -47,6 +47,9 @@ public class ApplicationManager : Manager< ApplicationManager > {
     private bool[ ] _reset_mass_update = new bool[ 2 ] { false, false };
     private int _before_player_count;
 
+	private GameObject _particle;
+	[SerializeField]
+	private float      _particle_time = 0;
 
     public Text _scene_text;
 	public Text[ ] _reside_text = new Text[ ( int )PLAYER_ORDER.MAX_PLAYER_NUM ];    //残りマス用テキスト
@@ -744,9 +747,9 @@ public class ApplicationManager : Manager< ApplicationManager > {
 	/// EventPhaseの更新
 	/// </summary>
 	private void updateEventPhase( ) {
-		if ( _player_manager.isEventFinish( 0 ) == false ) {
+		if ( _particle == null && _player_manager.isEventStart( 0 ) == false ) {
 			massEvent( _player_manager.getPlayerCount( 0, _stage_manager.getMassCount( ) ), 0 );
-		} else if ( _player_manager.isEventFinish( 0 ) == true && _player_manager.isEventStart( 1 ) == false ) {
+		} else if ( _particle == null && _player_manager.isEventFinish( 0 ) == true && _player_manager.isEventStart( 1 ) == false ) {
 				if ( _reset_mass_update[ 0 ] ) {
 					_stage_manager.resetMassColor( _player_manager.getPlayerCount( 0, _stage_manager.getMassCount( ) ), ref _reset_mass_update[ 0 ] );
 				} else {
@@ -778,8 +781,20 @@ public class ApplicationManager : Manager< ApplicationManager > {
         }
         // ゴールまでの残りマスを表示
         resideCount ( );
+		if(_particle != null){
+			if(_particle.gameObject.name == "OceanCurrent" ){
+				_particle_time++;
+				if(_particle_time > 60){
+					_particle.GetComponent<ParticleEmitter>().emit = false;
+				}
+				if(_particle_time > 90){
+					_particle_time = 0;
+					_particle = null;
+				}
+			}
+		}
 
-        if ( _player_manager.isEventFinish ( 0 ) == true && _player_manager.isEventFinish ( 1 ) == true && _goal_flag == false && _reset_mass_update[ 0 ] == false && _reset_mass_update[ 1 ] == false ) {
+        if ( _player_manager.isEventFinish ( 0 ) == true && _player_manager.isEventFinish ( 1 ) == true && _goal_flag == false && _reset_mass_update[ 0 ] == false && _reset_mass_update[ 1 ] == false && _particle == null ) {
             _player_manager.setEventStart ( 0, false );
             _player_manager.setEventStart ( 1, false );
             _player_manager.setEventFinish ( 0, false );
@@ -798,6 +813,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
 	/// <param name="i">The index.</param>
 	public void massEvent( int i, int id ) {
         _stage_manager.getTargetMass ( i ).GetComponent<Renderer> ( ).material.SetColor ( "_Color", Color.white);
+
         if ( _stage_manager.getTargetMass ( i ).transform.localScale.x < 0.5f || _stage_manager.getTargetMass ( i ).transform.localScale.z < 0.5f
 			&& _player_manager.isEventStart ( id ) == false ) {
             _stage_manager.getTargetMass ( i ).transform.localScale =
@@ -831,34 +847,46 @@ public class ApplicationManager : Manager< ApplicationManager > {
                     Debug.Log ( "トラップ発動" );
                     Debug.Log ( "カード" + _file_manager.getMassValue ( i )[ 1 ] + "捨てる" );
                     Debug.Log ( _file_manager.getMassValue ( i )[ 0 ] + "マス進む" );
-                    _player_manager.setCurrentFlag ( true );
-                    _player_manager.setPlayerID ( id );
-                    _player_manager.setAdvanceFlag ( true );
-                    _player_manager.setLimitValue ( _file_manager.getMassValue ( i )[ 0 ] );
+					if(_particle == null){
+						_particle = GameObject.Find("OceanCurrent");
+					}
+					_particle.GetComponent<ParticleEmitter>().emit = true;
+					_reset_mass_update[ id ] = true;
+					_player_manager.setLimitValue ( _file_manager.getMassValue ( i )[ 0 ] );
+					_player_manager.setCurrentFlag ( true );
+					_player_manager.setPlayerID ( id );
+					_player_manager.setAdvanceFlag ( true );
                     _before_player_count = _player_manager.getPlayerCount ( id, _stage_manager.getMassCount ( ) );
-                    _reset_mass_update[ id ] = true;
                     _player_manager.setEventType ( id, EVENT_TYPE.EVENT_MOVE );
                     break;
                 case "trap2":
                     Debug.Log ( "トラップ発動" );
                     Debug.Log ( "カード" + _file_manager.getMassValue ( i )[ 0 ] + "ドロー" );
                     Debug.Log ( _file_manager.getMassValue ( i )[ 1 ] + "マス戻る" );
-                    _player_manager.setCurrentFlag ( true );
-                    _player_manager.setPlayerID ( id );
-                    _player_manager.setAdvanceFlag ( false );
-                    _player_manager.setLimitValue ( _file_manager.getMassValue ( i )[ 1 ] );
+					if(_particle == null){
+						_particle = GameObject.Find("OceanCurrent");
+					}
+					_particle.GetComponent<ParticleEmitter>().emit = true;
+					_reset_mass_update[ id ] = true;
+					_player_manager.setLimitValue ( _file_manager.getMassValue ( i )[ 1 ] );
+					_player_manager.setCurrentFlag ( true );
+					_player_manager.setPlayerID ( id );
+					_player_manager.setAdvanceFlag ( false );
                     _before_player_count = _player_manager.getPlayerCount ( id, _stage_manager.getMassCount ( ) );
-                    _reset_mass_update[ id ] = true;
                     _player_manager.setEventType ( id, EVENT_TYPE.EVENT_MOVE );
                     break;
                 case "advance":
                     Debug.Log ( _file_manager.getMassValue ( i )[ 0 ] + "マス進む" );
-                    _player_manager.setPlayerID ( id );
-                    _player_manager.setCurrentFlag ( true );
-                    _player_manager.setAdvanceFlag ( true );
-                    _player_manager.setLimitValue ( _file_manager.getMassValue ( i )[ 0 ] );
+					if(_particle == null){
+						_particle = GameObject.Find("OceanCurrent");
+					}
+                    _particle.GetComponent<ParticleEmitter>().emit = true;
+					_reset_mass_update[ id ] = true;
+					_player_manager.setLimitValue ( _file_manager.getMassValue ( i )[ 0 ] );
+					_player_manager.setCurrentFlag ( true );
+					_player_manager.setPlayerID ( id );
+					_player_manager.setAdvanceFlag ( true );
                     _before_player_count = _player_manager.getPlayerCount ( id, _stage_manager.getMassCount ( ) );
-                    _reset_mass_update[ id ] = true;
                     _player_manager.setEventType ( id, EVENT_TYPE.EVENT_MOVE );
                     break;
                 case "event":
@@ -876,13 +904,17 @@ public class ApplicationManager : Manager< ApplicationManager > {
                         _reset_mass_update[ id ] = true;
                         _player_manager.setEventType ( id, EVENT_TYPE.EVENT_GOAL );
                     } else if ( _player_manager.getPlayerResult ( id ) == BATTLE_RESULT.LOSE || _player_manager.getPlayerResult ( id ) == BATTLE_RESULT.DRAW ) {
-                        _player_manager.setPlayerID ( id );
-                        _player_manager.setAdvanceFlag ( false );
-                        _player_manager.setCurrentFlag ( true );
-                        _player_manager.setLimitValue ( 1 );
-                        _before_player_count = _player_manager.getPlayerCount ( id, _stage_manager.getMassCount ( ) );
-                        _reset_mass_update[ id ] = true;
-                        _player_manager.setEventType ( id, EVENT_TYPE.EVENT_MOVE );
+                        if(_particle == null){
+						_particle = GameObject.Find("OceanCurrent");
+						}
+						_particle.GetComponent<ParticleEmitter>().emit = true;
+						_reset_mass_update[ id ] = true;
+						_player_manager.setLimitValue ( 1 );
+						_player_manager.setCurrentFlag ( true );
+						_player_manager.setPlayerID ( id );
+						_player_manager.setAdvanceFlag ( false );
+						_before_player_count = _player_manager.getPlayerCount ( id, _stage_manager.getMassCount ( ) );
+						_player_manager.setEventType ( id, EVENT_TYPE.EVENT_MOVE );
                     }
                     break;
                 case "selectDraw":

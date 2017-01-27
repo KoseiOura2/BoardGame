@@ -1,9 +1,102 @@
 diff a/boardgameFlow/Assets/Scripts/PlayerManager.cs b/boardgameFlow/Assets/Scripts/PlayerManager.cs	(rejected hunks)
-@@ -157,7 +157,6 @@
- 	}
-     #endif
- 
--    
-     // MovePhaseã®æ›´æ–°
-     public void movePhaseUpdate( int[ ] count, GameObject target_pos ) {
-         dicisionTopAndLowestPlayer( ref count );
+@@ -331,41 +331,68 @@
+         _end_position[i].y += 0.3f;
+         _move_flag = true;
+     }
++
++    // 指定した向きを向かせる.
++    public void SetDirection(Vector3 direction)
++    {
++        _force_rotate_direction = direction;
++        _force_rotate_direction.y = 0;
++        _force_rotate_direction.Normalize();
++    }
++
+     /// <summary>
+     /// プレイヤーを動かす処理
+     /// </summary>
+-    private void playerMove( int i, int id ) {
+-        var diff = Time.timeSinceLevelLoad - _startTime[ i ];
+-		Vector3 distance = ( _end_position[ i ] - _players[ id ].obj.transform.position ) / Vector3.Distance(_players[ id ].obj.transform.position, _end_position[ i ] );
+-		_time = Time.deltaTime * 3;
+-		if ( _time > 1 )
+-			_time = 1;
+-
+-		_speedvec = ( distance * _speed ) * _time + _speedvec * ( 1 - _time );
+-		_players[ id ].obj.GetComponent<CharacterController>().Move(_players[ id ].obj.transform.position + ( _speedvec * Time.deltaTime ) * Time.deltaTime);
+-		if ( _players[ id ].obj.transform.position == _end_position[ i ] ) {
+-			_players[ id ].obj.transform.position = _end_position[ i ];
+-			_accel_init = false;
+-
+-			if( _current_flag ) {
+-				if ( _advance_flag ) {
+-					_players[ id ].advance_count += _limit_value;
+-				} else {
+-					_players[ id ].advance_count -= _limit_value;
+-				}
+-				_limit_value = 0;
+-			} else {
+-				if ( _advance_flag ) {
+-					_players[ id ].advance_count++;
+-				} else {
+-					_players[ id ].advance_count--;
+-				}
+-				_limit_value--;
+-			}
+-			_current_flag = false;
+-			_move_flag = false;
+-			return;
+-		}
++    /// <param name="i" ターゲットの保管する番号></param>
++    /// <param name="id" プレイヤーID></param>
++    private void playerMove(int i, int id)
++    {
++        // 移動速度velocityを更新する
++        //if (_players[id].obj.GetComponent<CharacterController>().isGrounded)
++        //{
++            Vector3 direction = (_end_position[i] - _players[id].obj.transform.localPosition);
++            _velocity = direction * _walk_speed;
++            // 目的地にちかづいたら到着..
++            if (Vector3.Distance(_end_position[i], _players[id].obj.transform.localPosition) < 0.1f)
++            {
++            _players[id].obj.transform.localPosition = _end_position[i];
++                _accel_init = false;
++
++                if (_current_flag)
++                {
++                    if (_advance_flag)
++                    {
++                        _players[id].advance_count += _limit_value;
++                    }
++                    else {
++                        _players[id].advance_count -= _limit_value;
++                    }
++                    _limit_value = 0;
++                }
++                else {
++                    if (_advance_flag)
++                    {
++                        _players[id].advance_count++;
++                    }
++                    else {
++                        _players[id].advance_count--;
++                    }
++                    _limit_value--;
++                }
++                _current_flag = false;
++                _move_flag = false;
++                return;
++            }
++           
++        //}
++        // 重力.
++        _velocity.y -= _gravity_power;
++
++        // CharacterControllerを使って動かす.
++        _players[id].obj.GetComponent<CharacterController>().Move(_velocity);
++        _players[id].obj.transform.LookAt(_end_position[i]);
++    }
++    
+ 		/*if ( diff > _time * 3.5f ) {
+ 			_players[ id ].obj.transform.position = _end_position[ i ];
+             _accel_init = false;

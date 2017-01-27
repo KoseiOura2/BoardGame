@@ -35,22 +35,10 @@ public class PlayerManager : MonoBehaviour {
 	private int _defalut_power = 0;
 	private int _plus_draw;
 	private int _plus_power;
-	private float _speed = 1f;
+	private float _speed = 0.3f;
 	private Vector3 _speedvec;
     private float _time = 0.3f;
     private Vector3 _velocity = Vector3.zero;
-    // 目的地についたとみなす停止距離.
-    private const float _stopping_distance = 0.01f;
-    // 到着したか（到着した true/到着していない false)
-    private bool _arrived = false;
-    // 強制的に向かせたい方向.
-    private Vector3 _force_rotate_direction;
-    // 移動速度.
-    private float _walk_speed = 0.05f;
-    // 回転速度.
-    public float _rotation_speed = 360.0f;
-    // 重力値.
-    private const float _gravity_power = 9.8f;
     private float[] _startTime = new float[2];
 	[ SerializeField ]
     private bool _move_flag    = false;     //動かす時のフラグが立っているか
@@ -315,7 +303,6 @@ public class PlayerManager : MonoBehaviour {
         _start_position[i] = _players[id].obj.transform.position;
         _target[i] = target_pos;
         _end_position[i] = _target[i].transform.localPosition;
-        _arrived = false;
 
         switch (_player_id)
         {
@@ -331,69 +318,14 @@ public class PlayerManager : MonoBehaviour {
         _end_position[i].y += 0.3f;
         _move_flag = true;
     }
-
-    // 指定した向きを向かせる.
-    public void SetDirection(Vector3 direction)
-    {
-        _force_rotate_direction = direction;
-        _force_rotate_direction.y = 0;
-        _force_rotate_direction.Normalize();
-    }
-
     /// <summary>
     /// プレイヤーを動かす処理
     /// </summary>
-    /// <param name="i" ターゲットの保管する番号></param>
-    /// <param name="id" プレイヤーID></param>
-    private void playerMove(int i, int id)
-    {
-        // 移動速度velocityを更新する
-        //if (_players[id].obj.GetComponent<CharacterController>().isGrounded)
-        //{
-            Vector3 direction = (_end_position[i] - _players[id].obj.transform.localPosition);
-            _velocity = direction * _walk_speed;
-            // 目的地にちかづいたら到着..
-            if (Vector3.Distance(_end_position[i], _players[id].obj.transform.localPosition) < 0.1f)
-            {
-            _players[id].obj.transform.localPosition = _end_position[i];
-                _accel_init = false;
+    private void playerMove( int i, int id ) {
+        var diff = Time.timeSinceLevelLoad - _startTime[ i ];
+		Vector3 distance = ( _end_position[ i ] - _players[ id ].obj.transform.position ) / Vector3.Distance(_players[ id ].obj.transform.position, _end_position[ i ] );
 
-                if (_current_flag)
-                {
-                    if (_advance_flag)
-                    {
-                        _players[id].advance_count += _limit_value;
-                    }
-                    else {
-                        _players[id].advance_count -= _limit_value;
-                    }
-                    _limit_value = 0;
-                }
-                else {
-                    if (_advance_flag)
-                    {
-                        _players[id].advance_count++;
-                    }
-                    else {
-                        _players[id].advance_count--;
-                    }
-                    _limit_value--;
-                }
-                _current_flag = false;
-                _move_flag = false;
-                return;
-            }
-           
-        //}
-        // 重力.
-        _velocity.y -= _gravity_power;
-
-        // CharacterControllerを使って動かす.
-        _players[id].obj.GetComponent<CharacterController>().Move(_velocity);
-        _players[id].obj.transform.LookAt(_end_position[i]);
-    }
-    
-		/*if ( diff > _time * 3.5f ) {
+		if ( diff > _time * 3.5f ) {
 			_players[ id ].obj.transform.position = _end_position[ i ];
             _accel_init = false;
             
@@ -420,8 +352,10 @@ public class PlayerManager : MonoBehaviour {
 		Quaternion newDir = Quaternion.LookRotation( distance );
 		_players[ id ].obj.transform.rotation = Quaternion.SlerpUnclamped( _players[ id ].obj.transform.rotation, newDir, _time );
 
-        _players[ id ].obj.transform.position = Vector3.SmoothDamp(_players[id].obj.transform.position, _end_position[i], ref _velocity , _time);//Vector3.Lerp ( _start_position[ i ], _end_position[ i ], rate );
-		*/
+        _players[ id ].obj.transform.position = Vector3.SmoothDamp(_players[id].obj.transform.position, _end_position[i], ref _velocity , _time);
+		//Vector3.Lerp ( _start_position[ i ], _end_position[ i ], rate );
+	}
+		
     
 	/// <summary>
 	/// ランク付け関数
