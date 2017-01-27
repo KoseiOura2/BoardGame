@@ -13,6 +13,8 @@ public class ClientData : NetworkBehaviour {
     
     public int MAX_CARD_NUM = 6;
 
+    private bool _change_satatus = false;
+
     void Awake( ) {
 		_player_data.changed_scene    = false;
         _player_data.changed_phase    = false;
@@ -20,21 +22,14 @@ public class ClientData : NetworkBehaviour {
         _player_data.ready            = false;
 		_player_data.used_card_list   = new int[ MAX_CARD_NUM ];
 		_player_data.turned_card_list = new int[ MAX_CARD_NUM ];
-        _player_data.player_status    = 0;
+        _player_data.player_power     = 0;
+        _player_data.hand_num         = 0;
         _player_data.battle_ready     = false;
         _player_data.mass_adjust      = MASS_ADJUST.NO_ADJUST;
+        _player_data.ok_event         = false;
         _player_data.connect_ready    = false;
     }
 
-	// Use this for initialization
-	void Start( ) {
-		if ( isLocalPlayer == true ) {
-			_server_state = SERVER_STATE.STATE_HOST;
-		} else {
-			_server_state = SERVER_STATE.STATE_CLIANT;
-		}
-	}
-	
 	// Update is called once per frame
 	void Update( ) {
 	
@@ -77,6 +72,20 @@ public class ClientData : NetworkBehaviour {
     public void setChangedPhase( bool flag ) { 
 		_player_data.changed_phase = flag;
 
+    }
+    
+	[ Command ]
+	public void CmdSetSendStatus( int player_power, int hand_num ) { 
+        _player_data.player_power = player_power;
+        _player_data.hand_num     = hand_num;
+    }
+    
+	[ Client ]
+	public void setStatus( int player_power, int hand_num ) { 
+        _player_data.player_power = player_power;
+        _player_data.hand_num     = hand_num;
+
+        _change_satatus = false;
     }
 
     /// <summary>
@@ -130,8 +139,8 @@ public class ClientData : NetworkBehaviour {
     /// <param name="status"></param>
     /// <param name="card_list"></param>
 	[ Command ]
-	public void CmdSetSendBattleData( bool ready, int status, int[ ] used_card_list, int[ ] turned_card_list ) { 
-        _player_data.player_status = status;
+	public void CmdSetSendBattleData( bool ready, int player_power, int[ ] used_card_list, int[ ] turned_card_list ) { 
+        _player_data.player_power = player_power;
 		for ( int i = 0; i < used_card_list.Length; i++ ) {
 			_player_data.used_card_list[ i ] = used_card_list[ i ];
 		}
@@ -142,8 +151,11 @@ public class ClientData : NetworkBehaviour {
     }
     
 	[ Client ]
-	public void setBattleData( bool ready, int status, int[ ] used_card_list, int[ ] turned_card_list ) { 
-        _player_data.player_status = status;
+	public void setBattleData( bool ready, int player_power, int[ ] used_card_list, int[ ] turned_card_list ) { 
+        _player_data.player_power = player_power;
+		for ( int i = 0; i < used_card_list.Length; i++ ) {
+			_player_data.used_card_list[ i ] = used_card_list[ i ];
+		}
 		for ( int i = 0; i < turned_card_list.Length; i++ ) {
 			_player_data.turned_card_list[ i ] = turned_card_list[ i ];
 		}
@@ -165,6 +177,16 @@ public class ClientData : NetworkBehaviour {
     public void setMassAdjust( bool ready, MASS_ADJUST adjust ) { 
         _player_data.ready = ready;
         _player_data.mass_adjust = adjust;
+    }
+    
+	[ Command ]
+    public void CmdSetSendOkEvent( bool ok ) { 
+        _player_data.ok_event = ok;
+    }
+    
+	[ Client ]
+    public void setOkEvent( bool ok ) { 
+        _player_data.ok_event = ok;
     }
 
 	public NETWORK_PLAYER_DATA getRecvData( ) {
@@ -195,6 +217,10 @@ public class ClientData : NetworkBehaviour {
         }
 
         return false;
+    }
+
+    public bool isChangeStatus( ) {
+        return _change_satatus;
     }
 
 	public bool isLocal( ) {

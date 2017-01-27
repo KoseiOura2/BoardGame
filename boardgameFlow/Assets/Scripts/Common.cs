@@ -129,7 +129,10 @@ namespace Common {
     /// 通信で送受信するフィールド側のデータ
     /// </summary>
     public struct NETWORK_FIELD_DATA {
+        public bool[ ] send_status;
         public int player_num;
+        public int[ ] hand_num;
+        public int[ ] player_power;
         public SCENE scene;
 		public MAIN_GAME_PHASE main_game_phase;
 		public bool change_scene;
@@ -137,8 +140,8 @@ namespace Common {
 		public int[ ] card_list_one;
 		public int[ ] card_list_two;
 		public bool[ ] send_card;
-		public BATTLE_RESULT result_player_one;
-		public BATTLE_RESULT result_player_two;
+		public BATTLE_RESULT[ ] result_player;
+        public EVENT_TYPE[ ] event_type;
 		public bool send_result;
         public int[ ] mass_count;
 	};
@@ -151,11 +154,13 @@ namespace Common {
 		public bool changed_phase;
 		public int dice_value;
 		public bool ready;
-		public int player_status;
+		public int player_power;
+        public int hand_num;
 		public int[ ] used_card_list;
 		public int[ ] turned_card_list;
 		public bool battle_ready;
 		public MASS_ADJUST mass_adjust;
+        public bool ok_event;
         public bool connect_ready;
 	};
 

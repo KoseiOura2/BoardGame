@@ -12,6 +12,9 @@ public class PlayerManager : MonoBehaviour {
     [ SerializeField ]
     private PLAYER_ORDER _player_order;     // どのプレイヤーが行動中か
 	private PLAYER_DATA[ ] _players = new PLAYER_DATA[ ( int )PLAYER_ORDER.MAX_PLAYER_NUM ];
+    [ SerializeField ]
+    private List< int > _draw_card_one = new List< int >( );
+    private List< int > _draw_card_two = new List< int >( );
     
     private Vector3 _start_position;        //現在位置を設定
     [ SerializeField ]
@@ -495,6 +498,48 @@ public class PlayerManager : MonoBehaviour {
 			return getPlayerCount( getPlayerID( ), length ) - 1;
 		}
 	}
+
+    public void addDrawCard( int num, int id ) {
+        if ( id == ( int )PLAYER_ORDER.PLAYER_ONE ) {
+            _draw_card_one.Add( id );
+        } else if ( id == ( int )PLAYER_ORDER.PLAYER_TWO ) {
+            _draw_card_two.Add( id );
+        }
+    }
+
+    public List< int > getDrawCard( int id ) {
+        int count = 0;
+        if ( id == ( int )PLAYER_ORDER.PLAYER_ONE ) {
+            count = _draw_card_one.Count;
+        } else if ( id == ( int )PLAYER_ORDER.PLAYER_TWO ) {
+            count = _draw_card_two.Count;
+        }
+
+        List< int > card = new List< int >( );
+
+        if ( id == ( int )PLAYER_ORDER.PLAYER_ONE ) {
+            for ( int i = 0; i < count; i++ ) {
+                card.Add( _draw_card_one[ i ] );
+            }
+            _draw_card_one.Clear( );
+        } else if ( id == ( int )PLAYER_ORDER.PLAYER_TWO ) {
+            for ( int i = 0; i < count; i++ ) {
+                card.Add( _draw_card_two[ i ] );
+            }
+            _draw_card_two.Clear( );
+        }
+
+
+        return card;
+    }
+
+    public int getPlayerOneDrawCardNum( ) {
+        return _draw_card_one.Count;
+    }
+    
+    public int getPlayerTwoDrawCardNum( ) {
+        return _draw_card_two.Count;
+    }
 
 	//指定ランクプレイヤーのゲームオブジェクトを返す
 	public PLAYER_DATA getTopPlayer( PLAYER_RANK player_rank ) {
