@@ -552,49 +552,73 @@ public class ApplicationManager : Manager< ApplicationManager > {
             _phase_init = true;
         }
 
-		if ( _mode == PROGRAM_MODE.MODE_CONNECT ) {
-            int length = 0;
-            if ( _player_num == PLAYER_ORDER.PLAYER_ONE ) {
-                length = _host_data.getRecvData( ).card_list_one.Length;
-            } else if ( _player_num == PLAYER_ORDER.PLAYER_TWO ) {
-                length = _host_data.getRecvData( ).card_list_two.Length;
+        // カードドロー演出
+        if ( _mode == PROGRAM_MODE.MODE_CONNECT ) {
+            drawEventAction( false );
+		} else if ( _mode == PROGRAM_MODE.MODE_NO_CONNECT ) {
+            drawEventAction( MAIN_GAME_PHASE.GAME_PHASE_BATTLE );
+        }
+	}
+
+    /// <summary>
+    /// 通信時のドロー演出
+    /// </summary>
+    private void drawEventAction( bool event_phase ) {
+        int length = 0;
+        if ( _player_num == PLAYER_ORDER.PLAYER_ONE ) {
+            length = _host_data.getRecvData( ).card_list_one.Length;
+        } else if ( _player_num == PLAYER_ORDER.PLAYER_TWO ) {
+            length = _host_data.getRecvData( ).card_list_two.Length;
+        }
+
+		// カードデータを受診したら
+		if ( _host_data.getCardListNum( _player_num ) == length &&
+			    _client_data.getRecvData( ).ready == false ) {
+            if ( !_player_manager.isDrawCard( ) ) {
+				for ( int i = 0; i < _host_data.getCardListNum( _player_num ); i++ ) {
+					if ( _host_data.getCardList( _player_num )[ i ] < 1 ) {
+						continue;
+					}
+
+					// カードデータを登録
+					_player_manager.addDrawCard( _host_data.getCardList( _player_num )[ i ], i, _host_data.getCardListNum( _player_num ) );
+				}
+                _player_manager.setDrawCardFlag( true );
+            } else {
+                drawProductionUpdate( );
             }
+        }
 
-			// カードデータを受診したら
-			if ( _host_data.getCardListNum( _player_num ) == length &&
-			     _client_data.getRecvData( ).ready == false ) {
-                if ( !_player_manager.isDrawCard( ) ) {
-				    for ( int i = 0; i < _host_data.getCardListNum( _player_num ); i++ ) {
-					    if ( _host_data.getCardList( _player_num )[ i ] < 1 ) {
-						    continue;
-					    }
+        // カードが送られて来たら
+        if ( _player_manager.getDrawCardAction( ) == ClientPlayerManager.DRAW_CARD_ACTION.MOVE_FOR_GET_ACTION ) {
+            if ( _player_manager.isArrivedAllDrawCard( ) ) {
+                createFlushObj( );
+            }
+        }
 
-					    // カードデータを登録
-					    _player_manager.addDrawCard( _host_data.getCardList( _player_num )[ i ], i, _host_data.getCardListNum( _player_num ) );
-				    }
-                    _player_manager.setDrawCardFlag( true );
-                } else {
-                    drawProductionUpdate( );
+        // カードの回転が終わったら
+        if ( _player_manager.isFinishRotateAllDrawCard( ) ) {
+            finishRotateCard( );
+            destroyFlushObj( );
+        }
+
+        if ( _player_manager.getDrawCardAction( ) == ClientPlayerManager.DRAW_CARD_ACTION.MOVE_FOR_HAND_ACTION ) {
+            if ( _player_manager.isArrivedAllDrawCard( ) ) {
+                finishDrawUpdate( );
+
+                if ( event_phase ) {
+                    try {
+                        // イベント処理完了を送信
+                        _client_data.CmdSetSendOkEvent( true );
+                        _client_data.setOkEvent( true );
+                    }
+                    catch {
+                        Debug.Log( "Failure Connect..." );
+                    }
+                    _player_manager.setDrawCardFlag( false );
+                    destroyLightOffObj( );
                 }
-            }
-
-            // カードが送られて来たら
-            if ( _player_manager.getDrawCardAction( ) == ClientPlayerManager.DRAW_CARD_ACTION.MOVE_FOR_GET_ACTION ) {
-                if ( _player_manager.isArrivedAllDrawCard( ) ) {
-                    createFlushObj( );
-                }
-            }
-
-            // カードの回転が終わったら
-            if ( _player_manager.isFinishRotateAllDrawCard( ) ) {
-                finishRotateCard( );
-                destroyFlushObj( );
-            }
-
-            if ( _player_manager.getDrawCardAction( ) == ClientPlayerManager.DRAW_CARD_ACTION.MOVE_FOR_HAND_ACTION ) {
-                if ( _player_manager.isArrivedAllDrawCard( ) ) {
-                    finishDrawUpdate( );
-
+                else {
                     try {
 				        // サーバーに準備完了を送信
 				        _client_data.CmdSetSendReady( true );
@@ -605,50 +629,56 @@ public class ApplicationManager : Manager< ApplicationManager > {
                     }
                 }
             }
-		} else if ( _mode == PROGRAM_MODE.MODE_NO_CONNECT ) {
-            if ( !_player_manager.isDrawCard( ) ) {
-                // 配するカードを決定
-                List< int > card_list = new List< int >( );
-                for ( int i = 0; i < 4 - _player_manager.getDiceValue( ); i++ ) {
-                    if ( _card_manager.getDeckCardNum( ) <= 0 ) {
-                        _card_manager.createDeck( );
-                    }
-					card_list.Add( _card_manager.distributeCard( ).id );
-				}
+        }
+    }
 
-                // カード配布
-				for ( int i = 0; i < card_list.Count; i++ ) {
-					// カードデータを登録
-					_player_manager.addDrawCard( card_list[ i ], i, card_list.Count );
-                    //_player_manager.moveStartDrawCard( i );
-				}
-                _player_manager.setDrawCardFlag( true );
-            } else {
-                drawProductionUpdate( );
-            }
-            // カードが送られて来たら
-            if ( _player_manager.getDrawCardAction( ) == ClientPlayerManager.DRAW_CARD_ACTION.MOVE_FOR_GET_ACTION ) {
-                if ( _player_manager.isArrivedAllDrawCard( ) ) {
-                    createFlushObj( );
+    /// <summary>
+    /// 非通信時のドロー演出
+    /// </summary>
+    /// <param name="phase"></param>
+    private void drawEventAction( MAIN_GAME_PHASE phase ) {
+        if ( !_player_manager.isDrawCard( ) ) {
+            // 配するカードを決定
+            List< int > card_list = new List< int >( );
+            for ( int i = 0; i < 4 - _player_manager.getDiceValue( ); i++ ) {
+                if ( _card_manager.getDeckCardNum( ) <= 0 ) {
+                    _card_manager.createDeck( );
                 }
-            }
+				card_list.Add( _card_manager.distributeCard( ).id );
+			}
 
-            // カードの回転が終わったら
-            if ( _player_manager.isFinishRotateAllDrawCard( ) ) {
-                finishRotateCard( );
-                destroyFlushObj( );
+            // カード配布
+			for ( int i = 0; i < card_list.Count; i++ ) {
+				// カードデータを登録
+				_player_manager.addDrawCard( card_list[ i ], i, card_list.Count );
+                //_player_manager.moveStartDrawCard( i );
+			}
+            _player_manager.setDrawCardFlag( true );
+        } else {
+            drawProductionUpdate( );
+        }
+        // カードが送られて来たら
+        if ( _player_manager.getDrawCardAction( ) == ClientPlayerManager.DRAW_CARD_ACTION.MOVE_FOR_GET_ACTION ) {
+            if ( _player_manager.isArrivedAllDrawCard( ) ) {
+                createFlushObj( );
             }
-            if ( _player_manager.getDrawCardAction( ) == ClientPlayerManager.DRAW_CARD_ACTION.MOVE_FOR_HAND_ACTION ) {
-                if ( _player_manager.isArrivedAllDrawCard( ) ) {
-                    finishDrawUpdate( );
+        }
+
+        // カードの回転が終わったら
+        if ( _player_manager.isFinishRotateAllDrawCard( ) ) {
+            finishRotateCard( );
+            destroyFlushObj( );
+        }
+        if ( _player_manager.getDrawCardAction( ) == ClientPlayerManager.DRAW_CARD_ACTION.MOVE_FOR_HAND_ACTION ) {
+            if ( _player_manager.isArrivedAllDrawCard( ) ) {
+                finishDrawUpdate( );
                     
-                    _phase_init = false;
-                    _phase_manager.setPhase( MAIN_GAME_PHASE.GAME_PHASE_BATTLE );
+                _phase_init = false;
+                _phase_manager.setPhase( phase );
                     
-                }
             }
-		}
-	}
+        }
+    }
 
     /// <summary>
     /// DrawPhaseの演出処理
@@ -711,6 +741,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
         // 初期化処理
         if ( !_phase_init ) {
             _player_manager.setDrawCardFlag( false );
+            _player_manager.playerCardEnable( false );
             destroyLightOffObj( );
             createLightOffObj( true );
             _select_throw_area_pref = Resources.Load< GameObject >( "Prefabs/Background/SelectThrowArea" );
@@ -746,6 +777,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
                 _player_manager.refreshSelectCard( );
                 _player_manager.setPlayMode( _play_mode );
                 _player_manager.initAllPlayerCard( );
+                _player_manager.playerCardEnable( true );
             }
 		} else if ( _mode == PROGRAM_MODE.MODE_NO_CONNECT ) {
             if ( _player_manager.isSelectThrowComplete( ) ) {
@@ -761,6 +793,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
                 _player_manager.refreshSelectCard( );
                 _player_manager.setPlayMode( _play_mode );
                 _player_manager.initAllPlayerCard( );
+                _player_manager.playerCardEnable( true );
             }
 		}
     }
@@ -868,11 +901,8 @@ public class ApplicationManager : Manager< ApplicationManager > {
 
 			int battle_result = 0;
 
-			if ( _player_num == PLAYER_ORDER.PLAYER_ONE ) {
-				battle_result = _host_data.getBattleResultOne( );
-			} else if ( _player_num == PLAYER_ORDER.PLAYER_TWO ) {
-				battle_result = _host_data.getBattleResultTwo( );
-			}
+            battle_result = _host_data.getBattleResult( ( int )_player_num );
+
 
 			if ( !_result_init && battle_result != 0 ) {
                 destroyWaitImage( );
@@ -1029,6 +1059,20 @@ public class ApplicationManager : Manager< ApplicationManager > {
 				_client_data.CmdSetSendMassAdjust( false, MASS_ADJUST.NO_ADJUST );
 				_client_data.setMassAdjust( false, MASS_ADJUST.NO_ADJUST );
 			}
+
+            switch ( _host_data.getRecvData( ).event_type[ ( int )_player_num ] ) {
+                case EVENT_TYPE.EVENT_DRAW:
+                    drawEventAction( true );
+                    break;
+            }
+
+            if ( _host_data.getRecvData( ).event_type[ ( int )_player_num ] == EVENT_TYPE.EVENT_NONE ||
+                 _client_data.getRecvData( ).ok_event ) {
+                // イベント処理完了を初期化
+                _client_data.CmdSetSendOkEvent( false );
+                _client_data.setOkEvent( false );
+            }
+            
 		} else if ( _mode == PROGRAM_MODE.MODE_NO_CONNECT ) {
 			if ( Input.GetKeyDown( KeyCode.A ) ) {
 				_phase_manager.setPhase( MAIN_GAME_PHASE.GAME_PHASE_DICE );

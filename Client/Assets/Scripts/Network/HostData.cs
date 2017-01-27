@@ -16,29 +16,37 @@ public class HostData : NetworkBehaviour {
 	[ SyncVar ]
     public int _network_phase_data;
 
-    public SyncListInt _network_card_list_0 = new SyncListInt ( );
-    public SyncListInt _network_card_list_1 = new SyncListInt ( );
-
+    // 1Pのカードリスト
+    public SyncListInt _network_card_list_0   = new SyncListInt( );
+    // 2Pのカードリスト
+    public SyncListInt _network_card_list_1   = new SyncListInt( );
+    // プレイヤーのステータスを送信したかどうか
+	public SyncListBool _network_send_status  = new SyncListBool( );
+    // プレイヤーのパワー
+	public SyncListInt _network_player_power  = new SyncListInt( );
+    // プレイヤーの手数
+	public SyncListInt _network_hand_num      = new SyncListInt( );
+    // プレイヤーの戦闘結果を送信したかどうか
+	public SyncListInt _network_battle_result = new SyncListInt( );
+    // プレイヤーのカードを送信したかどうか
+	public SyncListBool _network_send_card    = new SyncListBool( );
+    // プレイヤーの現在位置
+	public SyncListInt _network_mass_count    = new SyncListInt( );
+    // プレイヤーの起こしたイベント
+	public SyncListInt _network_event_type    = new SyncListInt( );
+    
+    // プレイヤー番号
 	[ SyncVar ]
 	public int _network_player_num;
+    // シーン切り替えしたかどうか
 	[ SyncVar ]
 	public bool _network_change_scene;
+    // フェイズ切り替えしたかどうか
 	[ SyncVar ]
 	public bool _network_change_phase;
-	[ SyncVar ]
-	public int _network_battle_result_one;
-	[ SyncVar ]
-	public int _network_battle_result_two;
+    // 勝敗結果を送ったかどうか
 	[ SyncVar ]
 	public bool _network_send_result;
-	[ SyncVar ]
-	public bool _network_send_card_one;
-	[ SyncVar ]
-	public bool _network_send_card_two;
-	[ SyncVar ]
-	public int _network_mass_count_one;
-	[ SyncVar ]
-	public int _network_mass_count_two;
 
     private NETWORK_FIELD_DATA _field_data;
 
@@ -54,30 +62,50 @@ public class HostData : NetworkBehaviour {
         _network_phase_data        = 0;
         _network_change_scene      = false;
         _network_change_phase      = false;
-        _network_battle_result_one = 0;
-        _network_battle_result_two = 0;
         _network_send_result       = false;
-		_network_send_card_one     = false;
-		_network_send_card_two     = false;
-        _network_mass_count_one    = 0;
-        _network_mass_count_two    = 0;
 
-        _field_data.player_num        = _network_player_num;
-        _field_data.scene             = ( SCENE )_network_scene_data;
-        _field_data.main_game_phase   = ( MAIN_GAME_PHASE )_network_phase_data;
-        _field_data.change_scene      = _network_change_scene;
-        _field_data.change_phase      = _network_change_phase;
-        _field_data.card_list_one     = new int[ DISTRIBUT_CARD_NUM ];
-        _field_data.card_list_two     = new int[ DISTRIBUT_CARD_NUM ];
-        _field_data.result_player_one = ( BATTLE_RESULT )_network_battle_result_one;
-        _field_data.result_player_two = ( BATTLE_RESULT )_network_battle_result_two;
-        _field_data.send_result       = _network_send_result;
-		_field_data.send_card         = new bool[ ]{ _network_send_card_one, _network_send_card_two };
-        _field_data.mass_count        = new int[ ]{ _network_mass_count_one, _network_mass_count_two };
+        _field_data.player_num      = _network_player_num;
+        _field_data.scene           = ( SCENE )_network_scene_data;
+        _field_data.main_game_phase = ( MAIN_GAME_PHASE )_network_phase_data;
+        _field_data.change_scene    = _network_change_scene;
+        _field_data.change_phase    = _network_change_phase;
+        _field_data.send_result     = _network_send_result;
+
     }
 
     // Use this for initialization
     void Start ( ) {
+        for ( int i = 0; i < ( int )PLAYER_ORDER.MAX_PLAYER_NUM; i++ ) {
+            _network_send_status.Add( false );
+            _network_player_power.Add( 0 );
+            _network_hand_num.Add( 0 );
+            _network_battle_result.Add( 0 );
+            _network_send_card.Add( false );
+            _network_mass_count.Add( 0 );
+            _network_event_type.Add( 0 );
+        }
+
+        // 配列の確保
+        _field_data.card_list_one = new int[ DISTRIBUT_CARD_NUM ];
+        _field_data.card_list_two = new int[ DISTRIBUT_CARD_NUM ];
+        _field_data.send_status   = new bool[ _network_send_status.Count ];
+        _field_data.player_power  = new int[ _network_player_power.Count ];
+        _field_data.hand_num      = new int[ _network_hand_num.Count ];
+        _field_data.result_player = new BATTLE_RESULT[ _network_battle_result.Count ];
+		_field_data.send_card     = new bool[ _network_send_card.Count ];
+        _field_data.mass_count    = new int[ _network_mass_count.Count ];
+        _field_data.event_type    = new EVENT_TYPE[ _network_event_type.Count ];
+
+        for ( int i = 0; i < ( int )PLAYER_ORDER.MAX_PLAYER_NUM; i++ ) {
+            _field_data.send_status[ i ]   = _network_send_status[ i ];
+            _field_data.player_power[ i ]  = _network_player_power[ i ]; 
+            _field_data.hand_num[ i ]      = _network_hand_num[ i ];
+            _field_data.result_player[ i ] = ( BATTLE_RESULT )_network_battle_result[ i ];
+            _field_data.send_card[ i ]     = _network_send_card[ i ];
+            _field_data.mass_count[ i ]    = _network_mass_count[ i ];
+            _field_data.event_type[ i ]    = ( EVENT_TYPE )_network_event_type[ i ];
+        }
+
         if ( isLocalPlayer == true ) {
             _server_state = SERVER_STATE.STATE_CLIANT;
             this.gameObject.tag = "ClientObj";
@@ -101,34 +129,44 @@ public class HostData : NetworkBehaviour {
                 _network_phase_data        = ( int )_field_data.main_game_phase;
                 _network_change_scene      = _field_data.change_scene;
                 _network_change_phase      = _field_data.change_phase;
-                _network_battle_result_one = ( int )_field_data.result_player_one;
-                _network_battle_result_two = ( int )_field_data.result_player_two;
                 _network_send_result       = _field_data.send_result;
+
+                for ( int i = 0; i < ( int )PLAYER_ORDER.MAX_PLAYER_NUM; i++ ) {
+                    _network_battle_result[ i ] = ( int )_field_data.result_player[ i ];
+                }
             }
 
             // 1Pに送る
             if ( _connect[ ( int )PLAYER_ORDER.PLAYER_ONE ] ) {
-                _network_send_card_one  = _field_data.send_card[ 0 ];
-                _network_mass_count_two = _field_data.mass_count[ 0 ];
+                _network_send_status[ ( int )PLAYER_ORDER.PLAYER_ONE ]  = _field_data.send_status[ ( int )PLAYER_ORDER.PLAYER_ONE ];
+                _network_player_power[ ( int )PLAYER_ORDER.PLAYER_ONE ] = _field_data.player_power[ ( int )PLAYER_ORDER.PLAYER_ONE ];
+                _network_hand_num[ ( int )PLAYER_ORDER.PLAYER_ONE ]     = _field_data.hand_num[ ( int )PLAYER_ORDER.PLAYER_ONE ];
+                _network_send_card[ ( int )PLAYER_ORDER.PLAYER_ONE ]    = _field_data.send_card[ ( int )PLAYER_ORDER.PLAYER_ONE ];
+                _network_mass_count[ ( int )PLAYER_ORDER.PLAYER_ONE ]   = _field_data.mass_count[ ( int )PLAYER_ORDER.PLAYER_ONE ];
+                _network_event_type[ ( int )PLAYER_ORDER.PLAYER_ONE ]   = ( int )_field_data.event_type[ ( int )PLAYER_ORDER.PLAYER_ONE ];
 
-                if ( _field_data.send_card[ 0 ] == true ) {
+                if ( _field_data.send_card[ ( int )PLAYER_ORDER.PLAYER_ONE ] ) {
                     for ( int i = 0; i < _field_data.card_list_one.Length; i++ ) {
                         _network_card_list_0.Add( _field_data.card_list_one[ i ] );
                     }
-                    _field_data.send_card[ 0 ] = false;
+                    _field_data.send_card[ ( int )PLAYER_ORDER.PLAYER_ONE ] = false;
                 }
             }
 
             // 2Pに送る
             if ( _connect[ ( int )PLAYER_ORDER.PLAYER_TWO ] ) {
-				_network_send_card_two  = _field_data.send_card[ 1 ];
-                _network_mass_count_two = _field_data.mass_count[ 1 ];
+                _network_send_status[ ( int )PLAYER_ORDER.PLAYER_TWO ]  = _field_data.send_status[ ( int )PLAYER_ORDER.PLAYER_TWO ];
+                _network_player_power[ ( int )PLAYER_ORDER.PLAYER_TWO ] = _field_data.player_power[ ( int )PLAYER_ORDER.PLAYER_TWO ];
+                _network_hand_num[ ( int )PLAYER_ORDER.PLAYER_TWO ]     = _field_data.hand_num[ ( int )PLAYER_ORDER.PLAYER_TWO ];
+                _network_send_card[ ( int )PLAYER_ORDER.PLAYER_TWO ]    = _field_data.send_card[ ( int )PLAYER_ORDER.PLAYER_TWO ];
+                _network_mass_count[ ( int )PLAYER_ORDER.PLAYER_TWO ]   = _field_data.mass_count[ ( int )PLAYER_ORDER.PLAYER_TWO ];
+                _network_event_type[ ( int )PLAYER_ORDER.PLAYER_TWO ]   = ( int )_field_data.event_type[ ( int )PLAYER_ORDER.PLAYER_TWO ];
                 
-                if ( _field_data.send_card[ 1 ] == true ) {
+                if ( _field_data.send_card[ ( int )PLAYER_ORDER.PLAYER_TWO ] ) {
                     for ( int i = 0; i < _field_data.card_list_two.Length; i++ ) {
                         _network_card_list_1.Add( _field_data.card_list_two[ i ] );
                     }
-                    _field_data.send_card[ 1 ] = false;
+                    _field_data.send_card[ ( int )PLAYER_ORDER.PLAYER_TWO ] = false;
                 }
             }
 
@@ -209,16 +247,12 @@ public class HostData : NetworkBehaviour {
         for ( int i = 0; i < card_list.Count; i++ ) {
             if ( player_num == ( int )PLAYER_ORDER.PLAYER_ONE ) {
                 _field_data.card_list_one[ i ] = card_list[ i ];
-				_field_data.send_card[ player_num ] = true;
-
-                _connect[ ( int )PLAYER_ORDER.PLAYER_ONE ] = true;
             } else if ( player_num == ( int )PLAYER_ORDER.PLAYER_TWO ) {
                 _field_data.card_list_two[ i ] = card_list[ i ];
-				_field_data.send_card[ player_num ] = true;
-
-                _connect[ ( int )PLAYER_ORDER.PLAYER_TWO ] = true;
             }
         }
+        _connect[ ( int )player_num ]       = true;
+		_field_data.send_card[ player_num ] = true;
     }
 
     [ Server ]
@@ -228,32 +262,40 @@ public class HostData : NetworkBehaviour {
                 _field_data.card_list_one[ i ] = -1;
             }
 			_network_card_list_0.Clear( );
-			_field_data.send_card[ player_num ] = false;
-			_network_send_card_one = false;
         } else if ( player_num == ( int )PLAYER_ORDER.PLAYER_TWO ) {
-            for ( int i = 0; i < _field_data.card_list_one.Length; i++ ) {
+            for ( int i = 0; i < _field_data.card_list_two.Length; i++ ) {
                 _field_data.card_list_two[ i ] = -1;
             }
 			_network_card_list_1.Clear ( );
-			_field_data.send_card[ player_num ] = false;
-			_network_send_card_two = false;
         }
+        
+		_field_data.send_card[ player_num ] = false;
+		_network_send_card[ player_num ]    = false;
+    }
+    
+	[ Server ]
+    public void setSendPlayerStatus( int player_num, int power, int hand_num, bool send ) {
+        _field_data.player_power[ player_num ] = power;
+        _field_data.hand_num[ player_num ]     = hand_num;
+        _field_data.send_status[ player_num ]  = send;
+        _connect[ player_num ] = true;
     }
 
     /// <summary>
     /// 戦闘結果を送る
     /// </summary>
-    /// <param name="result_one"></param>
-    /// <param name="result_two"></param>
     /// <param name="result"></param>
+    /// <param name="result_flag"></param>
 	[ Server ]
-    public void setSendBattleResult( BATTLE_RESULT result_one, BATTLE_RESULT result_two, bool result ) {
-        _field_data.result_player_one = result_one;
-        _field_data.result_player_two = result_two;
-        _field_data.send_result = result;
-
-        _connect[ ( int )PLAYER_ORDER.PLAYER_ONE ] = true;
-        _connect[ ( int )PLAYER_ORDER.PLAYER_TWO ] = true;
+    public void setSendBattleResult( BATTLE_RESULT[ ] result, bool result_flag ) {
+        for ( int i = 0; i < result.Length; i++ ) {
+            _field_data.result_player[ i ] = result[ i ];
+        }
+        _field_data.send_result = result_flag;
+        
+        for ( int i = 0; i < _connect.Length; i++ ) {
+            _connect[ i ] = true;
+        }
     }
     
     /// <summary>
@@ -263,15 +305,16 @@ public class HostData : NetworkBehaviour {
     /// <param name="count"></param>
 	[ Server ]
     public void setSendMassCount( PLAYER_ORDER player_num, int count ) {
-        if ( player_num == PLAYER_ORDER.PLAYER_ONE ) {
-            _field_data.mass_count[ 0 ] = count;
-
-            _connect[ ( int )PLAYER_ORDER.PLAYER_ONE ] = true;
-        } else if ( player_num == PLAYER_ORDER.PLAYER_TWO ) {
-            _field_data.mass_count[ 1 ] = count;
-            
-            _connect[ ( int )PLAYER_ORDER.PLAYER_TWO ] = true;
-        }
+        _field_data.mass_count[ ( int )player_num ] = count;
+        
+        _connect[ ( int )player_num ] = true;
+    }
+    
+	[ Server ]
+    public void setSendEventType( PLAYER_ORDER player_num, EVENT_TYPE type ) {
+        _field_data.event_type[ ( int )player_num ] = type;
+        
+        _connect[ ( int )player_num ] = true;
     }
 
     [ Client ]
@@ -281,13 +324,17 @@ public class HostData : NetworkBehaviour {
         _field_data.main_game_phase   = ( MAIN_GAME_PHASE )_network_phase_data;
         _field_data.change_scene      = _network_change_scene;
         _field_data.change_phase      = _network_change_phase;
-        _field_data.result_player_one = ( BATTLE_RESULT )_network_battle_result_one;
-        _field_data.result_player_two = ( BATTLE_RESULT )_network_battle_result_two;
         _field_data.send_result       = _network_send_result;
-		_field_data.send_card[ 0 ]    = _network_send_card_one;
-		_field_data.send_card[ 1 ]    = _network_send_card_two;
-        _field_data.mass_count[ 0 ]   = _network_mass_count_one;
-        _field_data.mass_count[ 1 ]   = _network_mass_count_two;
+
+        for ( int i = 0; i < ( int )PLAYER_ORDER.MAX_PLAYER_NUM; i++ ) {
+            _field_data.send_status[ i ]   = _network_send_status[ i ];
+            _field_data.player_power[ i ]  = _network_player_power[ i ];
+            _field_data.hand_num[ i ]      = _network_hand_num[ i ];
+            _field_data.result_player[ i ] = ( BATTLE_RESULT )_network_battle_result[ i ];
+            _field_data.send_card[ i ]     = _network_send_card[ i ];
+            _field_data.mass_count[ i ]    = _network_mass_count[ i ];
+            _field_data.event_type[ i ]    = ( EVENT_TYPE )_network_event_type[ i ];
+        }
         
 		for ( int i = 0; i < _network_card_list_0.Count; i++ ) {
             _field_data.card_list_one[ i ] = _network_card_list_0[ i ];
@@ -367,11 +414,7 @@ public class HostData : NetworkBehaviour {
         return _server_state;
     }
 
-    public int getBattleResultOne( ) {
-        return _network_battle_result_one;
-    }
-
-    public int getBattleResultTwo( ) {
-        return _network_battle_result_two;
+    public int getBattleResult( int id ) {
+        return _network_battle_result[ id ];
     }
 }

@@ -631,6 +631,10 @@ public class ClientPlayerManager : MonoBehaviour {
 		_player_card.select_list.Clear( );
 	}
 
+    public void playerCardEnable( bool flag ) { 
+        _profile_card_obj.SetActive( flag );
+    }
+
     public bool isDrawCard( ) {
         return _draw_card;
     }
