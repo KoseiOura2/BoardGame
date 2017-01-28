@@ -501,9 +501,9 @@ public class PlayerManager : MonoBehaviour {
 
     public void addDrawCard( int num, int id ) {
         if ( id == ( int )PLAYER_ORDER.PLAYER_ONE ) {
-            _draw_card_one.Add( id );
+            _draw_card_one.Add( num );
         } else if ( id == ( int )PLAYER_ORDER.PLAYER_TWO ) {
-            _draw_card_two.Add( id );
+            _draw_card_two.Add( num );
         }
     }
 
@@ -514,12 +514,15 @@ public class PlayerManager : MonoBehaviour {
         } else if ( id == ( int )PLAYER_ORDER.PLAYER_TWO ) {
             count = _draw_card_two.Count;
         }
-
+        
+        Debug.Log( "ドローカードの数" + count );
         List< int > card = new List< int >( );
 
         if ( id == ( int )PLAYER_ORDER.PLAYER_ONE ) {
             for ( int i = 0; i < count; i++ ) {
                 card.Add( _draw_card_one[ i ] );
+                Debug.Log( "kari:" + card[ i ] );
+                Debug.Log( "honmei:" + _draw_card_one[ i ] );
             }
             _draw_card_one.Clear( );
         } else if ( id == ( int )PLAYER_ORDER.PLAYER_TWO ) {

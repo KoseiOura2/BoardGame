@@ -33,6 +33,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
 	private PROGRAM_MODE _mode = PROGRAM_MODE.MODE_NO_CONNECT;
 	[ SerializeField ]
 	private SCENE _scene = SCENE.SCENE_CONNECT;
+	[ SerializeField ]
     private EVENT_TYPE[ ] _event_type = new EVENT_TYPE[ ]{ EVENT_TYPE.EVENT_NONE, EVENT_TYPE.EVENT_NONE };
 	private int[ ] _event_count = new int[ ]{ 0, 0 };        //イベントを起こす回数 
     [ SerializeField ]
@@ -928,8 +929,10 @@ public class ApplicationManager : Manager< ApplicationManager > {
                         }
                         int num = _card_manager.distributeCard( ).id;
                         card_list.Add( num );
-                        _player_manager.addDrawCard( num, id );
+                        _player_manager.addDrawCard( card_list[ j ], id );
+                        Debug.Log( "ID：" + card_list[ j ] );
                     }
+
                     StartCoroutine( massAnimation( i, id, card_list ) );
                     _animation_running = true;
                 }
@@ -1008,7 +1011,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
     /// <summary>
     /// マス効果のコルーチン
     /// </summary>
-    IEnumerator massAnimation( int i, int id, List<int> card_list ) {
+    IEnumerator massAnimation( int i, int id, List< int > card_list ) {
         switch ( _file_manager.getFileData( ).mass[ i ].type ) {
         case "draw":
             int j = 0;
