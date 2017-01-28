@@ -917,7 +917,9 @@ public class ApplicationManager : Manager< ApplicationManager > {
         switch ( _file_manager.getFileData( ).mass[ i ].type ) {
             case "draw":
                 _event_type[ id ] = EVENT_TYPE.EVENT_DRAW;
-                _host_data.setSendEventType( ( PLAYER_ORDER )id, _event_type[ id ] );
+                if ( _mode != PROGRAM_MODE.MODE_NO_CONNECT ) {
+                    _host_data.setSendEventType( ( PLAYER_ORDER )id, _event_type[ id ] );
+                }
                 int value = _file_manager.getMassValue( i )[ 0 ];
                 List< int > card_list = new List< int >( );
                 if ( !_animation_running ) {
@@ -1022,14 +1024,15 @@ public class ApplicationManager : Manager< ApplicationManager > {
                 card.GetComponent< Card >( ).setCardData( _card_manager.getCardData( card_list[ j ] ) );
                 card.transform.parent = treasure_chest.transform;
                 card.transform.position = treasure_chest.transform.position;
+                card.transform.localScale = Vector3.one;
                 yield return new WaitForSeconds( 3.0f );
-                card.GetComponent< Animator >( ).SetTrigger( "_popup_end" );
+                Destroy( card.GetComponent< Animator >( ) );
                 yield return new WaitForSeconds( 0.2f );
                 //カメラの前に表示
+                card.transform.localScale = returnScale;
                 card.transform.rotation = Camera.main.transform.rotation;
                 card.transform.parent = Camera.main.transform;
-                yield return new WaitForSeconds( 3.0f );
-                card.GetComponent< Animator >( ).SetInteger( "_player_id", id );
+                card.transform.localPosition = new Vector3( 0, 0, 5 );
                 yield return new WaitForSeconds( 2.0f );
                 Destroy( card );
                 j++;
