@@ -75,15 +75,6 @@ public class HostData : NetworkBehaviour {
 
     // Use this for initialization
     void Start ( ) {
-        for ( int i = 0; i < ( int )PLAYER_ORDER.MAX_PLAYER_NUM; i++ ) {
-            _network_send_status.Add( false );
-            _network_player_power.Add( 0 );
-            _network_hand_num.Add( 0 );
-            _network_battle_result.Add( 0 );
-            _network_send_card.Add( false );
-            _network_mass_count.Add( 0 );
-            _network_event_type.Add( 0 );
-        }
 
         // 配列の確保
         _field_data.card_list_one = new int[ DISTRIBUT_CARD_NUM ];

@@ -296,6 +296,12 @@ public class ApplicationManager : Manager< ApplicationManager > {
 
                 _scene_init = false;
             } 
+        } else if ( _mode == PROGRAM_MODE.MODE_CONNECT ) {
+            // サーバーに準備完了を送信
+            if ( Input.GetMouseButtonDown( 0 ) ) {
+			    _client_data.CmdSetSendReady( true );
+			    _client_data.setReady( true );
+            }
         }
 	}
 
@@ -310,7 +316,6 @@ public class ApplicationManager : Manager< ApplicationManager > {
             } 
         }
 	}
-
 	/// <summary>
 	/// GameSceneの更新
 	/// </summary>
@@ -318,6 +323,11 @@ public class ApplicationManager : Manager< ApplicationManager > {
         if ( !_scene_init ) {
             if ( _mode == PROGRAM_MODE.MODE_CONNECT ) {
                 _client_data.CmdSetSendConnectReady( false );
+                if ( _client_data.getRecvData( ).ready == true ) {
+				    // 準備完了を初期化
+				    _client_data.CmdSetSendReady( false );
+				    _client_data.setReady( false );
+			    }
 			    //マスの生成
 			    for( int i = 0; i < _file_manager.getMassCount( ); i++ ) {
 				    int num = _map_manager.getMassCount( );
@@ -412,12 +422,14 @@ public class ApplicationManager : Manager< ApplicationManager > {
             _map_manager.massMove( );
         }
 
+        // ゴールまでの残りマスの数字テキストを変更する
 		if ( _goal_count_image[ 0 ] != null && _goal_count_image[ 1 ] != null ) {
 			_map_manager.changeGoalImageNum( _goal_count_image[ 0 ], _goal_count_image[ 1 ] );
 		}
-
+        
+        // 水深の更新
 		_map_manager.adbanceSea( );
-
+        // 水深の数字テキストを変更する
 		if ( _sea_deep_count_image[ 0 ] != null && _sea_deep_count_image[ 1 ] != null && _sea_deep_count_image[ 2 ] != null ) {
 			_map_manager.changeSeaDeepNum( _sea_deep_count_image[ 2 ], _sea_deep_count_image[ 0 ], _sea_deep_count_image[ 1 ] );
 		}
@@ -438,7 +450,6 @@ public class ApplicationManager : Manager< ApplicationManager > {
 			_client_data.CmdSetSendChangedPhase( true );
 			_client_data.setChangedPhase( true );
             _phase_init = false;
-            Debug.Log( "GamePhase Change..." );
             _change_phase_count = 1;
 		}
 	}
@@ -573,7 +584,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
 
 		// カードデータを受診したら
 		if ( _host_data.getCardListNum( _player_num ) == length &&
-			    _client_data.getRecvData( ).ready == false ) {
+			 _client_data.getRecvData( ).ready == false ) {
             if ( !_player_manager.isDrawCard( ) ) {
 				for ( int i = 0; i < _host_data.getCardListNum( _player_num ); i++ ) {
 					if ( _host_data.getCardList( _player_num )[ i ] < 1 ) {
@@ -584,6 +595,10 @@ public class ApplicationManager : Manager< ApplicationManager > {
 					_player_manager.addDrawCard( _host_data.getCardList( _player_num )[ i ], i, _host_data.getCardListNum( _player_num ) );
 				}
                 _player_manager.setDrawCardFlag( true );
+                if ( event_phase ) {
+                    destroyWaitImage( );
+                    createLightOffObj( true );
+                }
             } else {
                 drawProductionUpdate( );
             }
@@ -597,14 +612,24 @@ public class ApplicationManager : Manager< ApplicationManager > {
         }
 
         // カードの回転が終わったら
-        if ( _player_manager.isFinishRotateAllDrawCard( ) ) {
-            finishRotateCard( );
-            destroyFlushObj( );
+        if ( _player_manager.getDrawCardAction( ) == ClientPlayerManager.DRAW_CARD_ACTION.ROTATE_ACTION ) {
+            if ( _player_manager.isFinishRotateAllDrawCard( ) ) {
+                finishRotateCard( );
+                destroyFlushObj( );
+            }
         }
 
         if ( _player_manager.getDrawCardAction( ) == ClientPlayerManager.DRAW_CARD_ACTION.MOVE_FOR_HAND_ACTION ) {
             if ( _player_manager.isArrivedAllDrawCard( ) ) {
                 finishDrawUpdate( );
+                
+                if ( _player_manager.getPlayerCardNum( ) > _player_manager.getMaxPlayerCardNum( ) ) {
+                    _play_mode = GAME_PLAY_MODE.MODE_PLAYER_SELECT;
+                    _player_manager.setPlayMode( _play_mode );
+                    _player_manager.initAllPlayerCard( );
+                    _phase_init = false;
+                    return;
+                }
 
                 if ( event_phase ) {
                     try {
@@ -651,12 +676,12 @@ public class ApplicationManager : Manager< ApplicationManager > {
 			for ( int i = 0; i < card_list.Count; i++ ) {
 				// カードデータを登録
 				_player_manager.addDrawCard( card_list[ i ], i, card_list.Count );
-                //_player_manager.moveStartDrawCard( i );
 			}
             _player_manager.setDrawCardFlag( true );
         } else {
             drawProductionUpdate( );
         }
+
         // カードが送られて来たら
         if ( _player_manager.getDrawCardAction( ) == ClientPlayerManager.DRAW_CARD_ACTION.MOVE_FOR_GET_ACTION ) {
             if ( _player_manager.isArrivedAllDrawCard( ) ) {
@@ -665,14 +690,25 @@ public class ApplicationManager : Manager< ApplicationManager > {
         }
 
         // カードの回転が終わったら
-        if ( _player_manager.isFinishRotateAllDrawCard( ) ) {
-            finishRotateCard( );
-            destroyFlushObj( );
+        if ( _player_manager.getDrawCardAction( ) == ClientPlayerManager.DRAW_CARD_ACTION.ROTATE_ACTION ) {
+            if ( _player_manager.isFinishRotateAllDrawCard( ) ) {
+                finishRotateCard( );
+                destroyFlushObj( );
+            }
         }
+
         if ( _player_manager.getDrawCardAction( ) == ClientPlayerManager.DRAW_CARD_ACTION.MOVE_FOR_HAND_ACTION ) {
             if ( _player_manager.isArrivedAllDrawCard( ) ) {
                 finishDrawUpdate( );
                     
+                if ( _player_manager.getPlayerCardNum( ) > _player_manager.getMaxPlayerCardNum( ) ) {
+                    _play_mode = GAME_PLAY_MODE.MODE_PLAYER_SELECT;
+                    _player_manager.setPlayMode( _play_mode );
+                    _player_manager.initAllPlayerCard( );
+                    _phase_init = false;
+                    return;
+                }
+
                 _phase_init = false;
                 _phase_manager.setPhase( phase );
                     
@@ -705,13 +741,6 @@ public class ApplicationManager : Manager< ApplicationManager > {
         // カードを生成
         _player_manager.initAllPlayerCard( );
 
-        if ( _player_manager.getPlayerCardNum( ) > _player_manager.getMaxPlayerCardNum( ) ) {
-            _play_mode = GAME_PLAY_MODE.MODE_PLAYER_SELECT;
-            _player_manager.setPlayMode( _play_mode );
-            _player_manager.initAllPlayerCard( );
-            _phase_init = false;
-            return;
-        }
     }
 
     /// <summary>
@@ -964,7 +993,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
 			}
 
 			// マスを進ませるかどうかを送信
-			if ( flag ) {
+			if ( flag && !_wait_play ) {
 				_client_data.CmdSetSendMassAdjust( true, adjust );
 				_client_data.setMassAdjust( true, adjust );
                 _map_manager.allMassReject( );
@@ -1060,13 +1089,15 @@ public class ApplicationManager : Manager< ApplicationManager > {
 				_client_data.setMassAdjust( false, MASS_ADJUST.NO_ADJUST );
 			}
 
-            switch ( _host_data.getRecvData( ).event_type[ ( int )_player_num ] ) {
-                case EVENT_TYPE.EVENT_DRAW:
-                    drawEventAction( true );
-                    break;
+            if ( _client_data.getRecvData( ).ok_event == false ) {
+                switch ( _host_data.getRecvData( ).event_type[ ( int )_player_num ] ) {
+                    case EVENT_TYPE.EVENT_DRAW:
+                        drawEventAction( true );
+                        break;
+                }
             }
 
-            if ( _host_data.getRecvData( ).event_type[ ( int )_player_num ] == EVENT_TYPE.EVENT_NONE ||
+            if ( _host_data.getRecvData( ).event_type[ ( int )_player_num ] == EVENT_TYPE.EVENT_NONE &&
                  _client_data.getRecvData( ).ok_event ) {
                 // イベント処理完了を初期化
                 _client_data.CmdSetSendOkEvent( false );

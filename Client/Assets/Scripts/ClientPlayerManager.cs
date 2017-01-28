@@ -69,6 +69,7 @@ public class ClientPlayerManager : MonoBehaviour {
     private Vector3[ ] _select_throw_area = new Vector3[ MAX_PLAYER_CARD_NUM ];
 
     private GAME_PLAY_MODE _play_mode          = GAME_PLAY_MODE.MODE_NORMAL_PLAY;
+    [ SerializeField ]
     private DRAW_CARD_ACTION _draw_card_action = DRAW_CARD_ACTION.ACTION_NONE;
 
     private List< bool > _arrived_list = new List< bool >( );
@@ -77,6 +78,7 @@ public class ClientPlayerManager : MonoBehaviour {
     private float _card_width = 3.0f;
     private float _draw_card_pos_x_adjust = 0.5f;
     private float _draw_card_move_speed = 0.5f;
+    [ SerializeField ]
     private bool _draw_card = false;
 	private bool _dice_roll = false;
     private bool _select_throw_complete = false;
