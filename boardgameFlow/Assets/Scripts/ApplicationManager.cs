@@ -49,11 +49,13 @@ public class ApplicationManager : Manager< ApplicationManager > {
     private const int CONNECT_WAIT_TIME = 120;
 	private const int SECOND_CONNECT_WAIT_TIME = 180;
 	private const int MAX_DRAW_VALUE = 4;
+    private float _start_time;
 
     private bool _scene_init = false;
     private bool _phase_init = false;
 
-	public Text _scene_text;
+    private Vector3 _start_position;
+    public Text _scene_text;
 	public Text[ ] _reside_text = new Text[ ( int )PLAYER_ORDER.MAX_PLAYER_NUM ];    //残りマス用テキスト
 	public Text[ ] _environment = new Text[ ( int )PLAYER_ORDER.MAX_PLAYER_NUM ];    //環境情報用テキスト
 
@@ -938,6 +940,12 @@ public class ApplicationManager : Manager< ApplicationManager > {
                     StartCoroutine( massAnimation( i, id, card_list ) );
                     _animation_running = true;
                 }
+
+                if ( id == 0 ) {
+                    //playerAbsorption( _player_manager.getTopPlayer( PLAYER_RANK.RANK_FIRST ).obj.transform.position );
+                } else {
+                    //playerAbsorption( _player_manager.getTopPlayer( PLAYER_RANK.RANK_SECOND ).obj.transform.position );
+                }
                 // カードリストを初期化
                 if ( _animation_end ) {
                     card_list.Clear( );
@@ -1007,7 +1015,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
 			    _player_manager.setEventFinish( id, true );
 			    _player_manager.setEventType( id, EVENT_TYPE.EVENT_DRAW );
 			    break;
-		}  
+		}
 	}
 
     /// <summary>
@@ -1018,25 +1026,30 @@ public class ApplicationManager : Manager< ApplicationManager > {
         case "draw":
             int j = 0;
             while( j < card_list.Count ) {
-                GameObject card = Instantiate( ( GameObject )Resources.Load( "Prefabs/AnimationCard" ) );
                 GameObject treasure_chest = GameObject.Find( "TreasureChest:" + i );
-                Vector3 returnScale = card.transform.localScale;
-                card.GetComponent< Card >( ).setCardData( _card_manager.getCardData( card_list[ j ] ) );
-                card.transform.parent = treasure_chest.transform;
-                card.transform.position = treasure_chest.transform.position;
-                card.transform.localScale = Vector3.one;
-                yield return new WaitForSeconds( 3.0f );
-                Destroy( card.GetComponent< Animator >( ) );
-                yield return new WaitForSeconds( 0.2f );
-                //カメラの前に表示
-                card.transform.localScale = returnScale;
-                card.transform.rotation = Camera.main.transform.rotation;
-                card.transform.parent = Camera.main.transform;
-                card.transform.localPosition = new Vector3( 0, 0, 5 );
-                yield return new WaitForSeconds( 2.0f );
-                Destroy( card );
+                if ( treasure_chest != null ) {
+                    GameObject card = Instantiate( ( GameObject )Resources.Load( "Prefabs/AnimationCard" ) );
+                    Vector3 returnScale = card.transform.localScale;
+
+                    card.GetComponent< Card >( ).setCardData( _card_manager.getCardData( card_list[ j ] ) );
+                    card.name = card.name + "id:" + i;
+                    card.transform.parent = treasure_chest.transform;
+                    card.transform.position = treasure_chest.transform.position;
+                    card.transform.localScale = Vector3.one;
+                    yield return new WaitForSeconds( 3.0f );
+
+                    Destroy( card.GetComponent< Animator >( ) );
+                    card.transform.localScale = returnScale;
+                    card.transform.rotation = Camera.main.transform.rotation;
+                    card.transform.parent = Camera.main.transform;
+                    card.transform.localPosition = new Vector3( 0, 0, 5 );
+                    yield return new WaitForSeconds( 2.0f );
+                    _start_time = Time.timeSinceLevelLoad;
+                    _start_position = card.transform.position;
+                }
                 j++;
             }
+            //アニメーションのフラグを立てる
             break;
         }
         if ( _mode != PROGRAM_MODE.MODE_NO_CONNECT ) {
@@ -1045,7 +1058,23 @@ public class ApplicationManager : Manager< ApplicationManager > {
                 _host_data.setSendCardlist( id, _player_manager.getDrawCard( id ) );
             }
         }
-        _animation_end = true;
+    }
+
+    /// <summary>
+    /// Playerに向かうカードのアニメーション
+    /// </summary>
+    void playerAbsorption( Vector3 endPosition, GameObject card  ) {
+
+        var diff = Time.timeSinceLevelLoad - _start_time;
+        if ( diff > 1 ) {
+            card.transform.position = endPosition;
+            Destroy( card );
+            _animation_end = true;
+        }
+
+        var rate = diff / 1;
+
+        card.transform.position = Vector3.Lerp( _start_position, endPosition, rate );
     }
 
     /// <summary>
