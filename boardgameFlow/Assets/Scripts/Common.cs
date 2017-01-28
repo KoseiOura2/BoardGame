@@ -105,6 +105,7 @@ namespace Common {
         EVENT_ACTION,
         EVENT_WORP,
         EVENT_CHANGE,
+		EVENT_DISCARD,
         EVENT_GOAL
     }
 

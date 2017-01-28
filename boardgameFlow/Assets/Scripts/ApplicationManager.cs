@@ -747,20 +747,24 @@ public class ApplicationManager : Manager< ApplicationManager > {
 	/// EventPhaseの更新
 	/// </summary>
 	private void updateEventPhase( ) {
-		if ( _particle == null && _player_manager.isEventStart( 0 ) == false ) {
-			massEvent( _player_manager.getPlayerCount( 0, _stage_manager.getMassCount( ) ), 0 );
-		} else if ( _particle == null && _player_manager.isEventFinish( 0 ) == true && _player_manager.isEventStart( 1 ) == false ) {
-				if ( _reset_mass_update[ 0 ] ) {
-					_stage_manager.resetMassColor( _player_manager.getPlayerCount( 0, _stage_manager.getMassCount( ) ), ref _reset_mass_update[ 0 ] );
-				} else {
+		if ( _player_manager.isEventFinish( 0 ) == false ) {
+			if(_player_manager.getEventType( 0 ) != EVENT_TYPE.EVENT_WORP && _player_manager.getEventType( 0 ) != EVENT_TYPE.EVENT_CHANGE)
+				massEvent( _player_manager.getPlayerCount( 0, _stage_manager.getMassCount( ) ), 0 );
+			else
+				massEvent( _before_player_count, 0 );
+		} else if ( _player_manager.isEventFinish( 0 ) == true && _player_manager.isEventFinish( 1 ) == false ) {
+			if ( _reset_mass_update[ 0 ] == false ) {
+				if(_player_manager.getEventType( 0 ) != EVENT_TYPE.EVENT_WORP && _player_manager.getEventType( 0 ) != EVENT_TYPE.EVENT_CHANGE)
 					massEvent( _player_manager.getPlayerCount( 1, _stage_manager.getMassCount( ) ), 1 );
-				}
+				else
+					massEvent( _before_player_count, 1 );
 			}
+		}
         
 		// マス移動終了時にイベントフラグをfalseにしてもう一度イベントが発生するようにする
 		for ( int i = 0; i < ( int )PLAYER_ORDER.MAX_PLAYER_NUM; i++ ) {
 			if ( _player_manager.getEventType( i ) == EVENT_TYPE.EVENT_MOVE ) {
-				if ( _player_manager.isPlayerMoveFinish( i ) == true && _player_manager.isAdjsutmentStart( ) == false ) {
+				if ( _player_manager.isPlayerMoveFinish( i ) == true ) {
 					if ( _reset_mass_update[ i ] ) {
 						_stage_manager.resetMassColor( _before_player_count, ref _reset_mass_update[ i ] );
 					} else {
@@ -769,11 +773,16 @@ public class ApplicationManager : Manager< ApplicationManager > {
 					}
 				}
 			} else if ( _player_manager.getEventType( i ) == EVENT_TYPE.EVENT_WORP || _player_manager.getEventType( i ) == EVENT_TYPE.EVENT_CHANGE ) {
-				_stage_manager.resetMassColor( _before_player_count, ref _reset_mass_update[ i ] );
+				if ( _reset_mass_update[ i ] ) {
+					_stage_manager.resetMassColor( _before_player_count, ref _reset_mass_update[ i ] );
+				}
 			} else {
 				if ( _reset_mass_update[ i ] ) {
 					_stage_manager.resetMassColor( _player_manager.getPlayerCount( i, _stage_manager.getMassCount( ) ), ref _reset_mass_update[ i ] );
 				}
+			}
+			if( _player_manager.isEventFinish( i ) == true && _reset_mass_update[ i ] == false ){
+				_player_manager.eventRefresh( i );
 			}
 		}
         if ( _player_manager.getPlayerID ( ) > -1 ) {
@@ -791,10 +800,14 @@ public class ApplicationManager : Manager< ApplicationManager > {
 					_particle_time = 0;
 					_particle = null;
 				}
+			} else if(_particle.gameObject.name == "Spiral" ){
+				_particle_time++;
 			}
 		}
 
-        if ( _player_manager.isEventFinish ( 0 ) == true && _player_manager.isEventFinish ( 1 ) == true && _goal_flag == false && _reset_mass_update[ 0 ] == false && _reset_mass_update[ 1 ] == false && _particle == null ) {
+        if ( _player_manager.isEventFinish ( 0 ) == true && 
+		_player_manager.isEventFinish ( 1 ) == true && 
+		_goal_flag == false && _reset_mass_update[ 0 ] == false && _reset_mass_update[ 1 ] == false && _particle == null ) {
             _player_manager.setEventStart ( 0, false );
             _player_manager.setEventStart ( 1, false );
             _player_manager.setEventFinish ( 0, false );
@@ -815,13 +828,12 @@ public class ApplicationManager : Manager< ApplicationManager > {
         _stage_manager.getTargetMass ( i ).GetComponent<Renderer> ( ).material.SetColor ( "_Color", Color.white);
 
         if ( _stage_manager.getTargetMass ( i ).transform.localScale.x < 0.5f || _stage_manager.getTargetMass ( i ).transform.localScale.z < 0.5f
-			&& _player_manager.isEventStart ( id ) == false ) {
+			&& _player_manager.isEventStart ( id ) == false && _reset_mass_update[ id ] == false ) {
             _stage_manager.getTargetMass ( i ).transform.localScale =
                 new Vector3 ( _stage_manager.getTargetMass ( i ).transform.localScale.x + 0.02f,
                 _stage_manager.getTargetMass ( i ).transform.localScale.y,
                 _stage_manager.getTargetMass ( i ).transform.localScale.z + 0.02f );
         } else {
-            _player_manager.setEventStart ( id, true );
             switch ( _file_manager.getFileData ( ).mass[ i ].type ) {
                 case "draw":
                     int value = _file_manager.getMassValue ( i )[ 0 ];
@@ -841,6 +853,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
                     card_list.Clear ( );
                     _player_manager.setEventFinish ( id, true );
                     _reset_mass_update[ id ] = true;
+					_player_manager.setEventStart ( id, true );
                     _player_manager.setEventType ( id, EVENT_TYPE.EVENT_DRAW );
                     break;
                 case "trap1":
@@ -850,12 +863,14 @@ public class ApplicationManager : Manager< ApplicationManager > {
 					if(_particle == null){
 						_particle = GameObject.Find("OceanCurrent");
 					}
+					_player_manager.setEventStart ( id, true );
 					_particle.GetComponent<ParticleEmitter>().emit = true;
 					_reset_mass_update[ id ] = true;
 					_player_manager.setLimitValue ( _file_manager.getMassValue ( i )[ 0 ] );
 					_player_manager.setCurrentFlag ( true );
 					_player_manager.setPlayerID ( id );
 					_player_manager.setAdvanceFlag ( true );
+					_player_manager.setEventStart ( id, true );
                     _before_player_count = _player_manager.getPlayerCount ( id, _stage_manager.getMassCount ( ) );
                     _player_manager.setEventType ( id, EVENT_TYPE.EVENT_MOVE );
                     break;
@@ -866,12 +881,14 @@ public class ApplicationManager : Manager< ApplicationManager > {
 					if(_particle == null){
 						_particle = GameObject.Find("OceanCurrent");
 					}
+					_player_manager.setEventStart ( id, true );
 					_particle.GetComponent<ParticleEmitter>().emit = true;
 					_reset_mass_update[ id ] = true;
 					_player_manager.setLimitValue ( _file_manager.getMassValue ( i )[ 1 ] );
 					_player_manager.setCurrentFlag ( true );
 					_player_manager.setPlayerID ( id );
 					_player_manager.setAdvanceFlag ( false );
+					_player_manager.setEventStart ( id, true );
                     _before_player_count = _player_manager.getPlayerCount ( id, _stage_manager.getMassCount ( ) );
                     _player_manager.setEventType ( id, EVENT_TYPE.EVENT_MOVE );
                     break;
@@ -886,16 +903,19 @@ public class ApplicationManager : Manager< ApplicationManager > {
 					_player_manager.setCurrentFlag ( true );
 					_player_manager.setPlayerID ( id );
 					_player_manager.setAdvanceFlag ( true );
+					_player_manager.setEventStart ( id, true );
                     _before_player_count = _player_manager.getPlayerCount ( id, _stage_manager.getMassCount ( ) );
                     _player_manager.setEventType ( id, EVENT_TYPE.EVENT_MOVE );
                     break;
                 case "event":
                     Debug.Log ( "イベント発生!!" );
                     _player_manager.setEventFinish ( id, true );
+					_player_manager.setEventStart ( id, true );
                     _reset_mass_update[ id ] = true;
                     _player_manager.setEventType ( id, EVENT_TYPE.EVENT_ACTION );
                     break;
                 case "goal":
+					_player_manager.setEventStart ( id, true );
                     if ( _player_manager.getPlayerResult ( id ) == BATTLE_RESULT.WIN ) {
                         _phase_manager.changeMainGamePhase ( MAIN_GAME_PHASE.GAME_PHASE_FINISH, "FinishPhase" );
                         Debug.Log ( "プレイヤー" + ( id + 1 ) + ":Goal!!" );
@@ -920,56 +940,98 @@ public class ApplicationManager : Manager< ApplicationManager > {
                 case "selectDraw":
                     int cardType = _file_manager.getCardID ( i );
                     _card_manager.getCardData ( cardType );
+					_player_manager.setEventStart ( id, true );
                     _player_manager.setEventFinish ( id, true );
                     _reset_mass_update[ id ] = true;
                     break;
                 case "Buff":
                     int buffValue = _file_manager.getMassValue ( i )[ 0 ];
                     Debug.Log ( "プレイヤーのパラメーターを" + buffValue.ToString ( ) + "上昇" );
+					_player_manager.setEventStart ( id, true );
                     _player_manager.setEventFinish ( id, true );
                     _reset_mass_update[ id ] = true;
                     break;
                 case "MoveSeal":
                     Debug.Log ( "行動停止" );
                     _player_manager.setPlayerOnMove ( id, false );
+					_player_manager.setEventStart ( id, true );
                     _player_manager.setEventFinish ( id, true );
                     _reset_mass_update[ id ] = true;
                     _player_manager.setEventType ( id, EVENT_TYPE.EVENT_DRAW );
                     break;
                 case "change":
                     Debug.Log ( "チェンジ" );
-					_before_player_count = _player_manager.getPlayerCount ( id, _stage_manager.getMassCount ( ) );
+					
                     int count_tmp;
                     Vector3 vector_tmp;
-                    count_tmp = _player_manager.getPlayerCount ( id, _stage_manager.getMassCount ( ) );
-                    vector_tmp = _stage_manager.getTargetMass ( count_tmp ).transform.localPosition;
-                    if ( id == 0 ) {
-                        _player_manager.setPlayerCount ( 0, _player_manager.getPlayerCount ( 1, _stage_manager.getMassCount ( ) ) );
-                        _player_manager.setPlayerPosition ( 0, _stage_manager.getTargetMass ( _player_manager.getPlayerCount ( 1, _stage_manager.getMassCount ( ) ) ).transform.localPosition );
-                        _player_manager.setPlayerPosition ( 1, vector_tmp );
-                        _player_manager.setPlayerCount ( 1, count_tmp );
-                    } else if ( id == 1 ) {
-                        _player_manager.setPlayerCount ( 1, _player_manager.getPlayerCount ( 0, _stage_manager.getMassCount ( ) ) );
-                        _player_manager.setPlayerPosition ( 1, _stage_manager.getTargetMass ( _player_manager.getPlayerCount ( 0, _stage_manager.getMassCount ( ) ) ).transform.localPosition );
-                        _player_manager.setPlayerPosition ( 0, vector_tmp );
-                        _player_manager.setPlayerCount ( 0, count_tmp );
-                    }
-                    for ( int j = 0; j < ( int )PLAYER_ORDER.MAX_PLAYER_NUM; j++ ) {
-                        _player_manager.setEventFinish ( j, true );
-                        _reset_mass_update[ j ] = true;
-                    }
+					count_tmp = _player_manager.getPlayerCount ( id, _stage_manager.getMassCount ( ) );
+					vector_tmp = _stage_manager.getTargetMass ( count_tmp ).transform.localPosition;
+					if(_particle == null){
+						_particle = GameObject.Find("Spiral");
+					}
+					if(_particle_time == 0){
+						_before_player_count = _player_manager.getPlayerCount ( id, _stage_manager.getMassCount ( ) );
+						
+						_particle.GetComponent<ParticleEmitter>().emit = true;
+					} else if(_particle_time < 360 && _particle_time > 10){
+						_particle.GetComponent<ParticleEmitter>().emit = false;
+					} else if(_particle_time < 362 && _particle_time > 360){
+						if ( id == 0 ) {
+							_player_manager.setPlayerPosition ( 0, _stage_manager.getTargetMass ( _player_manager.getPlayerCount ( 1, _stage_manager.getMassCount ( ) ) ).transform.localPosition );
+							_player_manager.setPlayerPosition ( 1, vector_tmp );
+							_player_manager.setPlayerCount ( 0, _player_manager.getPlayerCount ( 1, _stage_manager.getMassCount ( ) ) );
+							_player_manager.setPlayerCount ( 1, count_tmp );_player_manager.setEventStart ( id, true );
+						} else if ( id == 1 ) {
+							_player_manager.setPlayerPosition ( 1, _stage_manager.getTargetMass ( _player_manager.getPlayerCount ( 0, _stage_manager.getMassCount ( ) ) ).transform.localPosition );
+							_player_manager.setPlayerPosition ( 0, vector_tmp );
+							_player_manager.setPlayerCount ( 1, _player_manager.getPlayerCount ( 0, _stage_manager.getMassCount ( ) ) ); 
+							_player_manager.setPlayerCount ( 0, count_tmp );
+						}
+						int[] count = getResideCount ( );
+						_player_manager.dicisionTopAndLowestPlayer( ref count);
+					} else if(_particle_time > 480){
+						for ( int j = 0; j < ( int )PLAYER_ORDER.MAX_PLAYER_NUM; j++ ) {
+							_player_manager.setEventFinish ( j, true );
+							_reset_mass_update[ j ] = true;
+						}
+						_particle_time = 0;
+						_particle = null;
+					}
                     _player_manager.setEventType ( id, EVENT_TYPE.EVENT_CHANGE );
                     break;
                 case "worp":
-                    Debug.Log ( "ワープ" );
                     int worp_position = 15;
-					_before_player_count = _player_manager.getPlayerCount ( id, _stage_manager.getMassCount ( ) );
-                    _player_manager.setPlayerCount ( id, worp_position );
-                    _player_manager.setPlayerPosition ( id, _stage_manager.getTargetMass ( worp_position ).transform.localPosition );
-                    _player_manager.setEventFinish ( id, true );
-                    _reset_mass_update[ id ] = true;
+					if(_particle == null){
+						_particle = GameObject.Find("Spiral");
+					}
+					if(_particle_time == 0){
+						_before_player_count = _player_manager.getPlayerCount ( id, _stage_manager.getMassCount ( ) );
+						_particle.GetComponent<ParticleEmitter>().emit = true;
+					} else if(_particle_time < 360 && _particle_time > 10){
+						_particle.GetComponent<ParticleEmitter>().emit = false;
+					} else if(_particle_time < 480 && _particle_time > 360){
+						_player_manager.setPlayerCount ( id, worp_position );
+						_player_manager.setPlayerPosition ( id, _stage_manager.getTargetMass ( worp_position ).transform.localPosition );
+						int[] count = getResideCount ( );
+						_player_manager.dicisionTopAndLowestPlayer( ref count);
+					} else if(_particle_time > 480){
+						_reset_mass_update[ id ] = true;
+						_player_manager.setEventStart ( id, true );
+						_player_manager.setEventFinish ( id, true );
+						_particle_time = 0;
+						_particle = null;
+					}
                     _player_manager.setEventType ( id, EVENT_TYPE.EVENT_WORP );
                     break;
+				case "discard":
+                    Debug.Log ( "カード" + "捨てる" );
+					if(_player_manager.getAnimationEnd( id ) == true){
+						_reset_mass_update[ id ] = true;
+						_player_manager.setEventStart ( id, true );
+						_player_manager.setEventFinish ( id, true );
+					}
+					_player_manager.setEventType ( id, EVENT_TYPE.EVENT_DISCARD );
+					break;
             }
         } 
 	}

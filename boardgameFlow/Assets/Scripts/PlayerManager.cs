@@ -6,7 +6,7 @@ using Common;
 
 public class PlayerManager : MonoBehaviour {
     
-    public float ADJUST_FIRST_PLAYER_Y_POS = 0.3f;          // プレイヤー初期生成時の修正Y座標
+    public float ADJUST_FIRST_PLAYER_Y_POS = 0f;          // プレイヤー初期生成時の修正Y座標
     public float ADJUST_PLAYER_POS = 15f;          // プレイヤー初期生成時の修正Z座標
 
     [ SerializeField ]
@@ -66,14 +66,11 @@ public class PlayerManager : MonoBehaviour {
     /// <param name="first_pos"></param>
     public void init( Vector3 first_pos ) {
 
-		_player_pref[ 0 ] = ( GameObject )Resources.Load( "Prefabs/Player1" );
-		_player_pref[ 1 ] = ( GameObject )Resources.Load( "Prefabs/Player2" );
+		_player_pref[ 0 ] = ( GameObject )Resources.Load( "FBX/model_syujinkou" );
+		_player_pref[ 1 ] = ( GameObject )Resources.Load( "FBX/motion_syujinkou_walk_001" );
 
         createObj( first_pos );
-        // playerオブジェクトの色替え
-        
-        _players[ 0 ].obj.GetComponent< Renderer>( ).material.color = Color.magenta;
-        _players[ 1 ].obj.GetComponent< Renderer>( ).material.color = Color.green;
+    
 
 		// ステータス値の初期化
 		setDefalutStatus( );
@@ -101,8 +98,10 @@ public class PlayerManager : MonoBehaviour {
                     break;
             }
 
-			_players[ i ].obj = ( GameObject )Instantiate( _player_pref[ i ], first_pos, Quaternion.identity );
-            _players[ i ].obj.transform.parent = transform;
+			_players[ i ].obj = ( GameObject )Instantiate( _player_pref[ 0 ], first_pos, new Quaternion(0,0.1f,0,0) );
+			_players[ i ].obj.GetComponent<Animator>().runtimeAnimatorController = (RuntimeAnimatorController)RuntimeAnimatorController.Instantiate(Resources.Load ("Animation/Player" + i));
+			_players[ i ].obj.GetComponent<Animator>().SetInteger("state", 0);
+			_players[ i ].obj.transform.parent = transform;
             _players[ i ].obj.name = "Player" + i;
             _players[ i ].event_type = EVENT_TYPE.EVENT_NONE;
 			_players[ i ].onMove = true;
@@ -144,6 +143,8 @@ public class PlayerManager : MonoBehaviour {
         if ( Input.GetKeyDown( KeyCode.Q ) ) {
             endBonusMode( 1, GAME_STAGE.NORMAL );
         }
+
+		setPlayerMotion();
     }
     #endif
 
@@ -175,111 +176,6 @@ public class PlayerManager : MonoBehaviour {
 			_target[ 0 ] = null;
 		}
 	}
-
-    /*private void adjustmentUpdate( GameObject target_pos ) {
-        if ( _limit_value_adjustment == 0 ) {
-            _limit_value_adjustment--;
-            _adjustment_flag = false;
-        } else {
-            if( _limit_value_adjustment < 0 ) {
-                if ( !_adjustment_flag ) {
-                    playerPostionAdjustment( target_pos );
-                }
-            } else if( _limit_value_adjustment > 0 ) {
-                //playerAdjustment( );
-            }
-        }
-    }
-
-    private void setAdjustmentTargetPos( int i, int id, ref GameObject target_pos ) {
-        _startTime[ i ] = Time.timeSinceLevelLoad;
-		_start_position[ i ] = _players[ id ].obj.transform.position;
-        _target[ i ] = target_pos;
-        _end_position[ i ] = _target[ i ].transform.localPosition;
-        _end_position[ i ].y += 0.3f;
-    }
-
-    private void playerPostionAdjustment( GameObject target_pos ) {
-        if( _players[ 0 ].advance_count + 1 == _players[ 1 ].advance_count
-            && getPlayerID( ) == 0 && _limit_value > 1 ) {
-            if( _advance_flag ) {
-                _adjustment_flag = true;
-                _limit_value_adjustment = 1;
-                setAdjustmentTargetPos( 1, 0, ref target_pos );
-                _end_position[ 1 ].z += ADJUST_FIRST_PLAYER_Z_POS;
-            }
-        } else if( _players[ 1 ].advance_count + 1 == _players[ 0 ].advance_count
-            && getPlayerID( ) == 1 && _limit_value > 1 ) {
-            if( _advance_flag ) {
-                _adjustment_flag = true;
-                _limit_value_adjustment = 1;
-                setAdjustmentTargetPos( 1, 1, ref target_pos );
-                _end_position[ 1 ].z += ADJUST_FIRST_PLAYER_Z_POS;
-            }
-        } else if(  _players[ 1 ].advance_count - 1 == _players[ 0 ].advance_count || _players[ 1 ].advance_count == _players[ 0 ].advance_count - 1 ) {
-            if( _limit_value == 1 && _players[ 1 ].advance_count > 0 && _players[ 0 ].advance_count > 0 ) {
-                _adjustment_flag = true;
-                _limit_value_adjustment = 1;
-                if ( _advance_flag ) {
-                    if( _player_id == 0 )
-                        setAdjustmentTargetPos( 1, 1, ref target_pos );
-                    else
-                        setAdjustmentTargetPos( 1, 0, ref target_pos );
-                }
-                _end_position[ 0 ].z += ADJUST_FIRST_PLAYER_Z_POS;
-                _end_position[ 1 ].z -= ADJUST_FIRST_PLAYER_Z_POS;
-            } 
-        } else {
-            _adjustment_flag = false;
-            _limit_value_adjustment = 0;
-        }
-    }
-
-    /*private void playerAdjustment( ) {
-        if( _players[ 0 ].advance_count + 1 == _players[ 1 ].advance_count ) {
-            if( _advance_flag ) {
-                if( getPlayerID( ) == 0 && _limit_value > 1 ) {
-                    playerAdjustmentMove( 1, 1 );
-                } else if( _limit_value == 1 && _players[ 1 ].advance_count > 0 && _players[ 0 ].advance_count > 0 ) {
-                    playerAdjustmentMove( 1, 0 );
-                }
-            }
-        } else if( _players[ 1 ].advance_count + 1 == _players[ 0 ].advance_count ) {
-            if( _advance_flag ) {
-                if( getPlayerID( ) == 1 && _limit_value > 1 ) {
-                    playerAdjustmentMove( 1, 0 );
-                } else if( _limit_value == 1 && _players[ 1 ].advance_count > 0 && _players[ 0 ].advance_count > 0 ) {
-                    playerAdjustmentMove( 1, 1 );
-                }
-            }
-        } /*else if(  _players[ 1 ].advance_count - 1 == _players[ 0 ].advance_count ) {
-            if( _limit_value == 1 && _players[ 1 ].advance_count > 0 && _players[ 0 ].advance_count > 0 ) {
-                if( _advance_flag ) {
-                    if( _player_id == 0 ) {
-                        playerAdjustmentMove( 1, 1 );
-                    }
-                } else {
-                    if( _players[ 1 ].advance_count == _players[ 0 ].advance_count - 1 ) {
-                        if( _player_id == 1 ) {
-                            playerAdjustmentMove( 1, 0 );
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    public void playerAdjustmentMove( int i, int id ) {
-        var diff = Time.timeSinceLevelLoad - _startTime[ i ];
-		if ( diff > _time ) {
-			_players[ id ].obj.transform.position = _end_position[ i ];
-            _limit_value_adjustment--;
-        }
-
-		var rate = diff / _time;
-
-		_players[ id ].obj.transform.position = Vector3.Lerp ( _start_position[ i ], _end_position[ i ], rate );
-    }*/
     /// <summary>
 	/// ターゲットの設定
 	/// </summary>
@@ -315,7 +211,7 @@ public class PlayerManager : MonoBehaviour {
                 _end_position[i].z -= ADJUST_PLAYER_POS;
                 break;
         }
-        _end_position[i].y += 0.3f;
+        _end_position[i].y += ADJUST_FIRST_PLAYER_Y_POS;
         _move_flag = true;
     }
     /// <summary>
@@ -662,4 +558,41 @@ public class PlayerManager : MonoBehaviour {
          _players[ id ].obj.transform.position = new Vector3( 25, 0, 0);
          _players[ id ].stage = stage;
      }
+
+	 public void eventRefresh( int id ){
+		_players[ id ].event_type = EVENT_TYPE.EVENT_NONE;
+	 }
+
+	 public void setPlayerMotion(){
+		 for(int i = 0; i < (int)PLAYER_ORDER.MAX_PLAYER_NUM; i++){
+			 if(_players[i].obj != null){
+				switch(_players[i].event_type){
+					case EVENT_TYPE.EVENT_NONE:
+						if(_move_start[i] == false || _move_finish[i] == true){
+							_players[ i ].obj.GetComponent<Animator>().SetInteger("state", 0);
+						}else if(_move_start[i] == true && _move_finish[i] == false){
+							_players[ i ].obj.GetComponent<Animator>().SetInteger("state", 1); //歩くアニメーションをセット
+						}
+						break;
+					case EVENT_TYPE.EVENT_MOVE:
+						_players[ i ].obj.GetComponent<Animator>().SetInteger("state", 1); //イベント時歩くアニメーションをセット
+						break;
+					case EVENT_TYPE.EVENT_WORP:
+					case EVENT_TYPE.EVENT_CHANGE:
+						_players[ i ].obj.GetComponent<Animator>().SetInteger("state", 1); 
+						break;
+					case EVENT_TYPE.EVENT_DISCARD:
+						_players[ i ].obj.GetComponent<Animator>().SetInteger("state", 1); //イベント時転ぶアニメーションをセット
+						break;
+				}
+			}
+		}
+	 }
+
+	 public bool getAnimationEnd( int id ){
+		if ( _players[ id ].obj.GetComponent<Animator>().GetCurrentAnimatorStateInfo(0).normalizedTime == 1)
+			return true;
+		else
+			return false;
+	 }
 }
