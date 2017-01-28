@@ -1,7 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2015
+# Visual Studio 2013
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "boardgameFlow.CSharp.Plugins", "boardgameFlow.CSharp.Plugins.csproj", "{040BD37A-0960-E85A-12F9-1148F205F311}"
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "boardgameFlow.CSharp", "boardgameFlow.CSharp.csproj", "{B7F62293-5A51-A13A-F0AF-6BAF07ABDC42}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "boardgameFlow.CSharp.Editor", "boardgameFlow.CSharp.Editor.csproj", "{54FC6BAC-4D23-6E0F-9860-E3312EC25AEE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -9,10 +13,18 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{040BD37A-0960-E85A-12F9-1148F205F311}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{040BD37A-0960-E85A-12F9-1148F205F311}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{040BD37A-0960-E85A-12F9-1148F205F311}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{040BD37A-0960-E85A-12F9-1148F205F311}.Release|Any CPU.Build.0 = Release|Any CPU
 		{B7F62293-5A51-A13A-F0AF-6BAF07ABDC42}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{B7F62293-5A51-A13A-F0AF-6BAF07ABDC42}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B7F62293-5A51-A13A-F0AF-6BAF07ABDC42}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B7F62293-5A51-A13A-F0AF-6BAF07ABDC42}.Release|Any CPU.Build.0 = Release|Any CPU
+		{54FC6BAC-4D23-6E0F-9860-E3312EC25AEE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{54FC6BAC-4D23-6E0F-9860-E3312EC25AEE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{54FC6BAC-4D23-6E0F-9860-E3312EC25AEE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{54FC6BAC-4D23-6E0F-9860-E3312EC25AEE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

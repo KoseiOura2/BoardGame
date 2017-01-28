@@ -141,6 +141,10 @@ public class ClientData : NetworkBehaviour {
 	[ Command ]
 	public void CmdSetSendBattleData( bool ready, int player_power, int[ ] used_card_list, int[ ] turned_card_list ) { 
         _player_data.player_power = player_power;
+        if ( used_card_list.Length > _player_data.used_card_list.Length ) {
+            Debug.Log( "使ったカード数" + used_card_list.Length );
+            Debug.Log( "確保したカード数" + _player_data.used_card_list.Length );
+        }
 		for ( int i = 0; i < used_card_list.Length; i++ ) {
 			_player_data.used_card_list[ i ] = used_card_list[ i ];
 		}

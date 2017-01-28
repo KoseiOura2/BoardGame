@@ -7,7 +7,7 @@ using Common;
 public class PlayerManager : MonoBehaviour {
     
     public float ADJUST_FIRST_PLAYER_Y_POS = 0.3f;          // プレイヤー初期生成時の修正Y座標
-    public float ADJUST_FIRST_PLAYER_Z_POS = 0.6f;          // プレイヤー初期生成時の修正Z座標
+    public float ADJUST_PLAYER_POS = 0.6f;          // プレイヤー初期生成時の修正Z座標
 
     [ SerializeField ]
     private PLAYER_ORDER _player_order;     // どのプレイヤーが行動中か
@@ -36,7 +36,8 @@ public class PlayerManager : MonoBehaviour {
 	private int _defalut_power = 0;
 	private int _plus_draw;
 	private int _plus_power;
-    private float _time = 1;
+    private float _time = 0.3f;
+    private Vector3 _velocity = Vector3.zero;
     private float[] _startTime = new float[2];
 	[ SerializeField ]
     private bool _move_flag    = false;     //動かす時のフラグが立っているか
@@ -51,6 +52,7 @@ public class PlayerManager : MonoBehaviour {
 	[ SerializeField ]
 	private bool[ ] _change_count = new bool[ ]{ false, false };
     private bool _advance_flag = true;   	//前に進むか後ろに戻るか
+    private bool _current_flag = false;
     
     private bool _accel_init = false;
     private float _accel = 0.0f;
@@ -91,11 +93,11 @@ public class PlayerManager : MonoBehaviour {
             first_pos.y = ADJUST_FIRST_PLAYER_Y_POS;
             switch ( _player_order ) {
                 case PLAYER_ORDER.PLAYER_ONE:
-                    first_pos.z += ADJUST_FIRST_PLAYER_Z_POS;
+                    first_pos.z += ADJUST_PLAYER_POS;
                     _player_order = PLAYER_ORDER.PLAYER_TWO;
                     break;
                 case PLAYER_ORDER.PLAYER_TWO:
-                    first_pos.z -= ADJUST_FIRST_PLAYER_Z_POS;
+                    first_pos.z -= ADJUST_PLAYER_POS;
                     _player_order = PLAYER_ORDER.NO_PLAYER;
                     break;
             }
@@ -153,7 +155,7 @@ public class PlayerManager : MonoBehaviour {
         if ( _player_id > -1 ) {
             _move_start[ _player_id ] = true;
             //if( _target != null )
-              //  adjustmentUpdate( );
+               // adjustmentUpdate( target_pos );
             if ( _limit_value > 0 ) {
                 if ( !_move_flag ) {
                     setTargetPos( 0, _player_id, ref target_pos );
@@ -161,37 +163,16 @@ public class PlayerManager : MonoBehaviour {
                     playerMove( 0, _player_id );
                 }
             } else if ( _limit_value == 0 ) {
-                //playerPostionAdjustment( ref target_pos );
-                //playerAdjustment( );
-                if( _adjustment_flag == false ) {
-                    _move_finish[ _player_id ] = true;
-                    _limit_value--;
-                    
-                }
+                _move_finish[ _player_id ] = true;
+                _limit_value--;
+                _adjustment_flag = false;
             } else {
                  _move_finish[ _player_id ] = true;
-                _player_id = -1;
             }
         } else {
-			_player_id = -1;
 			_target = null;
 		}
 	}
-
-    /*private void adjustmentUpdate( ) {
-        if ( _limit_value[ 1 ] == 0 ) {
-            _limit_value[ 1 ]--;
-            _adjustment_flag = false;
-        } else {
-            if( _limit_value[ 1 ] < 0 ) {
-                if ( !_adjustment_flag ) {
-                    playerPostionAdjustment( );
-                }
-            } else if( _limit_value[ 1 ] > 0 ) {
-                playerAdjustment( );
-            }
-        }
-    }*/
 
 	/// <summary>
 	/// ターゲットの設定
@@ -199,143 +180,80 @@ public class PlayerManager : MonoBehaviour {
 	/// <param name="count">Count.</param>
 	/// <param name="advance_pos">Advance position.</param>
 	/// <param name="back_pos">Back position.</param>
-	private void setTargetPos( int i, int id, ref GameObject target_pos ) {
-        if ( _time <= 0 ) {
-			_players[ id ].obj.transform.position = _end_position;
-			_player_id = -1;
+	private void setTargetPos(int i, int id, ref GameObject target_pos)
+    {
+        if (_time <= 0)
+        {
+            _players[id].obj.transform.position = _end_position;
+            _player_id = -1;
             _target = null;
             return;
         }
 
-        _startTime[ i ] = Time.timeSinceLevelLoad;
-		_start_position = _players[ id ].obj.transform.position;
-		_target = target_pos;
+        if(_current_flag) _time = 1.0f;
+        else _time = 0.5f;
+
+        _startTime[i] = Time.timeSinceLevelLoad;
+        _start_position = _players[id].obj.transform.position;
+        _target = target_pos;
         _end_position = _target.transform.localPosition;
-        _end_position.y += 0.3f;
+
+        switch (_player_id)
+        {
+        case 0:
+                _end_position.x -= ADJUST_PLAYER_POS;
+                _end_position.z += ADJUST_PLAYER_POS;
+            break;
+        case 1:
+                _end_position.x += ADJUST_PLAYER_POS;
+                _end_position.z -= ADJUST_PLAYER_POS;
+                break;
+        }
+        _end_position.y += ADJUST_FIRST_PLAYER_Y_POS;
         _move_flag = true;
     }
-    /*private void setAdjustmentTargetPos( int i, int id ) {
-        _startTime[ i ] = Time.timeSinceLevelLoad;
-		_start_position[ i ] = _players[ id ].obj.transform.position;
-        _end_position[ i ] = _target.transform.localPosition;
-        _end_position[ i ].y += 0.3f;
-    }*/
-
-    /*private void playerPostionAdjustment( ) {
-        _adjustment_flag = true;
-        setLimitValue( 1, 1 );
-        if( _players[ 0 ].advance_count + 1 == _players[ 1 ].advance_count
-            && getPlayerID( ) == 0 && _limit_value[ 0 ] > 1 ) {
-            setAdjustmentTargetPos( 1, 0 );
-            _end_position[ 1 ].z += ADJUST_FIRST_PLAYER_Z_POS;
-        } else if( _players[ 1 ].advance_count + 1 == _players[ 0 ].advance_count
-            && getPlayerID( ) == 1 && _limit_value[ 0 ] > 1 ) {
-            setAdjustmentTargetPos( 1, 1 );
-            _end_position[ 1 ].z += ADJUST_FIRST_PLAYER_Z_POS;
-        } else if( _players[ 1 ].advance_count - 1 == _players[ 0 ].advance_count || _players[ 0 ].advance_count - 1 == _players[ 1 ].advance_count ) {
-            if( _limit_value[ 0 ] == 1 && _players[ 1 ].advance_count > 0 && _players[ 0 ].advance_count > 0 ) {
-                switch( _player_id ) {
-                    case 0:
-                        setAdjustmentTargetPos( 1, 1 );
-                        _end_position[ 0 ].z += ADJUST_FIRST_PLAYER_Z_POS;
-                        _end_position[ 1 ].z -= ADJUST_FIRST_PLAYER_Z_POS;
-                        break;
-                    case 1:
-                        setAdjustmentTargetPos( 1, 0 );
-                        _end_position[ 0 ].z += ADJUST_FIRST_PLAYER_Z_POS;
-                        _end_position[ 1 ].z -= ADJUST_FIRST_PLAYER_Z_POS;
-                        break;
-                }
-            }
-        } else {
-            _adjustment_flag = false;
-            setLimitValue( 1, 0 );
-        }
-    }
-
-    private void playerAdjustment( ) {
-        if( _players[ 0 ].advance_count + 1 == _players[ 1 ].advance_count
-            && getPlayerID( ) == 0 && _limit_value[ 0 ] > 0 ) {
-             playerAdjustmentMove( 1, 1 );
-        } else if( _players[ 1 ].advance_count + 1 == _players[ 0 ].advance_count
-            && getPlayerID( ) == 1 && _limit_value[ 0 ] > 0 ) {
-             playerAdjustmentMove( 1, 0 );
-        } else if( _players[ 1 ].advance_count == _players[ 0 ].advance_count
-            && _limit_value[ 0 ] == 0 ) {
-            switch( _player_id ) {
-                    case 0:
-                        playerAdjustmentMove( 1, 1 );
-                        break;
-                    case 1:
-                        playerAdjustmentMove( 1, 0 );
-                        break;
-                }
-        } else {
-            _adjustment_flag = false;
-            setLimitValue( 1, 0 );
-        }
-    }
-
-    public void playerAdjustmentMove( int i, int id ) {
-        var diff = Time.timeSinceLevelLoad - _startTime[ i ];
-		if ( diff > _time ) {
-			_players[ id ].obj.transform.position = _end_position[ i ];
-            _limit_value[ i ]--;
-        }
-
-		var rate = diff / _time;
-
-		_players[ id ].obj.transform.position = Vector3.Lerp ( _start_position[ i ], _end_position[ i ], rate );
-    }*/
 
 	/// <summary>
 	/// プレイヤーを動かす処理
 	/// </summary>
-    private void playerMove( int i, int id ) {
+     private void playerMove( int i, int id ) {
         var diff = Time.timeSinceLevelLoad - _startTime[ i ];
-        float distance = Vector3.Distance( _players[ _player_id ].obj.transform.position, _end_position );
-		if ( diff > _time || distance < 0.1f ) {
-			_players[ _player_id ].obj.transform.position = _end_position;
+		Vector3 distance = ( _end_position - _players[ id ].obj.transform.position ) / Vector3.Distance(_players[ id ].obj.transform.position, _end_position );
+
+		if ( diff > _time * 3.5f ) {
+			_players[ id ].obj.transform.position = _end_position;
             _accel_init = false;
-            _limit_value--;
-			if ( _advance_flag ) {
-				_players[ _player_id ].advance_count++;
-                _change_count[ _player_id ] = true;
-			} else {
-				_players[ _player_id ].advance_count--;
-                _change_count[ _player_id ] = true;
-			}
+            
+            if( _current_flag ) {
+			    if ( _advance_flag ) {
+				    _players[ id ].advance_count += _limit_value;
+                    _change_count[ id ] = true;
+			    } else {
+				    _players[ id ].advance_count -= _limit_value;
+                    _change_count[ id ] = true;
+			    }
+                _limit_value = 0;
+            } else {
+                if ( _advance_flag ) {
+				    _players[ id ].advance_count++;
+                    _change_count[ id ] = true;
+			    } else {
+				    _players[ id ].advance_count--;
+                    _change_count[ id ] = true;
+			    }
+                _limit_value--;
+            }
+            _current_flag = false;
             _move_flag = false;
-            _target    = null;
             return;
         }
 
-        float dis = Vector3.Distance( _start_position, _end_position );
-		float rate = 0.0f;
-        if ( !_accel_init ) {
-            _accel = 0.0f;
-            _speed = 0.0f;
-            _first_speed = 0.0f;
-            _accel_init = true;
-        }
+		Quaternion newDir = Quaternion.LookRotation( distance );
+		_players[ id ].obj.transform.rotation = Quaternion.SlerpUnclamped( _players[ id ].obj.transform.rotation, newDir, _time );
 
-        if ( diff >= 0 && diff < 0.2 ) {
-            _first_speed = 0.0f;
-            _accel = 0.1f;
-            _speed = _accel * diff * 10;
-            _first_speed = _speed;
-            rate = ( _speed * diff / 2 ) / dis;
-        } else if ( diff > 0.75 ) {
-            _accel = -0.1f;
-            _speed = _accel * ( diff - 0.75f ) * 10 + _first_speed;
-            rate = ( _speed * ( diff - 0.75f ) * 10 / 2 ) / dis;
-        } else {
-            _first_speed = _speed;
-            rate = ( _speed * ( diff - 0.2f ) * 10 ) / dis;
-        }
-
-        _players[ _player_id ].obj.transform.position = Vector3.Lerp( _start_position, _end_position, rate );
-    }
+        _players[ id ].obj.transform.position = Vector3.SmoothDamp(_players[ id ].obj.transform.position, _end_position, ref _velocity , _time);
+		//Vector3.Lerp ( _start_position[ i ], _end_position[ i ], rate );
+	}
     
 	/// <summary>
 	/// ランク付け関数
@@ -443,17 +361,18 @@ public class PlayerManager : MonoBehaviour {
     /// <summary>
     /// プレイヤーがどれくらい進んでいるかを取得
     /// </summary>
-    /// <param name="i"></param>
+    /// <param name="id"></param>
     /// <returns></returns>
-	public int getPlayerCount( int i, int length ) {
-		if ( i >= 0 ) {
-			if( _players[ i ].advance_count < length - 1 ) {
-				return _players[ i ].advance_count;
+	public int getPlayerCount( int id, int length ) {
+		if ( id >= 0 ) {
+			if( _players[ id ].advance_count < length - 1 ) {
+				return _players[ id ].advance_count;
 			} else {
 				return length - 1;
 			}
+        } else {
+            return 0;
         }
-        return 0;
     }
 
     /// <summary>
@@ -489,13 +408,21 @@ public class PlayerManager : MonoBehaviour {
 	public int getTargetMassID( int length ) {
 		if( _advance_flag ) {
 			if( getPlayerCount( getPlayerID( ), length ) < length - 1 ) {
-				return getPlayerCount( getPlayerID( ), length ) + 1;
+                if( _current_flag ){
+				    return getPlayerCount( getPlayerID( ), length ) + _limit_value;
+                } else {
+                    return getPlayerCount( getPlayerID( ), length ) + 1;
+                }
 			} else {
                 _limit_value = 0;
 				return getPlayerCount( getPlayerID( ), length );
 			}
 		} else {
-			return getPlayerCount( getPlayerID( ), length ) - 1;
+            if( _current_flag ){
+                return getPlayerCount( getPlayerID( ), length ) - _limit_value;
+            } else {
+			    return getPlayerCount( getPlayerID( ), length ) - 1;
+            }
 		}
 	}
 
@@ -588,11 +515,12 @@ public class PlayerManager : MonoBehaviour {
             _move_finish[ i ] = false;
             _move_start[ i ] = false;
         }
+        _player_id = -1;
     }
 
-    public bool isChangeCount( ) {
-        if ( _change_count[ _player_id ] ) {
-            _change_count[ _player_id ] = false;
+    public bool isChangeCount( PLAYER_ORDER player_num ) {
+        if ( _change_count[ ( int )player_num ] ) {
+            _change_count[ ( int )player_num ] = false;
             return true;
         }
 
@@ -659,4 +587,67 @@ public class PlayerManager : MonoBehaviour {
          _players[ id ].obj.transform.position = new Vector3( 25, 0, 0);
          _players[ id ].stage = stage;
      }
+
+    public void eventRefresh( int id ){
+		_players[ id ].event_type = EVENT_TYPE.EVENT_NONE;
+	 }
+
+	 public void setPlayerMotion(){
+		 for(int i = 0; i < (int)PLAYER_ORDER.MAX_PLAYER_NUM; i++){
+			 if(_players[i].obj != null){
+				switch(_players[i].event_type){
+					case EVENT_TYPE.EVENT_NONE:
+						if(_move_start[i] == false || _move_finish[i] == true){
+							_players[ i ].obj.GetComponent<Animator>().SetInteger("state", 0);
+						}else if(_move_start[i] == true && _move_finish[i] == false){
+							_players[ i ].obj.GetComponent<Animator>().SetInteger("state", 1); //歩くアニメーションをセット
+						}
+						break;
+					case EVENT_TYPE.EVENT_MOVE:
+						_players[ i ].obj.GetComponent<Animator>().SetInteger("state", 1); //イベント時歩くアニメーションをセット
+						break;
+					case EVENT_TYPE.EVENT_WORP:
+					case EVENT_TYPE.EVENT_CHANGE:
+						_players[ i ].obj.GetComponent<Animator>().SetInteger("state", 1); 
+						break;
+					case EVENT_TYPE.EVENT_DISCARD:
+						_players[ i ].obj.GetComponent<Animator>().SetInteger("state", 1); //イベント時転ぶアニメーションをセット
+						break;
+				}
+			}
+		}
+	 }
+
+	 public bool getAnimationEnd( int id ){
+		if ( _players[ id ].obj.GetComponent<Animator>().GetCurrentAnimatorStateInfo(0).normalizedTime == 1)
+			return true;
+		else
+			return false;
+	 }
+
+     public void setPlayerCount ( int id, int count ) {
+        _players[ id ].advance_count = count;
+    }
+
+    public void setPlayerPosition( int id, Vector3 position ) {
+        if ( id == 0 ) {
+            position.x -= ADJUST_PLAYER_POS;
+            position.z += ADJUST_PLAYER_POS;
+			position.y += ADJUST_FIRST_PLAYER_Y_POS;
+            _players[ id ].obj.transform.localPosition = position;
+        } else if( id == 1 ) {
+            position.x += ADJUST_PLAYER_POS;
+            position.z -= ADJUST_PLAYER_POS;
+			position.y += ADJUST_FIRST_PLAYER_Y_POS;
+            _players[ id ].obj.transform.localPosition = position;
+        }
+    }
+
+    public Vector3 isPlayerPosition( int id ) {
+        return _players[ id ].obj.transform.localPosition;
+    }
+
+    public void setCurrentFlag( bool flag ){
+        _current_flag = flag;
+    }
 }

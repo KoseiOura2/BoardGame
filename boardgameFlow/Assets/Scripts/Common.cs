@@ -114,6 +114,9 @@ namespace Common {
         EVENT_DRAW,
         EVENT_MOVE,
         EVENT_ACTION,
+        EVENT_WORP,
+        EVENT_CHANGE,
+		EVENT_DISCARD,
         EVENT_GOAL
     }
 
