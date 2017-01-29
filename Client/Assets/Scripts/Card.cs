@@ -1,8 +1,12 @@
 ﻿using UnityEngine;
+using UnityEngine.EventSystems;
 using System.Collections;
 using Common;
 
 public class Card : MonoBehaviour {
+
+    const float MOUSE_OVER_TIME = 2.0f;
+
     [ SerializeField ]
 	private GameObject _front_object;
 	private Material _front_material;
@@ -15,6 +19,9 @@ public class Card : MonoBehaviour {
 	private bool _selected;
 	[ SerializeField ]
 	private int _id = -1;
+    [ SerializeField ]
+    private float _over_time = 0.0f;
+    private bool _mouse_overed = false;
 
 	void Awake( ) {
 		if ( _front_material == null ) {
@@ -30,9 +37,6 @@ public class Card : MonoBehaviour {
 		_front_material = Resources.Load< Material >( "Materials/Cards/" + card_data.name );
 		_front_object.GetComponent< Renderer >( ).material = _front_material;
 		_card_data = card_data;
-        if ( card_data.id < 0 ) {
-            Debug.Log( "korosu2" );
-        }
 		_id = card_data.id;
 	}
 
@@ -63,4 +67,28 @@ public class Card : MonoBehaviour {
 	public bool getSelectFlag( ) {
 		return _selected;
 	}
+
+    public bool isMouseOvered( ) {
+        return _mouse_overed;
+    }
+
+    public void mouseOverFinish( ) {
+        _mouse_overed = false;
+    }
+
+    public void OnMouseOver( ) {
+        if ( !_mouse_overed ) {
+            _over_time += Time.deltaTime;
+            if ( _over_time >= MOUSE_OVER_TIME ) {
+                _mouse_overed = true;
+                _over_time = 0.0f;
+            }
+        }
+    }
+
+    // オブジェクトの範囲内からマウスポインタが出た際に呼び出されます。
+    // 
+    public void OnMouseExit( ) {
+        _over_time = 0.0f;
+    }
 }

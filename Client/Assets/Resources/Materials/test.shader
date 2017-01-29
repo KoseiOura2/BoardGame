@@ -4,6 +4,8 @@
 	}
 	SubShader {
 	    Pass {
+			Blend SrcAlpha OneMinusSrcAlpha
+			Cull Back
 			Tags { "RenderType"="Opaque" }
 			LOD 200
 			
@@ -39,7 +41,7 @@
 
 			float4 frag ( v2f input ) : SV_Target {
 				// 色を出力
-				float4 color = float4( 1, 1, 1, 1 );
+				float4 color = float4( 1, 1, 1, 0 );
 
 				color = tex2D ( _MainTex, input.uv );
 

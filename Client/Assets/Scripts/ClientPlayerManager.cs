@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.UI;
 using System.Collections;
 using System.IO;
 using System.Collections.Generic;
@@ -11,6 +12,7 @@ public class ClientPlayerManager : MonoBehaviour {
 	private const int INIT_PLAYER_POWER  = 10;
     private const int MAX_PLAYER_CARD_NUM = 6;
 	private const int MAX_SEND_CARD_NUM = 4;
+    private const float EXPANTION_MAGNIFICATION = 2.0f;
 
     public enum DRAW_CARD_ACTION {
         ACTION_NONE,
@@ -58,6 +60,8 @@ public class ClientPlayerManager : MonoBehaviour {
 	private GameObject _profile_card_pref;
 	private GameObject _profile_card_obj;
 	private GameObject _profile_card_area;
+    private GameObject _expantion_card;
+    private GameObject _expantion_card_area;
     [ SerializeField ]
     private GameObject _create_draw_card_pos;
     private GameObject _draw_card_area;
@@ -68,20 +72,22 @@ public class ClientPlayerManager : MonoBehaviour {
 	private GameObject _select_throw_area_base;
     private Vector3[ ] _select_throw_area = new Vector3[ MAX_PLAYER_CARD_NUM ];
 
-    private GAME_PLAY_MODE _play_mode          = GAME_PLAY_MODE.MODE_NORMAL_PLAY;
+    private GAME_PLAY_MODE _play_mode = GAME_PLAY_MODE.MODE_NORMAL_PLAY;
     [ SerializeField ]
     private DRAW_CARD_ACTION _draw_card_action = DRAW_CARD_ACTION.ACTION_NONE;
 
     private List< bool > _arrived_list = new List< bool >( );
     private List< bool > _rotate_list  = new List< bool >( );
 	private int _dice_value = 0;
-    private float _card_width = 3.0f;
+    private int _expantion_num = -1;
+    private float _card_width = 3.1f;
     private float _draw_card_pos_x_adjust = 0.5f;
     private float _draw_card_move_speed = 0.5f;
     [ SerializeField ]
     private bool _draw_card = false;
 	private bool _dice_roll = false;
     private bool _select_throw_complete = false;
+    private bool _expansion = false;
 
 	[ SerializeField ]
 	private int _hand_num = 0;
@@ -112,6 +118,9 @@ public class ClientPlayerManager : MonoBehaviour {
 		}
 		if ( _select_area_base == null ) {
 			_select_area_base = GameObject.Find( "SelectHandArea" );
+		}
+		if ( _expantion_card_area == null ) {
+			_expantion_card_area = GameObject.Find( "ExpantionArea" );
 		}
         
         // 選択エリアの設定
@@ -198,11 +207,16 @@ public class ClientPlayerManager : MonoBehaviour {
 	}
 	#endif
 
-    public void createProfileCard( ) {
+    public void createProfileCard( int player_num ) {
         _profile_card_pref = Resources.Load< GameObject >( "Prefabs/PlayerCard" );
-
-        _profile_card_obj = Instantiate( _profile_card_pref );
-        _profile_card_obj.transform.position = _profile_card_area.transform.position;
+        Vector3 pos = _profile_card_pref.GetComponent< RectTransform >( ).localPosition;
+            
+        _profile_card_obj = ( GameObject )Instantiate( _profile_card_pref );
+        _profile_card_obj.transform.SetParent( GameObject.Find( "Canvas" ).transform );
+        _profile_card_obj.GetComponent< RectTransform >( ).anchoredPosition = new Vector3( 0, 0, 0 );
+        _profile_card_obj.GetComponent< RectTransform >( ).localScale = new Vector3( 1, 1, 1 );
+        _profile_card_obj.GetComponent< RectTransform >( ).localPosition = pos;
+        _profile_card_obj.GetComponent< Image >( ).sprite = Resources.Load< Sprite >( "Graphics/PlayerCard/PlayerCard" + player_num.ToString( ) );
     }
 
     public void destroyProfileCard( ) {
@@ -224,7 +238,7 @@ public class ClientPlayerManager : MonoBehaviour {
         // オブジェクトの生成
         GameObject obj = Instantiate( _card_obj,
                                       _create_draw_card_pos.transform.position,
-                                      Quaternion.LookRotation( Vector3.back ) ) as GameObject;
+                                      _card_obj.transform.rotation ) as GameObject;
         obj.GetComponent< Card >( ).setCardData( card_data );
 
         // ポジションの決定
@@ -346,7 +360,7 @@ public class ClientPlayerManager : MonoBehaviour {
 
             if ( angle >= 0 ) {
                 // 誤差修正
-                _draw_card_list[ id ].obj.transform.rotation = Quaternion.Euler( 0, 0, 0 );
+                _draw_card_list[ id ].obj.transform.rotation = Quaternion.Euler( 90, 0, 0 );
                 
                 bool rotate = false;
                 _draw_card_list[ id ] = new DRAW_CARD_DATA( _draw_card_list[ id ].card_data, _draw_card_list[ id ].obj,
@@ -358,7 +372,7 @@ public class ClientPlayerManager : MonoBehaviour {
             }
 
             // 回転
-            _draw_card_list[ id ].obj.transform.rotation = Quaternion.Euler( 0, angle, 0 );
+            _draw_card_list[ id ].obj.transform.rotation = Quaternion.Euler( 90, angle, 0 );
 
             _draw_card_list[ id ] = new DRAW_CARD_DATA( _draw_card_list[ id ].card_data, _draw_card_list[ id ].obj,
                                                         _draw_card_list[ id ].pos, angle, 
@@ -406,6 +420,9 @@ public class ClientPlayerManager : MonoBehaviour {
 		for ( int i = 0; i < _player_card.hand_list.Count; i++ ) {
 			//プレハブを生成してリストのオブジェクトに入れる
 			_player_card.hand_obj_list.Add( ( GameObject )Instantiate( _card_obj ) );
+            _player_card.hand_obj_list[ i ].transform.rotation = Quaternion.Euler( 90,
+                                                                                   0,
+                                                                                   _player_card.hand_obj_list[ i ].transform.rotation.z );
 			//カードデータ設定
 			_player_card.hand_obj_list[ i ].GetComponent< Card >( ).setCardData( _player_card.hand_list[ i ] );
 			_player_card.hand_obj_list[ i ].GetComponent< Card >( ).changeHandNum( i );
@@ -628,6 +645,45 @@ public class ClientPlayerManager : MonoBehaviour {
             _select_throw_complete = true;
         }
 	}
+
+    public bool createExpantionCard( ) {
+        bool flag = false;
+
+        if ( !_expansion ) {
+            for ( int i = 0; i < _player_card.hand_obj_list.Count; i++ ) {
+                if ( _player_card.hand_obj_list[ i ].GetComponent< Card >( ).isMouseOvered( ) ) {
+                    // カード生成
+			        _expantion_card = ( GameObject )Instantiate( _card_obj );
+                    _expantion_card.transform.position = _expantion_card_area.transform.position;
+                    _expantion_card.transform.localScale = new Vector3( _card_obj.transform.localScale.x * EXPANTION_MAGNIFICATION,
+                                                                        1, _card_obj.transform.localScale.z * EXPANTION_MAGNIFICATION );
+                    _expantion_card.transform.rotation = Quaternion.Euler( 90,  0, _player_card.hand_obj_list[ i ].transform.rotation.z );
+			        //カードデータ設定
+			        _expantion_card.GetComponent< Card >( ).setCardData( _player_card.hand_list[ i ] );
+			        _expantion_card.GetComponent< Card >( ).changeHandNum( i );
+
+                    _expantion_num = i;
+                    _expansion = true;
+                    flag = true;
+                    continue;
+                }
+            }
+        }
+
+        return flag;
+    }
+
+    public void destroyExpantionCard( ) {
+        Destroy( _expantion_card );
+        _player_card.hand_obj_list[ _expantion_num ].GetComponent< Card >( ).mouseOverFinish( );
+
+        _expantion_num = -1;
+        _expansion = false;
+    }
+
+    public bool isExpantion( ) {
+        return _expansion;
+    }
 
 	public void refreshSelectCard( ) {
 		_player_card.select_list.Clear( );

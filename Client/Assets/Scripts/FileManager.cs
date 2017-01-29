@@ -144,7 +144,7 @@ public class FileManager : Manager< FileManager > {
                 // Z座標の取得
 				data.mass[ i ].z = uint.Parse( values[ 3 ] );
                 // マスタイプの取得
-				data.mass[ i ].type = values[ 4 ];
+				data.mass[ i ].type = ( MASS_TYPE )int.Parse( values[ 4 ] );
                 // 値１取得
 				data.mass[ i ].nomalValue = int.Parse( values[ 5 ] );
                 // 値２取得

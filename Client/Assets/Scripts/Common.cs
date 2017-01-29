@@ -49,15 +49,6 @@ namespace Common {
 		GAME_PHASE_FINISH,
 	};
 
-	public enum CARD_TYPE {
-		CARD_TYPE_NONE_TYPE,
-		CARD_TYPE_ONCE_ENHANCE,
-		CARD_TYPE_ONCE_WEAKEN,
-		CARD_TYPE_CONTUNU_ENHANCE,
-		CARD_TYPE_INSURANCE,
-		CARD_TYPE_UNAVAILABLE,
-	};
-
     public enum GAME_STAGE {
         NORMAL,
         BONUS
@@ -124,6 +115,26 @@ namespace Common {
 		FIELD_ENVIRONMENT_NUM,
 		NO_FIELD,
 	};
+    
+	public enum CARD_TYPE {
+		CARD_TYPE_NONE_TYPE,
+		CARD_TYPE_ONCE_ENHANCE,
+		CARD_TYPE_ONCE_WEAKEN,
+		CARD_TYPE_CONTUNU_ENHANCE,
+		CARD_TYPE_INSURANCE,
+		CARD_TYPE_UNAVAILABLE,
+	};
+
+    public enum MASS_TYPE {
+        MASS_TYPE_NONE,
+        MASS_TYPE_START,
+        MASS_TYPE_GOAL,
+        MASS_TYPE_DRAW,
+        MASS_TYPE_ADVANCE,
+        MASS_TYPE_TRAP_ONE,
+        MASS_TYPE_TRAP_TWO,
+        MASS_TYPE_EVENT_ONE,
+    }
 
     /// <summary>
     /// 通信で送受信するフィールド側のデータ
@@ -172,7 +183,7 @@ namespace Common {
 		public uint x;	// X座標
 		public uint y;	// Y座標
 		public uint z;	// Z座標
-		public string type; //マスタイプ
+		public MASS_TYPE type; //マスタイプ
 		public int nomalValue; //値１
 		public int trapValue; //値２
 		public string environment; //環境情報
@@ -208,11 +219,11 @@ namespace Common {
     public struct CARD_DATA {
         public int id;
         public string name;
-        public string enchant_type;
+        public CARD_TYPE enchant_type;
         public int enchant_value;
         public int special_value;
         public int rarity;
-        public CARD_DATA ( int id, string name, string enchant_type, int enchant_value, int special_value, int rarity ) {
+        public CARD_DATA ( int id, string name, CARD_TYPE enchant_type, int enchant_value, int special_value, int rarity ) {
             this.id = id;
             this.name = name;
             this.enchant_type = enchant_type;

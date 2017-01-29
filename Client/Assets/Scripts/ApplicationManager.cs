@@ -56,6 +56,8 @@ public class ApplicationManager : Manager< ApplicationManager > {
     private GameObject _game_scene_select_area_obj;
     private GameObject _map_info_pref;
     private GameObject _map_info_obj;
+    private GameObject _mass_text_pref;
+    private GameObject _mass_text_obj;
     private GameObject _wait_picture_pref;
     private GameObject _wait_picture_obj;
     private GameObject _select_throw_area_pref;
@@ -74,6 +76,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
 	private GameObject[ ] _sea_deep_count_image  = new GameObject[ 3 ];
 	private GameObject[ ] _goal_count_image      = new GameObject[ 2 ];
 
+    private bool _create_mass_text = false;
     private int _change_scene_count = 0;
     private int _change_phase_count = 0;
     private bool _scene_init  = false;
@@ -199,6 +202,9 @@ public class ApplicationManager : Manager< ApplicationManager > {
 		if ( _mode == PROGRAM_MODE.MODE_CONNECT ) {
 			if ( _host_data == null && _network_manager.getHostObj( ) != null ) {
 				_host_data = _network_manager.getHostObj ( ).GetComponent< HostData >( );
+                if ( _host_data != null ) {
+                    _host_data.init( );
+                }
 			}
 
 			if ( _client_data == null && _network_manager.getClientObj( ) != null ) {
@@ -285,7 +291,8 @@ public class ApplicationManager : Manager< ApplicationManager > {
 			    for( int i = 0; i < _file_manager.getMassCount( ); i++ ) {
 				    int num = _map_manager.getMassCount( );
                     try {
-				        _map_manager.createMassObj( num, _file_manager.getFileData( ).mass[ num ].type, _file_manager.getMassCoordinate( num ) );
+				        _map_manager.createMassObj( num, _file_manager.getFileData( ).mass[ num ].type, _file_manager.getMassCoordinate( num ),
+                                                    _file_manager.getMassValue( i )[ 0 ], _file_manager.getMassValue( i )[ 1 ] );
 				        _map_manager.increaseMassCount( );
                     }
                     catch {
@@ -334,8 +341,8 @@ public class ApplicationManager : Manager< ApplicationManager > {
 			    for( int i = 0; i < _file_manager.getMassCount( ); i++ ) {
 				    int num = _map_manager.getMassCount( );
                     try {
-				        _map_manager.createMassObj( num, _file_manager.getFileData( ).mass[ num ].type, _file_manager.getMassCoordinate( num ) );
-                        //Debug.Log( "Clear Create Mass..." );
+				        _map_manager.createMassObj( num, _file_manager.getFileData( ).mass[ num ].type, _file_manager.getMassCoordinate( num ),
+                                                    _file_manager.getMassValue( i )[ 0 ], _file_manager.getMassValue( i )[ 1 ] );
 				        _map_manager.increaseMassCount( );
                     }
                     catch {
@@ -350,7 +357,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
                 
             }
             // プレイヤーカードの生成
-            _player_manager.createProfileCard( );
+            _player_manager.createProfileCard( ( int )_player_num );
             _map_manager.bindSprite( _player_num );
             _scene_init = true;
         }
@@ -435,6 +442,19 @@ public class ApplicationManager : Manager< ApplicationManager > {
 		if ( _sea_deep_count_image[ 0 ] != null && _sea_deep_count_image[ 1 ] != null && _sea_deep_count_image[ 2 ] != null ) {
 			_map_manager.changeSeaDeepNum( _sea_deep_count_image[ 2 ], _sea_deep_count_image[ 0 ], _sea_deep_count_image[ 1 ] );
 		}
+
+        // マスの効果を可視化
+        if ( _map_manager.getOveredMassData( ).type != MASS_TYPE.MASS_TYPE_NONE ) {
+            if ( !_create_mass_text ) {
+                MapManager.MASS_DATA data = _map_manager.getOveredMassData( );
+                // 素材不足により
+                if ( data.type == MASS_TYPE.MASS_TYPE_DRAW || data.type == MASS_TYPE.MASS_TYPE_ADVANCE ) {
+                    createMassText( data.type, data.normal_value );
+                }
+            }
+        } else {
+            destroyMassText( );
+        }
 	}
 
 	/// <summary>
@@ -918,6 +938,16 @@ public class ApplicationManager : Manager< ApplicationManager > {
 				_client_data.setReady( false );
 			}
 		}
+
+        // カードの拡大
+        if ( _player_manager.createExpantionCard( ) ) {
+            createLightOffObj( true );
+        }
+        // 拡大カードの削除
+        if ( Input.GetMouseButtonDown( 0 ) && _player_manager.isExpantion( ) ) {
+            destroyLightOffObj( );
+            _player_manager.destroyExpantionCard( );
+        }
 	}
 
 	/// <summary>
@@ -1278,6 +1308,29 @@ public class ApplicationManager : Manager< ApplicationManager > {
         Destroy( _map_info_obj );
         _map_info_obj = null;
         _map_info_pref = null;
+    }
+    
+    private void createMassText( MASS_TYPE type, int num ) {
+        _mass_text_pref = Resources.Load< GameObject >( "Prefabs/UI/Mass/MassText" );
+        Vector3 pos = _mass_text_pref.GetComponent< RectTransform >( ).localPosition;
+            
+        _mass_text_obj = ( GameObject )Instantiate( _mass_text_pref );
+        _mass_text_obj.transform.SetParent( GameObject.Find( "Canvas" ).transform );
+        _mass_text_obj.GetComponent< RectTransform >( ).anchoredPosition = new Vector3( 0, 0, 0 );
+        _mass_text_obj.GetComponent< RectTransform >( ).localScale = new Vector3( 1, 1, 1 );
+        _mass_text_obj.GetComponent< RectTransform >( ).localPosition = pos;
+        _mass_text_obj.GetComponent< Image >( ).sprite = Resources.Load< Sprite >( "Graphics/UI/Text/Mass/maptext_"+ ( int )type + "_" + num );
+        _create_mass_text = true;
+    }
+
+    /// <summary>
+    /// マップ情報の削除
+    /// </summary>
+    private void destroyMassText( ) {
+        _create_mass_text = false;
+        Destroy( _mass_text_obj );
+        _mass_text_obj = null;
+        _mass_text_pref = null;
     }
 
     /// <summary>

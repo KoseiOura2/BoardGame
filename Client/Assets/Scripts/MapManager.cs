@@ -7,6 +7,18 @@ using Common;
 public class MapManager : MonoBehaviour {
 
     private const int MASS_TYPE_NUM = 5;
+
+    public struct MASS_DATA {
+        public MASS_TYPE type;
+        public int normal_value;
+        public int trap_value;
+
+        public MASS_DATA( int init ) {
+            this.type = MASS_TYPE.MASS_TYPE_NONE;
+            this.normal_value = init;
+            this.trap_value   = init;
+        }
+    };
     
     private Sprite _player_icon;
 	private Sprite[ ] _small_num = new Sprite[ 10 ];
@@ -14,6 +26,7 @@ public class MapManager : MonoBehaviour {
 	private GameObject _base_point;
 	private GameObject _player_point;
     private List< GameObject > _mass_obj = new List< GameObject >( );
+    private List< MASS_DATA > _mass_list = new List< MASS_DATA >( );
     private List< Vector3 > _mass_pos = new List< Vector3 >( );
     private int _target_mass_id;
     private int _create_mass_count = 0;
@@ -47,24 +60,24 @@ public class MapManager : MonoBehaviour {
     }
     
 
-    public void createMassObj( int num, string type, Vector3 pos ) {
+    public void createMassObj( int num, MASS_TYPE type, Vector3 pos, int value_1, int value_2 ) {
+        MASS_DATA data = new MASS_DATA( 0 );
         GameObject pref = null;
-
 		// タイプによるリソース分け
 		switch ( type ) {
-			case "start":
-			case "goal":
+			case MASS_TYPE.MASS_TYPE_START:
+			case MASS_TYPE.MASS_TYPE_GOAL:
 				pref = _mass_pref[ 4 ];
                 break;
-            case "draw":
-            case "advance":
+			case MASS_TYPE.MASS_TYPE_DRAW:
+			case MASS_TYPE.MASS_TYPE_ADVANCE:
 				pref = _mass_pref[ 1 ];
                 break;
-			case "trap1":
-			case "trap2":
+			case MASS_TYPE.MASS_TYPE_TRAP_ONE:
+			case MASS_TYPE.MASS_TYPE_TRAP_TWO:
 				pref = _mass_pref[ 3 ];
 				break;
-			case "event":
+			case MASS_TYPE.MASS_TYPE_EVENT_ONE:
 				pref = _mass_pref[ 2 ];
                 break;
         }
@@ -72,30 +85,31 @@ public class MapManager : MonoBehaviour {
 		// 生成
 		GameObject obj = ( GameObject )Instantiate( pref );
 		obj.name = "Mass:ID" + num;
-        
         obj.transform.SetParent( _base_point.transform );
         obj.GetComponent< RectTransform >( ).anchoredPosition = new Vector3( 0, 0, 0 );
         obj.GetComponent< RectTransform >( ).localScale = new Vector3( 0.2f, 0.2f, 1 );
-
+        
+        // 座標の設定
         float x = _adjust_mass_pos * pos.x;
         float y = _adjust_mass_pos * pos.z;
         Vector3 adjust_pos = new Vector3( x, y, pref.transform.position.z );
         _mass_pos.Add( adjust_pos );
-
         obj.GetComponent< RectTransform >( ).localPosition = adjust_pos;
-        
-        try {
-            obj.GetComponent< Button >( ).onClick.AddListener( obj.GetComponent< Mass >( ).selectedOnClick );
-        }
-        catch {
-            Debug.Log( "Can't Add Event" );
-        }
-
+        // ボタンにイベントを追加
+        obj.GetComponent< Button >( ).onClick.AddListener( obj.GetComponent< Mass >( ).selectedOnClick );
         _mass_obj.Add( obj );
+
+        data.type = type;
+
+        // 値の設定
+        data.normal_value = value_1;
+        data.trap_value   = value_2;
+
+        _mass_list.Add( data );
     }
     
 	public void createMiniMass( ) {
-		for( int i = 0; i < _mass_obj.Count - 1; i++ ) {
+		for( int i = 0; i < _mass_list.Count - 1; i++ ) {
 
 			GameObject obj = ( GameObject )Instantiate( _mass_pref[ 0 ] );
             
@@ -142,36 +156,36 @@ public class MapManager : MonoBehaviour {
     public void massMove( ) {
         bool x_finish = false;
         bool y_finish = false;
-        float[ ] x = new float[ _mass_obj.Count ];
-        float[ ] y = new float[ _mass_obj.Count ];
+        float[ ] x = new float[ _mass_list.Count ];
+        float[ ] y = new float[ _mass_list.Count ];
 
         // x座標を動かす
         if ( _purpose_distance_x > 0 ) {
             if ( _mass_obj[ _player_pos_num ].transform.position.x >= _player_point.transform.position.x ) {
-                for ( int i = 0; i < _mass_obj.Count; i++ ) {
+                for ( int i = 0; i < _mass_list.Count; i++ ) {
                     x[ i ] = _mass_obj[ i ].transform.position.x;
                 }
                 x_finish = true;
             } else {
-                for ( int i = 0; i < _mass_obj.Count; i++ ) {
+                for ( int i = 0; i < _mass_list.Count; i++ ) {
                     x[ i ] = _mass_obj[ i ].transform.position.x;
                     x[ i ] += _move_speed;
                 }
             }
         } else if ( _purpose_distance_x < 0 ) {
             if ( _mass_obj[ _player_pos_num ].transform.position.x <= _player_point.transform.position.x ) {
-                for ( int i = 0; i < _mass_obj.Count; i++ ) {
+                for ( int i = 0; i < _mass_list.Count; i++ ) {
                     x[ i ] = _mass_obj[ i ].transform.position.x;
                 }
                 x_finish = true;
             } else {
-                for ( int i = 0; i < _mass_obj.Count; i++ ) {
+                for ( int i = 0; i < _mass_list.Count; i++ ) {
                     x[ i ] = _mass_obj[ i ].transform.position.x;
                     x[ i ] -= _move_speed;
                 }
             }
         } else if ( _purpose_distance_x == 0 ) {
-            for ( int i = 0; i < _mass_obj.Count; i++ ) {
+            for ( int i = 0; i < _mass_list.Count; i++ ) {
                 x[ i ] = _mass_obj[ i ].transform.position.x;
             }
             x_finish = true;
@@ -179,37 +193,37 @@ public class MapManager : MonoBehaviour {
         // y座標を動かす
         if ( _purpose_distance_y > 0 ) {
             if ( _mass_obj[ _player_pos_num ].transform.position.y >= _player_point.transform.position.y ) {
-                for ( int i = 0; i < _mass_obj.Count; i++ ) {
+                for ( int i = 0; i < _mass_list.Count; i++ ) {
                     y[ i ] = _mass_obj[ i ].transform.position.y;
                 }
                 y_finish = true;
             } else {
-                for ( int i = 0; i < _mass_obj.Count; i++ ) {
+                for ( int i = 0; i < _mass_list.Count; i++ ) {
                     y[ i ] = _mass_obj[ i ].transform.position.y;
                     y[ i ] += _move_speed;
                 }
             }
         } else if ( _purpose_distance_y < 0 ) {
             if ( _mass_obj[ _player_pos_num ].transform.position.y <= _player_point.transform.position.y ) {
-                for ( int i = 0; i < _mass_obj.Count; i++ ) {
+                for ( int i = 0; i < _mass_list.Count; i++ ) {
                     y[ i ] = _mass_obj[ i ].transform.position.y;
                 }
                 y_finish = true;
             } else {
-                for ( int i = 0; i < _mass_obj.Count; i++ ) {
+                for ( int i = 0; i < _mass_list.Count; i++ ) {
                     y[ i ] = _mass_obj[ i ].transform.position.y;
                     y[ i ] -= _move_speed;
                 }
             }
         } else if ( _purpose_distance_y == 0 ) {
-            for ( int i = 0; i < _mass_obj.Count; i++ ) {
+            for ( int i = 0; i < _mass_list.Count; i++ ) {
                 y[ i ] = _mass_obj[ i ].transform.position.y;
             }
             y_finish = true;
         }
 
         // 座標の設定
-        for ( int i = 0; i < _mass_obj.Count; i++ ) {
+        for ( int i = 0; i < _mass_list.Count; i++ ) {
             _mass_obj[ i ].transform.position = new Vector3( x[ i ], y[ i ], _mass_obj[ i ].transform.position.z );
         }
 
@@ -225,7 +239,7 @@ public class MapManager : MonoBehaviour {
         float distance_y = _player_point.transform.position.y - _mass_pos[ _player_pos_num ].y;
 
         // 座標を修正
-        for ( int i = 0; i < _mass_obj.Count; i++ ) {
+        for ( int i = 0; i < _mass_list.Count; i++ ) {
             _mass_obj[ i ].transform.position = new Vector3( _mass_pos[ i ].x + distance_x,
                                                              _mass_pos[ i ].y + distance_y,
                                                              _mass_obj[ i ].transform.position.z );
@@ -241,7 +255,7 @@ public class MapManager : MonoBehaviour {
 	}
 
     public void allMassReject( ) {
-        for ( int i = 0; i < _mass_obj.Count; i++ ) {
+        for ( int i = 0; i < _mass_list.Count; i++ ) {
             _mass_obj[ i ].GetComponent< Mass >( ).changeReject( true );
         }
     }
@@ -255,7 +269,7 @@ public class MapManager : MonoBehaviour {
     }
 
     public void allMassVisible( bool flag ) {
-        for ( int i = 0; i < _mass_obj.Count; i++ ) {
+        for ( int i = 0; i < _mass_list.Count; i++ ) {
             _mass_obj[ i ].GetComponent< Image >( ).enabled  = flag;
             _mass_obj[ i ].GetComponent< Button >( ).enabled = flag;
             try {
@@ -264,7 +278,7 @@ public class MapManager : MonoBehaviour {
                 bool a = _mass_obj[ i ].GetComponentInChildren< Image >( ).enabled;
                 string b = _mass_obj[ i ].GetComponentInChildren< Image >( ).gameObject.name;
                 */
-                if ( i != _mass_obj.Count - 1 ) {
+                if ( i != _mass_list.Count - 1 ) {
                     _mass_obj[ i ].transform.GetChild( 0 ).gameObject.GetComponent< Image >( ).enabled = flag;
                 }
             }
@@ -334,6 +348,19 @@ public class MapManager : MonoBehaviour {
         return _player_pos_num;
     }
 
+    public MASS_DATA getOveredMassData( ) {
+        MASS_DATA data = new MASS_DATA( 0 );
+
+        for ( int i = 0; i < _mass_list.Count; i++ ) {
+            if ( _mass_obj[ i ].GetComponent< Mass >( ).isMouseOvered( ) ) {
+                data = _mass_list[ i ];
+                return data;
+            }
+        }
+
+        return data;
+    }
+
     public bool isMassMove( ) {
         return _move;
     }
@@ -341,7 +368,7 @@ public class MapManager : MonoBehaviour {
     public int isSelect( ) {
         int num = -1;
 
-        for ( int i = 0; i < _mass_obj.Count; i++ ) {
+        for ( int i = 0; i < _mass_list.Count; i++ ) {
             if ( _mass_obj[ i ].GetComponent< Mass >( ).isSelected( ) ) {
                 num = i;
                 return num;

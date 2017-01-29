@@ -1,11 +1,15 @@
 ﻿using UnityEngine;
 using System.Collections;
+using Common;
+using UnityEngine.EventSystems;
 
 public class Mass : MonoBehaviour {
     
     [ SerializeField ]
-    private bool _selected = false;
-    private bool _reject   = false;
+    private bool _selected     = false;
+    private bool _reject       = false;
+    [ SerializeField ]
+    private bool _mouse_overed = false;
 
 	// Use this for initialization
 	void Start( ) {
@@ -34,5 +38,19 @@ public class Mass : MonoBehaviour {
 
     public void changeReject( bool flag ) {
         _reject = flag;
+    }
+
+    public bool isMouseOvered( ) {
+        return _mouse_overed;
+    }
+
+    public void OnPointerEnter( PointerEventData eventData ) {
+        _mouse_overed = true;
+    }
+
+    // オブジェクトの範囲内からマウスポインタが出た際に呼び出されます。
+    // 
+    public void OnPointerExit( PointerEventData eventData ) {
+        _mouse_overed = false;
     }
 }

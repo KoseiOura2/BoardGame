@@ -74,7 +74,7 @@ public class HostData : NetworkBehaviour {
     }
 
     // Use this for initialization
-    void Start ( ) {
+    public void init ( ) {
 
         // 配列の確保
         _field_data.card_list_one = new int[ DISTRIBUT_CARD_NUM ];
