@@ -60,14 +60,16 @@ public class ApplicationManager : Manager< ApplicationManager > {
     private GameObject _wait_picture_obj;
     private GameObject _select_throw_area_pref;
     private GameObject _select_throw_area_obj;
-    [ SerializeField ]
+    private GameObject _dice_obj;
+    private GameObject _dice_pref;
     private GameObject _dice_button_obj;
-    [ SerializeField ]
     private GameObject _dice_button_pref;
     private GameObject _complete_button_obj;
 	private GameObject _complete_button_pref;
 
     // 時間テキスト
+	private GameObject _dice_num_image_obj;
+	private GameObject _dice_num_image_pref;
 	private GameObject[ ] _battle_time_image     = new GameObject[ 2 ];
 	private GameObject[ ] _sea_deep_count_image  = new GameObject[ 3 ];
 	private GameObject[ ] _goal_count_image      = new GameObject[ 2 ];
@@ -497,7 +499,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
                 destroyWaitImage( );
             }
 
-            createLightOffObj( false );
+            createLightOffObj( true );
 
             _dice_button_pref = Resources.Load< GameObject >( "Prefabs/UI/DiceButton" );
 
@@ -518,24 +520,51 @@ public class ApplicationManager : Manager< ApplicationManager > {
             Destroy( _dice_button_obj );
             _dice_button_pref = null;
             _dice_button_obj  = null;
-            destroyLightOffObj( );
-
-            createWaitImage( "InductionOver" );
-
+            
             // ダイスの目を決定
             value = _player_manager.getDiceValue( );
+            // ダイスを転がすアニメーション
+            _dice_pref = Resources.Load< GameObject >( "Prefabs/Dice/model_dice_0" + value.ToString( ) );
+            _dice_obj = ( GameObject )Instantiate( _dice_pref, _dice_pref.transform.position, _dice_pref.transform.rotation );
+            
+            StartCoroutine( diceRollAnim( value ) );
 
-            // サーバーにダイスの目を送信
-            if ( _mode == PROGRAM_MODE.MODE_CONNECT ) {
-                _client_data.CmdSetSendDiceValue( value );
-                _client_data.setDiceValue(value);
-            }  else if ( _mode == PROGRAM_MODE.MODE_NO_CONNECT ) {
-                _phase_manager.setPhase( MAIN_GAME_PHASE.GAME_PHASE_MOVE_CHARACTER );
-
-                _phase_init = false;
-            }
         }
 	}
+
+    IEnumerator diceRollAnim( int value ) {
+        yield return new WaitForSeconds( 2.0f );
+        // ダイスの値をイメージで表示
+        _dice_num_image_pref = Resources.Load< GameObject >( "Prefabs/UI/DiceValue" );
+        Vector3 pos = _dice_num_image_pref.GetComponent< RectTransform >( ).localPosition;
+            
+        _dice_num_image_obj = ( GameObject )Instantiate( _game_scene_select_area_pref );
+        _dice_num_image_obj.transform.SetParent( GameObject.Find( "Canvas" ).transform );
+        _dice_num_image_obj.GetComponent< Image >( ).sprite = Resources.Load< Sprite >( "Graphics/Number/number_buff_" + value.ToString( ) );
+        _dice_num_image_obj.GetComponent< Image >( ).SetNativeSize( );
+        _dice_num_image_obj.GetComponent< RectTransform >( ).anchoredPosition = new Vector3( 0, 0, 0 );
+        _dice_num_image_obj.GetComponent< RectTransform >( ).localScale = new Vector3( 1, 1, 1 );
+        _dice_num_image_obj.GetComponent< RectTransform >( ).localPosition = pos;
+
+        yield return new WaitForSeconds( 2.0f );
+        destroyLightOffObj( );
+        Destroy( _dice_obj );
+        _dice_obj  = null;
+        _dice_pref = null;
+        Destroy( _dice_num_image_obj );
+        _dice_num_image_obj  = null;
+        _dice_num_image_pref = null;
+        createWaitImage( "InductionOver" );
+        // サーバーにダイスの目を送信
+        if ( _mode == PROGRAM_MODE.MODE_CONNECT ) {
+            _client_data.CmdSetSendDiceValue( value );
+            _client_data.setDiceValue(value);
+        }  else if ( _mode == PROGRAM_MODE.MODE_NO_CONNECT ) {
+            _phase_manager.setPhase( MAIN_GAME_PHASE.GAME_PHASE_MOVE_CHARACTER );
+
+            _phase_init = false;
+        }
+    }
 
 	/// <summary>
 	/// MovePhaseの更新
