@@ -728,6 +728,12 @@ public class ClientPlayerManager : MonoBehaviour {
 		_dice_value = 0;
 	}
 
+    public void cardListVisible( bool flag ) {
+        for ( int i = 0; i < _player_card.hand_obj_list.Count; i++ ) {
+            _player_card.hand_obj_list[ i ].SetActive( flag );
+        }
+    }
+
     public void setPlayMode( GAME_PLAY_MODE mode ) {
         _play_mode = mode;
     }

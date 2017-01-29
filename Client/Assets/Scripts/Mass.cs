@@ -44,13 +44,13 @@ public class Mass : MonoBehaviour {
         return _mouse_overed;
     }
 
-    public void OnPointerEnter( PointerEventData eventData ) {
+    public void OnMouseEnter( ) {
         _mouse_overed = true;
     }
 
     // オブジェクトの範囲内からマウスポインタが出た際に呼び出されます。
     // 
-    public void OnPointerExit( PointerEventData eventData ) {
+    public void OnMouseExit( ) {
         _mouse_overed = false;
     }
 }
