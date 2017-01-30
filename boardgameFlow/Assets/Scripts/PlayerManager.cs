@@ -102,7 +102,7 @@ public class PlayerManager : MonoBehaviour {
 			_players[ i ].obj = ( GameObject )Instantiate( _player_pref[ i ], first_pos, _player_pref[ i ].transform.rotation );
             _players[ i ].obj.transform.parent = transform;
             _players[ i ].obj.name = "Player" + i;
-            _players[ i ].event_type = MASS_EVENT_TYPE.EVENT_NONE;
+            _players[ i ].event_type = EVENT_TYPE.EVENT_NONE;
 			_players[ i ].onMove = true;
         }
     }
@@ -484,7 +484,7 @@ public class PlayerManager : MonoBehaviour {
 		return _latest_player;
 	}
 
-    public MASS_EVENT_TYPE getEventType( int id ) {
+    public EVENT_TYPE getEventType( int id ) {
         return _players[ id ].event_type;
     }
 
@@ -555,7 +555,7 @@ public class PlayerManager : MonoBehaviour {
 		_event_finish[ id ] = flag;
 	}
 
-    public void setEventType( int id, MASS_EVENT_TYPE event_type ) {
+    public void setEventType( int id, EVENT_TYPE event_type ) {
         _players[ id ].event_type = event_type;
     }
 
@@ -585,7 +585,7 @@ public class PlayerManager : MonoBehaviour {
      }
 
     public void eventRefresh( int id ) {
-        _players[ id ].event_type = MASS_EVENT_TYPE.EVENT_NONE;
+        _players[ id ].event_type = EVENT_TYPE.EVENT_NONE;
 	 }
 
     /// <summary>
@@ -596,7 +596,7 @@ public class PlayerManager : MonoBehaviour {
 			if( _players[ i ].obj != null ) {
 			    switch( _players[ i ].event_type ) {
                     // MovePhase時
-                    case MASS_EVENT_TYPE.EVENT_NONE:
+                    case EVENT_TYPE.EVENT_NONE:
 					    if( _move_start[ i ] == false || _move_finish[ i ] == true ) {
 						    _players[ i ].obj.GetComponent< Animator >( ).SetInteger( "state", 0 );
 					    } else if(_move_start[ i ] == true && _move_finish[ i ] == false ) {
@@ -605,17 +605,17 @@ public class PlayerManager : MonoBehaviour {
 					    }
                         break;
                     // マス移動時
-                    case MASS_EVENT_TYPE.EVENT_MOVE:
+                    case EVENT_TYPE.EVENT_MOVE:
                         //イベント時歩くアニメーションをセット
 					    _players[ i ].obj.GetComponent< Animator >( ).SetInteger( "state", 1 ); 
                         break;
                     // ワープイベント時
-                    case MASS_EVENT_TYPE.EVENT_WORP:
-                    case MASS_EVENT_TYPE.EVENT_CHANGE:
+                    case EVENT_TYPE.EVENT_WORP:
+                    case EVENT_TYPE.EVENT_CHANGE:
 					    _players[ i ].obj.GetComponent< Animator >( ).SetInteger( "state", 1 );
                         break;
                     // カードを捨てるマス発生時
-                    case MASS_EVENT_TYPE.EVENT_DISCARD:
+                    case EVENT_TYPE.EVENT_DISCARD:
                         //イベント時転ぶアニメーションをセット
 					    _players[ i ].obj.GetComponent< Animator >( ).SetInteger( "state", 1 ); 
 					    break;

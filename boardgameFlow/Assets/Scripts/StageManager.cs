@@ -52,24 +52,20 @@ public class StageManager : MonoBehaviour {
     }
 
     //ゲーム開始時マスを生成
-	public void massCreate( int num, MASS_EVENT_TYPE type, Vector3 pos ) {
+	public void massCreate( int num, MASS_TYPE type, EVENT_TYPE event_type, Vector3 pos ) {
 		// タイプによるリソース分け
 		switch ( type ) {
-			case MASS_EVENT_TYPE.EVENT_START:
-			case MASS_EVENT_TYPE.EVENT_GOAL:
+			case MASS_TYPE.MASS_START:
+			case MASS_TYPE.MASS_GOAL:
 				_mass_prefab = ( GameObject )Resources.Load( "Prefabs/Mass/mass_yellow" );
                 break;
-            case MASS_EVENT_TYPE.EVENT_DRAW:
-            case MASS_EVENT_TYPE.EVENT_MOVE:
+            case MASS_TYPE.MASS_NORMAL:
 				_mass_prefab = ( GameObject )Resources.Load( "Prefabs/Mass/mass_blue" );
                 break;
-			case MASS_EVENT_TYPE.EVENT_TRAP_ONE:
-			case MASS_EVENT_TYPE.EVENT_TRAP_TWO:
-			case MASS_EVENT_TYPE.EVENT_DISCARD:
+			case MASS_TYPE.MASS_DENGER:
 				_mass_prefab = ( GameObject )Resources.Load( "Prefabs/Mass/mass_red" );
 				break;
-			case MASS_EVENT_TYPE.EVENT_WORP:
-			case MASS_EVENT_TYPE.EVENT_CHANGE:
+			case MASS_TYPE.MASS_EVENT:
 				_mass_prefab = ( GameObject )Resources.Load( "Prefabs/Mass/mass_green" );
                 break;
         }
@@ -78,8 +74,8 @@ public class StageManager : MonoBehaviour {
 		GameObject obj = ( GameObject )Instantiate( _mass_prefab, pos, _mass_prefab.transform.localRotation );
 		obj.name = "Mass:ID" + num;
 
-        switch( type ) {
-            case MASS_EVENT_TYPE.EVENT_DRAW:
+        switch( event_type ) {
+            case EVENT_TYPE.EVENT_DRAW:
                 _arrangement_prefab = ( GameObject )Resources.Load( "Prefabs/BackGroundObj/object_chest" );
                 GameObject obj_arrangement = ( GameObject )Instantiate( _arrangement_prefab, new Vector3(obj.transform.localPosition.x,obj.transform.localPosition.y,obj.transform.localPosition.z + 2), _arrangement_prefab.transform.rotation );
                 break; 

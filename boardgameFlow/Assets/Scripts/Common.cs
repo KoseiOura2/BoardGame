@@ -109,7 +109,16 @@ namespace Common {
         CARD_TYPE_UNAVAILABLE,
     };
 
-    public enum MASS_EVENT_TYPE {
+    public enum MASS_TYPE {
+        MASS_NONE,
+        MASS_START,
+        MASS_GOAL,
+        MASS_NORMAL,
+        MASS_DENGER,
+        MASS_EVENT,
+    }
+
+    public enum EVENT_TYPE {
         EVENT_NONE,
         EVENT_START,
         EVENT_GOAL,
@@ -146,7 +155,7 @@ namespace Common {
 		public int[ ] card_list_two;
 		public bool[ ] send_card;
 		public BATTLE_RESULT[ ] result_player;
-        public MASS_EVENT_TYPE[ ] event_type;
+        public EVENT_TYPE[ ] event_type;
 		public bool send_result;
         public int[ ] mass_count;
 	};
@@ -177,7 +186,8 @@ namespace Common {
 		public uint x;	// X座標
 		public uint y;	// Y座標
 		public uint z;	// Z座標
-        public MASS_EVENT_TYPE type; //マスタイプ
+        public MASS_TYPE mass_type; //マスタイプ
+        public EVENT_TYPE event_type; //マスタイプ
 		public int nomalValue; //値１
 		public int trapValue; //値２
 		public string environment; //環境情報
@@ -201,7 +211,7 @@ namespace Common {
 		public BATTLE_RESULT battle_result;
 		public int draw;
 		public int power;
-        public MASS_EVENT_TYPE event_type;
+        public EVENT_TYPE event_type;
         public bool onMove;
         public GAME_STAGE stage;
 

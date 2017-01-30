@@ -95,7 +95,7 @@ public class HostData : NetworkBehaviour {
         _field_data.result_player = new BATTLE_RESULT[ _network_battle_result.Count ];
 		_field_data.send_card     = new bool[ _network_send_card.Count ];
         _field_data.mass_count    = new int[ _network_mass_count.Count ];
-        _field_data.event_type    = new MASS_EVENT_TYPE[ _network_event_type.Count ];
+        _field_data.event_type    = new EVENT_TYPE[ _network_event_type.Count ];
 
         for ( int i = 0; i < ( int )PLAYER_ORDER.MAX_PLAYER_NUM; i++ ) {
             _field_data.send_status[ i ]   = _network_send_status[ i ];
@@ -104,7 +104,7 @@ public class HostData : NetworkBehaviour {
             _field_data.result_player[ i ] = ( BATTLE_RESULT )_network_battle_result[ i ];
             _field_data.send_card[ i ]     = _network_send_card[ i ];
             _field_data.mass_count[ i ]    = _network_mass_count[ i ];
-            _field_data.event_type[ i ]    = ( MASS_EVENT_TYPE )_network_event_type[ i ];
+            _field_data.event_type[ i ]    = ( EVENT_TYPE )_network_event_type[ i ];
         }
 
 		if ( isLocalPlayer == true ) {
@@ -312,7 +312,7 @@ public class HostData : NetworkBehaviour {
     }
     
 	[ Server ]
-    public void setSendEventType( PLAYER_ORDER player_num, MASS_EVENT_TYPE type ) {
+    public void setSendEventType( PLAYER_ORDER player_num, EVENT_TYPE type ) {
         _field_data.event_type[ ( int )player_num ] = type;
         
         _connect[ ( int )player_num ] = true;
@@ -334,7 +334,7 @@ public class HostData : NetworkBehaviour {
             _field_data.result_player[ i ] = ( BATTLE_RESULT )_network_battle_result[ i ];
             _field_data.send_card[ i ]     = _network_send_card[ i ];
             _field_data.mass_count[ i ]    = _network_mass_count[ i ];
-            _field_data.event_type[ i ] = ( MASS_EVENT_TYPE )_network_event_type[ i ];
+            _field_data.event_type[ i ] = ( EVENT_TYPE )_network_event_type[ i ];
         }
         
 		for ( int i = 0; i < _network_card_list_0.Count; i++ ) {
