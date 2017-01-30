@@ -144,13 +144,15 @@ public class FileManager : Manager< FileManager > {
                 // Z座標の取得
 				data.mass[ i ].z = uint.Parse( values[ 3 ] );
                 // マスタイプの取得
-				data.mass[ i ].type = ( MASS_TYPE )int.Parse( values[ 4 ] );
+				data.mass[ i ].mass_type = ( MASS_TYPE )int.Parse( values[ 4 ] );
+                // イベントタイプの取得
+				data.mass[ i ].event_type = ( EVENT_TYPE )int.Parse( values[ 5 ] );
                 // 値１取得
-				data.mass[ i ].nomalValue = int.Parse( values[ 5 ] );
+				data.mass[ i ].nomalValue = int.Parse( values[ 6 ] );
                 // 値２取得
-				data.mass[ i ].trapValue = int.Parse( values[ 6 ] );
+				data.mass[ i ].trapValue = int.Parse( values[ 7 ] );
                 // 環境情報取得
-				data.mass[ i ].environment = values[ 7 ];
+				data.mass[ i ].environment = values[ 8 ];
             } 
         }
 

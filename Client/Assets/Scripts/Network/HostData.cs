@@ -70,7 +70,18 @@ public class HostData : NetworkBehaviour {
         _field_data.change_scene    = _network_change_scene;
         _field_data.change_phase    = _network_change_phase;
         _field_data.send_result     = _network_send_result;
+        
+    }
 
+    void Start( ) {
+        if ( isLocalPlayer == true ) {
+            _server_state = SERVER_STATE.STATE_CLIANT;
+            this.gameObject.tag = "ClientObj";
+        } else {
+            _server_state = SERVER_STATE.STATE_HOST;
+            this.gameObject.tag = "HostObj";
+            Debug.Log( "a" );
+        }
     }
 
     // Use this for initialization
@@ -97,13 +108,6 @@ public class HostData : NetworkBehaviour {
             _field_data.event_type[ i ]    = ( EVENT_TYPE )_network_event_type[ i ];
         }
 
-        if ( isLocalPlayer == true ) {
-            _server_state = SERVER_STATE.STATE_CLIANT;
-            this.gameObject.tag = "ClientObj";
-        } else {
-            _server_state = SERVER_STATE.STATE_HOST;
-            this.gameObject.tag = "HostObj";
-        }
     }
 
     // Update is called once per frame

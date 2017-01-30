@@ -49,6 +49,20 @@ public class ClientPlayerManager : MonoBehaviour {
             this.rotate    = rotate;
         }
     };
+    
+    private struct THROW_CARD_DATA {
+        public CARD_DATA card_data;
+        public GameObject obj;
+        public Vector3 pos;
+        public bool move;
+
+        public THROW_CARD_DATA( CARD_DATA card_data, GameObject obj, Vector3 pos, bool move ) {
+            this.card_data = card_data;
+            this.obj       = obj;
+            this.pos       = pos;
+            this.move      = move;
+        }
+    };
 
 	[ SerializeField ]
 	private CardManager _card_manager;
@@ -56,6 +70,7 @@ public class ClientPlayerManager : MonoBehaviour {
 	private PLAYER_CARD_DATA _player_card = new PLAYER_CARD_DATA( );
 	private PLAYER_DATA _player_data;
     private List< DRAW_CARD_DATA > _draw_card_list = new List< DRAW_CARD_DATA >( );
+    private List< THROW_CARD_DATA > _throw_card_list = new List< THROW_CARD_DATA >( );
     
 	private GameObject _profile_card_pref;
 	private GameObject _profile_card_obj;
@@ -71,6 +86,7 @@ public class ClientPlayerManager : MonoBehaviour {
 	private GameObject[ ] _throw_player_card_area_base = new GameObject[ 2 ];
 	private GameObject _select_throw_area_base;
     private Vector3[ ] _select_throw_area = new Vector3[ MAX_PLAYER_CARD_NUM ];
+	private GameObject _throw_area;
 
     private GAME_PLAY_MODE _play_mode = GAME_PLAY_MODE.MODE_NORMAL_PLAY;
     [ SerializeField ]
@@ -78,13 +94,15 @@ public class ClientPlayerManager : MonoBehaviour {
 
     private List< bool > _arrived_list = new List< bool >( );
     private List< bool > _rotate_list  = new List< bool >( );
+    private int _power = 0;
 	private int _dice_value = 0;
     private int _expantion_num = -1;
     private float _card_width = 3.1f;
     private float _draw_card_pos_x_adjust = 0.5f;
     private float _draw_card_move_speed = 0.5f;
     [ SerializeField ]
-    private bool _draw_card = false;
+    private bool _draw_card  = false;
+    private bool _throw_card = false;
 	private bool _dice_roll = false;
     private bool _select_throw_complete = false;
     private bool _expansion = false;
@@ -118,6 +136,9 @@ public class ClientPlayerManager : MonoBehaviour {
 		}
 		if ( _select_area_base == null ) {
 			_select_area_base = GameObject.Find( "SelectHandArea" );
+		}
+		if ( _throw_area == null ) {
+			_throw_area = GameObject.Find( "ThrowArea" );
 		}
 		if ( _expantion_card_area == null ) {
 			_expantion_card_area = GameObject.Find( "ExpantionArea" );
@@ -394,7 +415,78 @@ public class ClientPlayerManager : MonoBehaviour {
 
         return false;
     }
+    public void addThrowCard( int id ) {
+        CARD_DATA card_data = _player_card.hand_list[ id ];
 
+        // オブジェクトの生成
+        GameObject obj = Instantiate( _card_obj,
+                                      _player_card.hand_obj_list[ id ].transform.position,
+                                      _player_card.hand_obj_list[ id ].transform.rotation ) as GameObject;
+        obj.GetComponent< Card >( ).setCardData( card_data );
+
+        // ポジションの決定
+        Vector3 pos = _player_card.hand_obj_list[ id ].transform.position;
+        float pos_y = _player_card.hand_obj_list[ id ].transform.position.y;
+        pos_y = _throw_area.transform.position.y;
+
+        pos = new Vector3( pos.x, pos_y, pos.z );
+
+        // フラグの初期化
+        bool move = true;
+
+        // 手札から削除
+        deletePlayerCardObject( id );
+        deletePlayerCardData( id );
+        
+        THROW_CARD_DATA data = new THROW_CARD_DATA( card_data, obj, pos, move );
+		//カードを追加
+        _throw_card_list.Add( data );
+    }
+    public void moveThrowCard( int id ) {
+        if ( _throw_card_list[ id ].move ) {
+            // 目的地までのベクトルを出す
+            Vector3 velocity = _throw_card_list[ id ].pos - _throw_card_list[ id ].obj.transform.position;
+            // ベクトルを単位化
+            velocity = velocity.normalized;
+            // カードの移動
+            _throw_card_list[ id ].obj.transform.position += velocity * _draw_card_move_speed;
+
+            float distance = Vector3.Distance( _throw_card_list[ id ].obj.transform.position, _throw_card_list[ id ].pos );
+            // 目的地までの距離が微小になったら
+            if ( distance < _draw_card_move_speed ) {
+                bool move   = false;
+                // 座標の修正
+                _throw_card_list[ id ].obj.transform.position = _throw_card_list[ id ].pos;
+
+                _throw_card_list[ id ] = new THROW_CARD_DATA( _throw_card_list[ id ].card_data, _throw_card_list[ id ].obj,
+                                                              _throw_card_list[ id ].pos, move );
+                _arrived_list.Add( true );
+            }
+        }
+    }
+
+    public bool isArrivedAllThrowCard( ) {
+        // 全てのカードが到着したら
+        if ( _arrived_list.Count == _throw_card_list.Count ) {
+            for ( int i = 0; i < _throw_card_list.Count; i++ ) {
+                // オブジェクトの削除
+                Destroy( _throw_card_list[ i ].obj );
+            }
+                
+            // リフレッシュ
+            _throw_card_list.Clear( );
+
+            _arrived_list.Clear( );
+
+            return true;
+        }
+
+        return false;
+    }
+
+    public int getThrowCardNum( ) {
+        return _throw_card_list.Count;
+    }
     /// <summary>
 	/// 手札にカードを追加する処理
     /// </summary>
@@ -685,6 +777,18 @@ public class ClientPlayerManager : MonoBehaviour {
         return _expansion;
     }
 
+    public int getPower( ) {
+        return _power;
+    } 
+
+    public void setPower( int power ) {
+        _power = power;
+    }
+
+    public int getHandNum( ) {
+        return _hand_num;
+    }
+
 	public void refreshSelectCard( ) {
 		_player_card.select_list.Clear( );
 	}
@@ -711,6 +815,14 @@ public class ClientPlayerManager : MonoBehaviour {
 
     public void setDrawCardFlag( bool flag ) {
         _draw_card = flag;
+    }
+
+    public bool isThrowCard( ) {
+        return _throw_card;
+    }
+
+    public void setThrowCard( bool flag ) {
+        _throw_card = flag;
     }
 
 	/// <summary>

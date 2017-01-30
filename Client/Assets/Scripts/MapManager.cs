@@ -9,12 +9,14 @@ public class MapManager : MonoBehaviour {
     private const int MASS_TYPE_NUM = 5;
 
     public struct MASS_DATA {
-        public MASS_TYPE type;
+        public MASS_TYPE mass_type;
+        public EVENT_TYPE event_type;
         public int normal_value;
         public int trap_value;
 
         public MASS_DATA( int init ) {
-            this.type = MASS_TYPE.MASS_TYPE_NONE;
+            this.mass_type    = MASS_TYPE.MASS_NONE;
+            this.event_type   = EVENT_TYPE.EVENT_NONE;
             this.normal_value = init;
             this.trap_value   = init;
         }
@@ -60,24 +62,22 @@ public class MapManager : MonoBehaviour {
     }
     
 
-    public void createMassObj( int num, MASS_TYPE type, Vector3 pos, int value_1, int value_2 ) {
+    public void createMassObj( int num, MASS_TYPE mass_type, EVENT_TYPE event_type, Vector3 pos, int value_1, int value_2 ) {
         MASS_DATA data = new MASS_DATA( 0 );
         GameObject pref = null;
 		// タイプによるリソース分け
-		switch ( type ) {
-			case MASS_TYPE.MASS_TYPE_START:
-			case MASS_TYPE.MASS_TYPE_GOAL:
+		switch ( mass_type ) {
+			case MASS_TYPE.MASS_START:
+			case MASS_TYPE.MASS_GOAL:
 				pref = _mass_pref[ 4 ];
                 break;
-			case MASS_TYPE.MASS_TYPE_DRAW:
-			case MASS_TYPE.MASS_TYPE_ADVANCE:
+			case MASS_TYPE.MASS_NORMAL:
 				pref = _mass_pref[ 1 ];
                 break;
-			case MASS_TYPE.MASS_TYPE_TRAP_ONE:
-			case MASS_TYPE.MASS_TYPE_TRAP_TWO:
+            case MASS_TYPE.MASS_DENGER:
 				pref = _mass_pref[ 3 ];
 				break;
-			case MASS_TYPE.MASS_TYPE_EVENT_ONE:
+			case MASS_TYPE.MASS_EVENT:
 				pref = _mass_pref[ 2 ];
                 break;
         }
@@ -99,7 +99,8 @@ public class MapManager : MonoBehaviour {
         obj.GetComponent< Button >( ).onClick.AddListener( obj.GetComponent< Mass >( ).selectedOnClick );
         _mass_obj.Add( obj );
 
-        data.type = type;
+        data.mass_type  = mass_type;
+        data.event_type = event_type;
 
         // 値の設定
         data.normal_value = value_1;
