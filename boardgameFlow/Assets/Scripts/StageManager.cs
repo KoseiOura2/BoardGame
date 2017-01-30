@@ -51,22 +51,24 @@ public class StageManager : MonoBehaviour {
     }
 
     //ゲーム開始時マスを生成
-	public void massCreate( int num, string type, Vector3 pos ) {
+	public void massCreate( int num, MASS_EVENT_TYPE type, Vector3 pos ) {
 		// タイプによるリソース分け
 		switch ( type ) {
-			case "start":
-			case "goal":
+			case MASS_EVENT_TYPE.EVENT_START:
+			case MASS_EVENT_TYPE.EVENT_GOAL:
 				_mass_prefab = ( GameObject )Resources.Load( "Prefabs/Mass/mass_yellow" );
                 break;
-            case "draw":
-            case "advance":
+            case MASS_EVENT_TYPE.EVENT_DRAW:
+            case MASS_EVENT_TYPE.EVENT_MOVE:
 				_mass_prefab = ( GameObject )Resources.Load( "Prefabs/Mass/mass_blue" );
                 break;
-			case "trap1":
-			case "trap2":
+			case MASS_EVENT_TYPE.EVENT_TRAP_ONE:
+			case MASS_EVENT_TYPE.EVENT_TRAP_TWO:
+			case MASS_EVENT_TYPE.EVENT_DISCARD:
 				_mass_prefab = ( GameObject )Resources.Load( "Prefabs/Mass/mass_red" );
 				break;
-			case "event":
+			case MASS_EVENT_TYPE.EVENT_WORP:
+			case MASS_EVENT_TYPE.EVENT_CHANGE:
 				_mass_prefab = ( GameObject )Resources.Load( "Prefabs/Mass/mass_green" );
                 break;
         }

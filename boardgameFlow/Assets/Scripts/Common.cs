@@ -49,15 +49,6 @@ namespace Common {
 		GAME_PHASE_FINISH,
 	};
 
-	public enum CARD_TYPE {
-		CARD_TYPE_NONE_TYPE,
-		CARD_TYPE_ONCE_ENHANCE,
-		CARD_TYPE_ONCE_WEAKEN,
-		CARD_TYPE_CONTUNU_ENHANCE,
-		CARD_TYPE_INSURANCE,
-		CARD_TYPE_UNAVAILABLE,
-	};
-
     public enum GAME_STAGE {
         NORMAL,
         BONUS
@@ -109,15 +100,26 @@ namespace Common {
 		NO_DATA
 	}
 
-    public enum EVENT_TYPE {
+    public enum CARD_TYPE {
+        CARD_TYPE_NONE_TYPE,
+        CARD_TYPE_ONCE_ENHANCE,
+        CARD_TYPE_ONCE_WEAKEN,
+        CARD_TYPE_CONTUNU_ENHANCE,
+        CARD_TYPE_INSURANCE,
+        CARD_TYPE_UNAVAILABLE,
+    };
+
+    public enum MASS_EVENT_TYPE {
         EVENT_NONE,
+        EVENT_START,
+        EVENT_GOAL,
         EVENT_DRAW,
         EVENT_MOVE,
-        EVENT_ACTION,
+        EVENT_TRAP_ONE,
+        EVENT_TRAP_TWO,
         EVENT_WORP,
         EVENT_CHANGE,
 		EVENT_DISCARD,
-        EVENT_GOAL
     }
 
 	public enum FIELD_ENVIRONMENT {
@@ -144,7 +146,7 @@ namespace Common {
 		public int[ ] card_list_two;
 		public bool[ ] send_card;
 		public BATTLE_RESULT[ ] result_player;
-        public EVENT_TYPE[ ] event_type;
+        public MASS_EVENT_TYPE[ ] event_type;
 		public bool send_result;
         public int[ ] mass_count;
 	};
@@ -175,7 +177,7 @@ namespace Common {
 		public uint x;	// X座標
 		public uint y;	// Y座標
 		public uint z;	// Z座標
-		public string type; //マスタイプ
+        public MASS_EVENT_TYPE type; //マスタイプ
 		public int nomalValue; //値１
 		public int trapValue; //値２
 		public string environment; //環境情報
@@ -199,7 +201,7 @@ namespace Common {
 		public BATTLE_RESULT battle_result;
 		public int draw;
 		public int power;
-        public EVENT_TYPE event_type;
+        public MASS_EVENT_TYPE event_type;
         public bool onMove;
         public GAME_STAGE stage;
 
@@ -211,11 +213,11 @@ namespace Common {
     public struct CARD_DATA {
         public int id;
         public string name;
-        public string enchant_type;
+        public CARD_TYPE enchant_type;
         public int enchant_value;
         public int special_value;
         public int rarity;
-        public CARD_DATA ( int id, string name, string enchant_type, int enchant_value, int special_value, int rarity ) {
+        public CARD_DATA( int id, string name, CARD_TYPE enchant_type, int enchant_value, int special_value, int rarity ) {
             this.id = id;
             this.name = name;
             this.enchant_type = enchant_type;

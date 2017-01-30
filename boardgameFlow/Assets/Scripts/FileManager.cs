@@ -80,7 +80,7 @@ public class FileManager : Manager< FileManager > {
 	/// <param name="list"> ファイルデータ型のリスト </param>
 	private bool loadFile( File file ) {
 		try {
-			StreamReader sr = new StreamReader( "../Files/" + file.getName( ) + ".csv" );
+			StreamReader sr = new StreamReader( Application.dataPath + "/Resources/CSV/" + file.getName( ) + ".csv" );
 
 			FILE_DATA data = new FILE_DATA( );
 
@@ -143,7 +143,7 @@ public class FileManager : Manager< FileManager > {
                 // Z座標の取得
 				data.mass[ i ].z = uint.Parse( values[ 3 ] );
                 // マスタイプの取得
-				data.mass[ i ].type = values[ 4 ];
+                data.mass[ i ].type = ( MASS_EVENT_TYPE )int.Parse( values[ 4 ] );
                 // 値１取得
 				data.mass[ i ].nomalValue = int.Parse( values[ 5 ] );
                 // 値２取得

@@ -38,7 +38,7 @@ public class PlayerManager : MonoBehaviour {
 	private int _plus_power;
     private float _time = 0.3f;
     private Vector3 _velocity = Vector3.zero;
-    private float[] _startTime = new float[2];
+    private float[] _startTime = new float[ 2 ];
 	[ SerializeField ]
     private bool _move_flag    = false;     //動かす時のフラグが立っているか
 	[ SerializeField ]
@@ -71,10 +71,6 @@ public class PlayerManager : MonoBehaviour {
 		_player_pref[ 1 ] = ( GameObject )Resources.Load( "Prefabs/Player/Player2" );
 
         createObj( first_pos );
-        // playerオブジェクトの色替え
-        
-        _players[ 0 ].obj.GetComponent< Renderer>( ).material.color = Color.magenta;
-        _players[ 1 ].obj.GetComponent< Renderer>( ).material.color = Color.green;
 
 		// ステータス値の初期化
 		setDefalutStatus( );
@@ -102,10 +98,10 @@ public class PlayerManager : MonoBehaviour {
                     break;
             }
 
-			_players[ i ].obj = ( GameObject )Instantiate( _player_pref[ i ], first_pos, Quaternion.identity );
+			_players[ i ].obj = ( GameObject )Instantiate( _player_pref[ i ], first_pos, _player_pref[ i ].transform.rotation );
             _players[ i ].obj.transform.parent = transform;
             _players[ i ].obj.name = "Player" + i;
-            _players[ i ].event_type = EVENT_TYPE.EVENT_NONE;
+            _players[ i ].event_type = MASS_EVENT_TYPE.EVENT_NONE;
 			_players[ i ].onMove = true;
         }
     }
@@ -313,25 +309,25 @@ public class PlayerManager : MonoBehaviour {
 	/// <param name="card">Card.</param>
 	public void playCard( CARD_DATA data ) {
 		switch ( data.enchant_type ) {
-		case "enhance":
-			addPower( data.enchant_value );
-			Debug.Log( "強化効果" + data.enchant_value );
-			Debug.Log( "power" + _plus_power );
-			break;
-		case "turn":
-			addPower( data.enchant_value );
-			Debug.Log( "強化効果" + data.enchant_value );
-			Debug.Log( "power" + _plus_power );
-			break;
-		case "special":
-			specialEnhance( data );
-			Debug.Log( "スペシャル効果" );
-			break;
-		case "demerit":
-			addPower( -data.enchant_value );
-			Debug.Log( "power" + _plus_power );
-			Debug.Log( "デメリット効果" + data.enchant_value );
-			break;
+            case CARD_TYPE.CARD_TYPE_ONCE_ENHANCE:
+			    addPower( data.enchant_value );
+			    Debug.Log( "強化効果" + data.enchant_value );
+			    Debug.Log( "power" + _plus_power );
+			    break;
+            case CARD_TYPE.CARD_TYPE_CONTUNU_ENHANCE:
+			    addPower( data.enchant_value );
+			    Debug.Log( "強化効果" + data.enchant_value );
+			    Debug.Log( "power" + _plus_power );
+			    break;
+            case CARD_TYPE.CARD_TYPE_INSURANCE:
+			    specialEnhance( data );
+			    Debug.Log( "スペシャル効果" );
+			    break;
+            case CARD_TYPE.CARD_TYPE_UNAVAILABLE:
+			    addPower( -data.enchant_value );
+			    Debug.Log( "power" + _plus_power );
+			    Debug.Log( "デメリット効果" + data.enchant_value );
+			    break;
 		}
 	}
 
@@ -488,7 +484,7 @@ public class PlayerManager : MonoBehaviour {
 		return _latest_player;
 	}
 
-    public EVENT_TYPE getEventType( int id ) {
+    public MASS_EVENT_TYPE getEventType( int id ) {
         return _players[ id ].event_type;
     }
 
@@ -559,7 +555,7 @@ public class PlayerManager : MonoBehaviour {
 		_event_finish[ id ] = flag;
 	}
 
-    public void setEventType( int id, EVENT_TYPE event_type ) {
+    public void setEventType( int id, MASS_EVENT_TYPE event_type ) {
         _players[ id ].event_type = event_type;
     }
 
@@ -588,44 +584,55 @@ public class PlayerManager : MonoBehaviour {
          _players[ id ].stage = stage;
      }
 
-    public void eventRefresh( int id ){
-		_players[ id ].event_type = EVENT_TYPE.EVENT_NONE;
+    public void eventRefresh( int id ) {
+        _players[ id ].event_type = MASS_EVENT_TYPE.EVENT_NONE;
 	 }
 
-	 public void setPlayerMotion(){
-		 for(int i = 0; i < (int)PLAYER_ORDER.MAX_PLAYER_NUM; i++){
-			 if(_players[i].obj != null){
-				switch(_players[i].event_type){
-					case EVENT_TYPE.EVENT_NONE:
-						if(_move_start[i] == false || _move_finish[i] == true){
-							_players[ i ].obj.GetComponent<Animator>().SetInteger("state", 0);
-						}else if(_move_start[i] == true && _move_finish[i] == false){
-							_players[ i ].obj.GetComponent<Animator>().SetInteger("state", 1); //歩くアニメーションをセット
-						}
-						break;
-					case EVENT_TYPE.EVENT_MOVE:
-						_players[ i ].obj.GetComponent<Animator>().SetInteger("state", 1); //イベント時歩くアニメーションをセット
-						break;
-					case EVENT_TYPE.EVENT_WORP:
-					case EVENT_TYPE.EVENT_CHANGE:
-						_players[ i ].obj.GetComponent<Animator>().SetInteger("state", 1); 
-						break;
-					case EVENT_TYPE.EVENT_DISCARD:
-						_players[ i ].obj.GetComponent<Animator>().SetInteger("state", 1); //イベント時転ぶアニメーションをセット
-						break;
-				}
-			}
-		}
+    /// <summary>
+    /// プレイヤーのアニメーションを変える
+    /// </summary>
+	public void setPlayerMotion( ) {
+		for( int i = 0; i < ( int )PLAYER_ORDER.MAX_PLAYER_NUM; i++ ) {
+			if( _players[ i ].obj != null ) {
+			    switch( _players[ i ].event_type ) {
+                    // MovePhase時
+                    case MASS_EVENT_TYPE.EVENT_NONE:
+					    if( _move_start[ i ] == false || _move_finish[ i ] == true ) {
+						    _players[ i ].obj.GetComponent< Animator >( ).SetInteger( "state", 0 );
+					    } else if(_move_start[ i ] == true && _move_finish[ i ] == false ) {
+                            //歩くアニメーションをセット
+                            _players[ i ].obj.GetComponent<Animator>( ).SetInteger( "state", 1 );
+					    }
+                        break;
+                    // マス移動時
+                    case MASS_EVENT_TYPE.EVENT_MOVE:
+                        //イベント時歩くアニメーションをセット
+					    _players[ i ].obj.GetComponent< Animator >( ).SetInteger( "state", 1 ); 
+                        break;
+                    // ワープイベント時
+                    case MASS_EVENT_TYPE.EVENT_WORP:
+                    case MASS_EVENT_TYPE.EVENT_CHANGE:
+					    _players[ i ].obj.GetComponent< Animator >( ).SetInteger( "state", 1 );
+                        break;
+                    // カードを捨てるマス発生時
+                    case MASS_EVENT_TYPE.EVENT_DISCARD:
+                        //イベント時転ぶアニメーションをセット
+					    _players[ i ].obj.GetComponent< Animator >( ).SetInteger( "state", 1 ); 
+					    break;
+			    }
+		    }
+	    }
+	}
+
+	 public bool getAnimationEnd( int id ) {
+         if ( _players[ id ].obj.GetComponent< Animator >( ).GetCurrentAnimatorStateInfo( 0 ).normalizedTime == 1 ) {
+             return true;
+         } else {
+             return false;
+         }
 	 }
 
-	 public bool getAnimationEnd( int id ){
-		if ( _players[ id ].obj.GetComponent<Animator>().GetCurrentAnimatorStateInfo(0).normalizedTime == 1)
-			return true;
-		else
-			return false;
-	 }
-
-     public void setPlayerCount ( int id, int count ) {
+     public void setPlayerCount( int id, int count ) {
         _players[ id ].advance_count = count;
     }
 
