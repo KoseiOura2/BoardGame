@@ -49,6 +49,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
     private const int CONNECT_WAIT_TIME = 120;
 	private const int SECOND_CONNECT_WAIT_TIME = 180;
 	private const int MAX_DRAW_VALUE = 4;
+	public int _debug_dice_value = 1;
 
     private bool _scene_init = false;
     private bool _phase_init = false;
@@ -492,7 +493,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
 				// 送られてきた賽の目の数
 				int[ ] dice_value = new int[ ( int )PLAYER_ORDER.MAX_PLAYER_NUM ];
 				for ( int i = 0; i < ( int )PLAYER_ORDER.MAX_PLAYER_NUM; i++ ) {
-					dice_value[ i ] = 2;//( int )Random.Range( 1.0f, 4.0f );
+					dice_value[ i ] = _debug_dice_value;//( int )Random.Range( 1.0f, 4.0f );
                     _dice_value[ i ] = dice_value[ i ];
 				}
 				// キャラクター移動フェイズへの移行
