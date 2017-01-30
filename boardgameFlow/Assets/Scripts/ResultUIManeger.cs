@@ -40,10 +40,10 @@ public class ResultUIManeger : MonoBehaviour {
 		CARD_DATA card;		
 		//_player_data [id].card_list.Add();		//サーバーが持っている使用したカードを入れる
 		//デバッグ用
-		for (int i = 0; i < 5; i++){
+		for (int i = 1; i < 5; i++){
 			card = _card_manager.getCardData(i);
-			Debug.Log (card);
-			//_player_data[id].card_list.Add(card);
+			Debug.Log (card.name);
+			_player_data[id].card_list.Add(card);
 		}
 	}
 	private void setCardImage(int id){
@@ -51,8 +51,10 @@ public class ResultUIManeger : MonoBehaviour {
 			if (id == 1) {
 				// _player_data[id].card_listのカードデータをもとに　_card_pbjectのRawImageを変える
 				//_card_object[i].texture = TexTure2Dリソースロード.(_player_data[id].card_list.name);
-				RawImage image = _card_object[i].GetComponent<RawImage>();
-				image.texture = Resources.Load("Graphics/Texture" + _player_data[id].card_list[i].name) as Texture2D;
+                Debug.Log(_player_data[id].card_list[i].name);
+				Image image = _card_object[i].GetComponent<Image>();
+
+                image.material.mainTexture = Resources.Load("Textures/"+ _player_data[id].card_list[i].name) as Texture;
 			} else if (id == 2) {
 				
 			} else {

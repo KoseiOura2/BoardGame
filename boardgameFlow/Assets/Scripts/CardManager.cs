@@ -74,9 +74,7 @@ public class CardManager : Manager< CardManager > {
 	
 	// Update is called once per frame
 	void Update( ) {
-	
-	}
-    
+    }
     /// <summary>
     /// デッキの読み込み
     /// </summary>
@@ -169,6 +167,8 @@ public class CardManager : Manager< CardManager > {
 			if ( id == 5 ) {
 				Debug.Log( "特定種類のカードの取得に成功しました" );
 			}
+Debug.Log(id);
+Debug.Log(_card_datas.Count);
 			return _card_datas[ id ];
 		} catch {
 			Debug.Log("カードデータ取得エラー");

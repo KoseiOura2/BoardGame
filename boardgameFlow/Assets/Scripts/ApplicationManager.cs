@@ -100,6 +100,10 @@ public class ApplicationManager : Manager< ApplicationManager > {
 		referManager( );
 
 		_card_manager.init( );
+#if true        //デバッグでリザルトUIを即表示したいときTrueに
+        GameObject go = (GameObject)Resources.Load("Prefabs/ResultUI");
+        Instantiate(go, new Vector3(0,0,0),Quaternion.identity);
+#endif
 	}
 
 	void referManager( ) {
