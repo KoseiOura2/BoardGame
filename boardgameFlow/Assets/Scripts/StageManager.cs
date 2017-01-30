@@ -18,6 +18,7 @@ public class StageManager : MonoBehaviour {
 	[ SerializeField ]
 	private List< GameObject > _mass_list = new List< GameObject >( );	//マスデータをリストとして保持しておく
 	private GameObject _mass_prefab;	//マスデータロード用関数
+    private GameObject _arrangement_prefab;
 	[ SerializeField ]
 	private Light _main_light;
     private int _create_mass_count = 0;
@@ -32,7 +33,7 @@ public class StageManager : MonoBehaviour {
 			_mass_prefab = ( GameObject )Resources.Load( "Prefabs/Mass/mass_mini" );
 			Vector3 pos = Vector3.Lerp( _mass_list[ i ].transform.localPosition, _mass_list[ i + 1 ].transform.localPosition, 0.5f );
 			GameObject obj = ( GameObject )Instantiate( _mass_prefab, pos, _mass_prefab.transform.localRotation );
-			obj.transform.parent = _mass_list[ i ].transform;
+			obj.transform.parent = transform;
 		}
 
 		GameObject light = GameObject.Find( "MainLight" ); 
@@ -76,6 +77,13 @@ public class StageManager : MonoBehaviour {
 		// 生成
 		GameObject obj = ( GameObject )Instantiate( _mass_prefab, pos, _mass_prefab.transform.localRotation );
 		obj.name = "Mass:ID" + num;
+
+        switch( type ) {
+            case MASS_EVENT_TYPE.EVENT_DRAW:
+                _arrangement_prefab = ( GameObject )Resources.Load( "Prefabs/BackGroundObj/object_chest" );
+                GameObject obj_arrangement = ( GameObject )Instantiate( _arrangement_prefab, new Vector3(obj.transform.localPosition.x,obj.transform.localPosition.y,obj.transform.localPosition.z + 2), _arrangement_prefab.transform.rotation );
+                break; 
+        }
 
         // マネージャーの配下に設定
         obj.transform.parent = transform;

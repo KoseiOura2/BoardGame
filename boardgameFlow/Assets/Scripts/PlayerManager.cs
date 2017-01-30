@@ -7,7 +7,7 @@ using Common;
 public class PlayerManager : MonoBehaviour {
     
     public float ADJUST_FIRST_PLAYER_Y_POS = 0.3f;          // プレイヤー初期生成時の修正Y座標
-    public float ADJUST_PLAYER_POS = 0.6f;          // プレイヤー初期生成時の修正Z座標
+    public float ADJUST_PLAYER_POS = 1f;          // プレイヤー初期生成時の修正Z座標
 
     [ SerializeField ]
     private PLAYER_ORDER _player_order;     // どのプレイヤーが行動中か
@@ -86,13 +86,14 @@ public class PlayerManager : MonoBehaviour {
 
         for( int i = 0; i < _player_pref.Length; i++ ) {
 			// 位置の決定
-            first_pos.y = ADJUST_FIRST_PLAYER_Y_POS;
             switch ( _player_order ) {
                 case PLAYER_ORDER.PLAYER_ONE:
+                    first_pos.x -= ADJUST_PLAYER_POS;
                     first_pos.z += ADJUST_PLAYER_POS;
                     _player_order = PLAYER_ORDER.PLAYER_TWO;
                     break;
                 case PLAYER_ORDER.PLAYER_TWO:
+                    first_pos.x += ADJUST_PLAYER_POS;
                     first_pos.z -= ADJUST_PLAYER_POS;
                     _player_order = PLAYER_ORDER.NO_PLAYER;
                     break;
@@ -205,7 +206,6 @@ public class PlayerManager : MonoBehaviour {
                 _end_position.z -= ADJUST_PLAYER_POS;
                 break;
         }
-        _end_position.y += ADJUST_FIRST_PLAYER_Y_POS;
         _move_flag = true;
     }
 
