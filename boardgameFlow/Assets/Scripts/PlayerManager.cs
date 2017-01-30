@@ -38,7 +38,7 @@ public class PlayerManager : MonoBehaviour {
 	private int _plus_power;
     private float _time = 0.3f;
     private Vector3 _velocity = Vector3.zero;
-    private float[] _startTime = new float[ 2 ];
+    private float[ ] _start_time = new float[ 2 ];
 	[ SerializeField ]
     private bool _move_flag    = false;     //動かす時のフラグが立っているか
 	[ SerializeField ]
@@ -155,16 +155,16 @@ public class PlayerManager : MonoBehaviour {
                // adjustmentUpdate( target_pos );
             if ( _limit_value > 0 ) {
                 if ( !_move_flag ) {
-                    setTargetPos( 0, _player_id, ref target_pos );
+                    setTargetPos( _player_id, ref target_pos );
                 } else {
-                    playerMove( 0, _player_id );
+                    playerMove( _player_id );
                 }
             } else if ( _limit_value == 0 ) {
                 _move_finish[ _player_id ] = true;
                 _limit_value--;
                 _adjustment_flag = false;
             } else {
-                 _move_finish[ _player_id ] = true;
+                _move_finish[ _player_id ] = true;
             }
         } else {
 			_target = null;
@@ -174,34 +174,33 @@ public class PlayerManager : MonoBehaviour {
 	/// <summary>
 	/// ターゲットの設定
 	/// </summary>
-	/// <param name="count">Count.</param>
-	/// <param name="advance_pos">Advance position.</param>
-	/// <param name="back_pos">Back position.</param>
-	private void setTargetPos(int i, int id, ref GameObject target_pos)
-    {
-        if (_time <= 0)
-        {
-            _players[id].obj.transform.position = _end_position;
+	/// <param name="id"></param>
+	/// <param name="target_pos"></param>
+	private void setTargetPos( int id, ref GameObject target_pos ) {
+        if ( _time <= 0 ) {
+            _players[ id ].obj.transform.position = _end_position;
             _player_id = -1;
             _target = null;
             return;
         }
 
-        if(_current_flag) _time = 1.0f;
-        else _time = 0.5f;
+        if ( _current_flag ) {
+            _time = 1.0f;
+        } else { 
+            _time = 0.5f;
+        }
 
-        _startTime[i] = Time.timeSinceLevelLoad;
-        _start_position = _players[id].obj.transform.position;
+        _start_time[ 0 ] = Time.timeSinceLevelLoad;
+        _start_position = _players[ id ].obj.transform.position;
         _target = target_pos;
         _end_position = _target.transform.localPosition;
 
-        switch (_player_id)
-        {
-        case 0:
+        switch ( ( PLAYER_ORDER )_player_id ) {
+        case PLAYER_ORDER.PLAYER_ONE:
                 _end_position.x -= ADJUST_PLAYER_POS;
                 _end_position.z += ADJUST_PLAYER_POS;
             break;
-        case 1:
+        case PLAYER_ORDER.PLAYER_TWO:
                 _end_position.x += ADJUST_PLAYER_POS;
                 _end_position.z -= ADJUST_PLAYER_POS;
                 break;
@@ -212,9 +211,8 @@ public class PlayerManager : MonoBehaviour {
 	/// <summary>
 	/// プレイヤーを動かす処理
 	/// </summary>
-     private void playerMove( int i, int id ) {
-        var diff = Time.timeSinceLevelLoad - _startTime[ i ];
-		Vector3 distance = ( _end_position - _players[ id ].obj.transform.position ) / Vector3.Distance(_players[ id ].obj.transform.position, _end_position );
+     private void playerMove( int id ) {
+        var diff = Time.timeSinceLevelLoad - _start_time[ 0 ];
 
 		if ( diff > _time * 3.5f ) {
 			_players[ id ].obj.transform.position = _end_position;
@@ -243,11 +241,12 @@ public class PlayerManager : MonoBehaviour {
             _move_flag = false;
             return;
         }
+        
+        // 方向を変える
+		Quaternion dir = Quaternion.LookRotation( _end_position - _players[ id ].obj.transform.position );
+		_players[ id ].obj.transform.rotation = Quaternion.SlerpUnclamped( _players[ id ].obj.transform.rotation, dir, _time );
 
-		Quaternion newDir = Quaternion.LookRotation( distance );
-		_players[ id ].obj.transform.rotation = Quaternion.SlerpUnclamped( _players[ id ].obj.transform.rotation, newDir, _time );
-
-        _players[ id ].obj.transform.position = Vector3.SmoothDamp(_players[ id ].obj.transform.position, _end_position, ref _velocity , _time);
+        _players[ id ].obj.transform.position = Vector3.SmoothDamp( _players[ id ].obj.transform.position, _end_position, ref _velocity , _time );
 		//Vector3.Lerp ( _start_position[ i ], _end_position[ i ], rate );
 	}
     
@@ -255,24 +254,24 @@ public class PlayerManager : MonoBehaviour {
 	/// ランク付け関数
 	/// </summary>
 	public void dicisionTopAndLowestPlayer( ref int[ ] count ) {
-		if( !Mathf.Approximately( count[ 0 ], count[ 1 ] ) ) {
-			float first = Mathf.Min( count[ 0 ], count[ 1 ] );
-			if( first == count[ 0 ] ) {
-				_firstest_player	= _players[ 0 ].obj;
-				_latest_player = _players[ 1 ].obj;
-				_players[ 0 ].rank = PLAYER_RANK.RANK_FIRST;
+		if( !Mathf.Approximately( count[ ( int )PLAYER_ORDER.PLAYER_ONE ], count[ ( int )PLAYER_ORDER.PLAYER_TWO ] ) ) {
+			float first = Mathf.Min( count[ ( int )PLAYER_ORDER.PLAYER_ONE ], count[ ( int )PLAYER_ORDER.PLAYER_TWO ] );
+			if( first == count[ ( int )PLAYER_ORDER.PLAYER_ONE ] ) {
+				_firstest_player	= _players[ ( int )PLAYER_ORDER.PLAYER_ONE ].obj;
+				_latest_player = _players[ ( int )PLAYER_ORDER.PLAYER_TWO ].obj;
+				_players[ ( int )PLAYER_ORDER.PLAYER_ONE ].rank = PLAYER_RANK.RANK_FIRST;
 				_players[ 1 ].rank = PLAYER_RANK.RANK_SECOND;
-			} else if( first == count[ 1 ] ) {
-				_firstest_player	= _players[ 1 ].obj;
-				_latest_player = _players[ 0 ].obj;
-				_players[ 0 ].rank = PLAYER_RANK.RANK_SECOND;
-				_players[ 1 ].rank = PLAYER_RANK.RANK_FIRST;
+			} else if( first == count[ ( int )PLAYER_ORDER.PLAYER_TWO ] ) {
+				_firstest_player	= _players[ ( int )PLAYER_ORDER.PLAYER_TWO ].obj;
+				_latest_player = _players[ ( int )PLAYER_ORDER.PLAYER_ONE ].obj;
+				_players[ ( int )PLAYER_ORDER.PLAYER_ONE ].rank = PLAYER_RANK.RANK_SECOND;
+				_players[ ( int )PLAYER_ORDER.PLAYER_TWO ].rank = PLAYER_RANK.RANK_FIRST;
 			}
 		} else {
-			_players[ 0 ].rank = PLAYER_RANK.RANK_FIRST;
-			_players[ 1 ].rank = PLAYER_RANK.RANK_SECOND;
-			_firstest_player	= _players[ 0 ].obj;
-			_latest_player = _players[ 1 ].obj;
+			_players[ ( int )PLAYER_ORDER.PLAYER_ONE ].rank = PLAYER_RANK.RANK_FIRST;
+			_players[ ( int )PLAYER_ORDER.PLAYER_TWO ].rank = PLAYER_RANK.RANK_SECOND;
+			_firstest_player	= _players[ ( int )PLAYER_ORDER.PLAYER_ONE ].obj;
+			_latest_player = _players[ ( int )PLAYER_ORDER.PLAYER_TWO ].obj;
 		}
         /*
 		Debug.Log( "プレイヤー1ランク:" + _players[ 0 ].rank );
@@ -614,11 +613,13 @@ public class PlayerManager : MonoBehaviour {
                     case EVENT_TYPE.EVENT_CHANGE:
 					    _players[ i ].obj.GetComponent< Animator >( ).SetInteger( "state", 1 );
                         break;
+                        /*
                     // カードを捨てるマス発生時
                     case EVENT_TYPE.EVENT_DISCARD:
                         //イベント時転ぶアニメーションをセット
 					    _players[ i ].obj.GetComponent< Animator >( ).SetInteger( "state", 1 ); 
 					    break;
+                         * */
 			    }
 		    }
 	    }
@@ -656,5 +657,11 @@ public class PlayerManager : MonoBehaviour {
 
     public void setCurrentFlag( bool flag ){
         _current_flag = flag;
+    }
+
+    public void destroyObj( ) {
+        for ( int i = 0; i < _players.Length; i++ ) {
+            Destroy( _players[ i ].obj );
+        }
     }
 }

@@ -145,17 +145,27 @@ public class StageManager : MonoBehaviour {
 	
 	}
 
-    public void resetMassColor ( int i, ref bool flag ) {
-        if ( getTargetMass ( i ).transform.localScale.x > 0.3f || getTargetMass ( i ).transform.localScale.z > 0.3f ) {
-            getTargetMass ( i ).GetComponent<Renderer> ( ).material.SetColor ( "_Color", new Color ( 0.4f, 0.4f, 0.4f, 1f ) );
-            getTargetMass ( i ).transform.localScale =
-            new Vector3 ( getTargetMass ( i ).transform.localScale.x - 0.05f,
-            getTargetMass ( i ).transform.localScale.y,
-            getTargetMass ( i ).transform.localScale.z - 0.05f );
+    public bool resetMassColor ( int i ) {
+        bool flag = false;
+
+        if ( getTargetMass ( i ).transform.localScale.x > 0.3f || getTargetMass( i ).transform.localScale.z > 0.3f ) {
+            getTargetMass ( i ).GetComponent< Renderer >( ).material.SetColor( "_Color", new Color ( 0.4f, 0.4f, 0.4f, 1f ) );
+            getTargetMass ( i ).transform.localScale = new Vector3 ( getTargetMass ( i ).transform.localScale.x - 0.05f,
+                                                                     getTargetMass ( i ).transform.localScale.y,
+                                                                     getTargetMass ( i ).transform.localScale.z - 0.05f );
         } else {
-            getTargetMass ( i ).transform.localScale =
-            new Vector3 ( 0.3f, getTargetMass ( i ).transform.localScale.y, 0.3f );
+            getTargetMass ( i ).transform.localScale = new Vector3 ( 0.3f, getTargetMass ( i ).transform.localScale.y, 0.3f );
             flag = false;
         }
+
+        return flag;
+    }
+
+    public void destroyObj( ) {
+        for ( int i = 0; i < _mass_list.Count; i++ ) {
+            Destroy( _mass_list[ i ] );
+        }
+
+        _mass_list.Clear( );
     }
 }
