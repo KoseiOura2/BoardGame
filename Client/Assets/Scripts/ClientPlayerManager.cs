@@ -120,6 +120,14 @@ public class ClientPlayerManager : MonoBehaviour {
 
 	public GameObject _card_obj;
 
+    void Awake( ) {
+		// プレイヤーの初期化
+		_player_card.hand_list       = new List< CARD_DATA >( );
+		_player_card.hand_obj_list   = new List< GameObject >( );
+		_player_card.select_position = new List< Vector3 >( );
+		_player_card.select_list     = new List< CARD_DATA >( );
+    }
+
 	// Use this for initialization
 	void Start( ) {
 		if ( _profile_card_area == null ) {
@@ -184,13 +192,6 @@ public class ClientPlayerManager : MonoBehaviour {
 		if ( _card_manager == null ) {
 			_card_manager = GameObject.Find( "CardManager" ).GetComponent< CardManager >( );
 		}
-
-
-		// プレイヤーの初期化
-		_player_card.hand_list       = new List< CARD_DATA >( );
-		_player_card.hand_obj_list   = new List< GameObject >( );
-		_player_card.select_position = new List< Vector3 >( );
-		_player_card.select_list     = new List< CARD_DATA >( );
 
 		_player_data.power = INIT_PLAYER_POWER;
 	}
@@ -782,7 +783,7 @@ public class ClientPlayerManager : MonoBehaviour {
     } 
 
     public void setPower( int power ) {
-        _power = power;
+        _player_data.power = power;
     }
 
     public int getHandNum( ) {
@@ -904,5 +905,16 @@ public class ClientPlayerManager : MonoBehaviour {
         }
         
         return false;
+    }
+
+    public void destroyObj( ) {
+        allDeletePlayerCard( );
+        Destroy( _profile_card_obj );
+
+        _player_card.hand_obj_list.Clear( );
+        _player_card.hand_list.Clear( );
+        _player_card.select_list.Clear( );
+        _player_card.select_position.Clear( );
+
     }
 }

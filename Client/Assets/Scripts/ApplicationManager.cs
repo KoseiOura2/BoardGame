@@ -343,10 +343,20 @@ public class ApplicationManager : Manager< ApplicationManager > {
 	/// FinishSceneの更新
 	/// </summary>
 	private void updateFinishScene( ) {
+        // 初期化処理
+        if ( !_scene_init ) {
+            _player_manager.destroyObj( );
+            destroyMapInfo( );
+            destroyMassText( );
+            destroyOpponentStatus( );
+            destroySelectArea( );
+            _scene_init = true;
+        }
         if ( _mode == PROGRAM_MODE.MODE_NO_CONNECT ) {
             if ( Input.GetKeyDown( KeyCode.A ) ) {
 			    _scene = SCENE.SCENE_TITLE;
 			    _scene_text.text = _scene.ToString( );
+                _scene_init = false;
             } 
         }
 	}
@@ -1254,20 +1264,24 @@ public class ApplicationManager : Manager< ApplicationManager > {
                  event_type == EVENT_TYPE.EVENT_TRAP_TWO ) {
                 num = _file_manager.getMassValue( _map_manager.getPlayerPosNum( ) )[ 0 ];
             }
-            
-            Debug.Log( "捨てるカード数" + num );
 
-            for ( int i = 0; i < num; i++ ) {
-                int throw_num = ( int )( Random.Range( 0, _player_manager.getPlayerCardNum( ) ) );
-                _player_manager.addThrowCard( throw_num );
+            if ( num > 0 && num >= _player_manager.getPlayerCardNum( ) ) {
+                for ( int i = 0; i < num; i++ ) {
+                    int throw_num = ( int )( Random.Range( 0, _player_manager.getPlayerCardNum( ) ) );
+                    _player_manager.addThrowCard( throw_num );
+                }
+            } else {
+                _player_manager.setPower( _player_manager.getPlayerData( ).power + ( _player_manager.getPlayerCardNum( ) - num ) );
             }
-            Debug.Log( "shindekure" );
         } else {
             // カードを動かす処理
-            for ( int i = 0; i < _player_manager.getThrowCardNum( ); i++ ) {
-                _player_manager.moveThrowCard( i );
+            if ( _player_manager.getThrowCardNum( ) > 0 ) {
+                for ( int i = 0; i < _player_manager.getThrowCardNum( ); i++ ) {
+                    _player_manager.moveThrowCard( i );
+                }
             }
-            if ( _player_manager.isArrivedAllThrowCard( ) ) {
+            if ( _player_manager.isArrivedAllThrowCard( ) ||
+                 _player_manager.getThrowCardNum( ) <= 0 ) {
                 _player_manager.setThrowCard( false );
                 //一度画面上に配置しているカードオブジェクトを削除
                 _player_manager.allDeletePlayerCard( );
@@ -1284,7 +1298,6 @@ public class ApplicationManager : Manager< ApplicationManager > {
 	/// FinishPhaseの更新
 	/// </summary>
 	private void updateFinishPhase( ) {
-
 	}
 
     /// <summary>
