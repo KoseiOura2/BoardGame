@@ -499,6 +499,11 @@ public class ApplicationManager : Manager< ApplicationManager > {
 		if ( _sea_deep_count_image[ 0 ] != null && _sea_deep_count_image[ 1 ] != null && _sea_deep_count_image[ 2 ] != null ) {
 			_map_manager.changeSeaDeepNum( _sea_deep_count_image[ 2 ], _sea_deep_count_image[ 0 ], _sea_deep_count_image[ 1 ] );
 		}
+        // 拡大カードの削除
+        if ( Input.GetMouseButtonDown( 0 ) && _player_manager.isExpantion( ) ) {
+            destroyLightOffObj( );
+            _player_manager.destroyExpantionCard( );
+        }
 	}
 
 	/// <summary>
@@ -1000,11 +1005,6 @@ public class ApplicationManager : Manager< ApplicationManager > {
         // カードの拡大
         if ( _player_manager.createExpantionCard( ) ) {
             createLightOffObj( true );
-        }
-        // 拡大カードの削除
-        if ( Input.GetMouseButtonDown( 0 ) && _player_manager.isExpantion( ) ) {
-            destroyLightOffObj( );
-            _player_manager.destroyExpantionCard( );
         }
 	}
 
