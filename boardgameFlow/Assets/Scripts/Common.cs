@@ -221,4 +221,17 @@ namespace Common {
             this.rarity = rarity;
         }
     }
+
+    /// <summary>
+    /// アニメーションデータ
+    /// </summary>
+    public struct ANIMATION_DATA {
+        public int _animation_id;                  //生成中のアニメーション番号
+        public bool _animation_running;            //アニメーション実行フラグ
+        public bool _animation_end;                //アニメーション終了フラグ
+        public bool _animation_create;             //アニメーション生成フラグ
+        public bool _animation_createing;          //アニメーション生成中フラグ
+        public GameObject _animation_object;       //アニメーションさせるオブジェクト
+        public List< int > _animation_card_list;   //アニメーション用のカードリスト
+    }
 }

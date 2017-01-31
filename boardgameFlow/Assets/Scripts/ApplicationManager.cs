@@ -43,22 +43,26 @@ public class ApplicationManager : Manager< ApplicationManager > {
     private int _connect_wait_time = 0;
 	private bool _refresh_card_list = false;
     private bool _network_init = false;
-    private int _animation_id = 0;
-    [ SerializeField ]
-    private bool _animation_running = false;
-    private bool _animation_end = false;
-    private bool _animation_create = false;
     private const int CONNECT_WAIT_TIME = 120;
 	private const int SECOND_CONNECT_WAIT_TIME = 180;
 	private const int MAX_DRAW_VALUE = 4;
-    private float _animation_start_time;
 
     private bool _scene_init = false;
     private bool _phase_init = false;
 
-    private Vector3 _animation_start_position;
-    private GameObject _animation_object;   //アニメーションさせるオブジェクト
-    private List< int > card_list = new List< int >( );
+
+    private int _animation_id = 0;              //生成中のアニメーション番号
+    private bool _animation_running = false;    //アニメーション実行フラグ
+    private bool _animation_end = false;        //アニメーション終了フラグ
+    private bool _animation_create = false;     //アニメーション生成フラグ
+    private bool _animation_createing = false;  //アニメーション生成中フラグ
+    private float _move_start_time;        //移動処理を開始した時間
+    private Vector3 _move_start_position;  //移動処理前の座標
+    private GameObject _animation_object;       //アニメーションさせるオブジェクト
+    private List< int > _animation_card_list = new List< int >( );  //アニメーション用のカードリスト
+
+    //private ANIMATION_DATA _animation_data = new ANIMATION_DATA( );
+
     public Text _scene_text;
 	public Text[ ] _reside_text = new Text[ ( int )PLAYER_ORDER.MAX_PLAYER_NUM ];    //残りマス用テキスト
 	public Text[ ] _environment = new Text[ ( int )PLAYER_ORDER.MAX_PLAYER_NUM ];    //環境情報用テキスト
@@ -926,7 +930,9 @@ public class ApplicationManager : Manager< ApplicationManager > {
                 if ( _mode != PROGRAM_MODE.MODE_NO_CONNECT ) {
                     _host_data.setSendEventType( ( PLAYER_ORDER )id, _event_type[ id ] );
                 }
+                List< int > card_list = new List< int >( );
                 int value = _file_manager.getMassValue( i )[ 0 ];
+                //アニメーション実行フラグがＯＦＦ
                 if ( !_animation_running ) {
                     Debug.Log( "カード" + value + "ドロー" );
                     for ( int j = 0; j < value; j++ ) {
@@ -939,26 +945,33 @@ public class ApplicationManager : Manager< ApplicationManager > {
                         _player_manager.addDrawCard( card_list[ j ], id );
                         Debug.Log( "ID：" + card_list[ j ] );
                     }
+                    //アニメーション用のカードリストに保存
+                    _animation_card_list = card_list;
+                    //アニメーション実行フラグをON
                     _animation_running = true;
                 }
-
-                if( !_animation_create ){
-                   StartCoroutine( massAnimation( i, id, card_list[ _animation_id ] ) );
+                
+                 //アニメーションが完了していたらプレイヤーに向かってカードが移動をする
+                if( _animation_create ){
+                    if( id == 0 ){
+                         playerAbsorption( _player_manager.getTopPlayer( PLAYER_RANK.RANK_FIRST ).obj.transform.position, _animation_card_list.Count );
+                    } else if( id == 1 ){
+                         playerAbsorption( _player_manager.getTopPlayer( PLAYER_RANK.RANK_SECOND ).obj.transform.position, _animation_card_list.Count );
+                    }
+                } else {
+                    //どのマスの宝箱か、どのプレイヤーのイベントか、生成するカードの情報を渡す
+                    StartCoroutine( massAnimation( i, id ) );
                 }
 
-                //アニメーションが完了していたらプレイヤーに向かってカードが移動をする
-                if ( id == 0 && _animation_create ) {
-                    playerAbsorption( _player_manager.getTopPlayer( PLAYER_RANK.RANK_FIRST ).obj.transform.position, _animation_id, card_list.Count );
-                } else if( id == 1 && _animation_create ){
-                    playerAbsorption( _player_manager.getTopPlayer( PLAYER_RANK.RANK_SECOND ).obj.transform.position, _animation_id, card_list.Count );
-                }
                 if ( _animation_end ) {
                     // カードリストを初期化
-                    card_list.Clear( );
+                    _animation_card_list.Clear( );
                     _player_manager.setEventFinish( id, true );
                     _player_manager.setEventType( id, EVENT_TYPE.EVENT_DRAW );
+                    //アニメーション終了フラグ、実行フラグ、アニメーション生成フラグをOFF
                     _animation_end = false;
                     _animation_running = false;
+                    _animation_create = false;
                 }
 			    break;
 		    case "trap1":
@@ -1027,29 +1040,39 @@ public class ApplicationManager : Manager< ApplicationManager > {
     /// <summary>
     /// マス効果のコルーチン
     /// </summary>
-    IEnumerator massAnimation( int i, int id, int card_id ) {
+    IEnumerator massAnimation( int i, int id ) {
+        if( _animation_createing ){ yield break; }
+        //アニメーション中フラグをON
+        _animation_createing = true;
+
         switch ( _file_manager.getFileData( ).mass[ i ].type ) {
         case "draw":
             GameObject treasure_chest = GameObject.Find( "TreasureChest:" + i );
+            //そのマスに対応した宝箱を取得できたか
             if ( treasure_chest != null ) {
-                GameObject _animation_object = Instantiate( ( GameObject )Resources.Load( "Prefabs/AnimationCard" ) );
+                _animation_object = Instantiate( ( GameObject )Resources.Load( "Prefabs/AnimationCard" ) );
                 Vector3 returnScale = _animation_object.transform.localScale;
 
-                _animation_object.GetComponent< Card >( ).setCardData( _card_manager.getCardData( card_id ) );
+                _animation_object.GetComponent< Card >( ).setCardData( _card_manager.getCardData( _animation_card_list[ _animation_id ] ) );
                 _animation_object.name = "AnimationCard:ID:" + i;
                 _animation_object.transform.parent = treasure_chest.transform;
-                yield return new WaitForSeconds( 3.0f );
+                yield return new WaitForSeconds( 2.0f );
                 Destroy( _animation_object.GetComponent< Animator >( ) );
                 _animation_object.transform.localScale = returnScale;
                 _animation_object.transform.rotation = Camera.main.transform.rotation;
                 _animation_object.transform.parent = Camera.main.transform;
                 _animation_object.transform.localPosition = new Vector3( 0, 0, 5 );
                 yield return new WaitForSeconds( 2.0f );
-                _animation_start_time = Time.timeSinceLevelLoad;
-                _animation_start_position = _animation_object.transform.position;
+                _move_start_time = Time.timeSinceLevelLoad;
+                _move_start_position = _animation_object.transform.position;
+                //アニメーション生成完了フラグを立てる
+                _animation_create = true;
+            } else {
+            //アニメーション終了フラグを与える
+            _animation_end = true;
             }
-            //アニメーションのフラグを立てる
-            _animation_create = true;
+            //アニメーション中フラグをOFF
+            _animation_createing = false;
             break;
         }
         if ( _mode != PROGRAM_MODE.MODE_NO_CONNECT ) {
@@ -1063,26 +1086,23 @@ public class ApplicationManager : Manager< ApplicationManager > {
     /// <summary>
     /// Playerに向かうカードのアニメーション
     /// </summary>
-    void playerAbsorption( Vector3 endPosition, int animation_card_id, int card_max  ) {
-
-        float diff = Time.timeSinceLevelLoad - _animation_start_time;
-
-        if ( diff > 1 ) {
-            Debug.Log("test");
-            _animation_object.transform.position = endPosition;
-            Destroy( _animation_object );
-            //今作ってるカードが最後のカードか
-            if( _animation_id < card_max ){ 
-                _animation_id++;
-                _animation_create = false;
-            } else {
-                _animation_end = true;
-            }
-        }
-
+    void playerAbsorption( Vector3 endPosition, int card_max  ) { 
+        float diff = Time.timeSinceLevelLoad - _move_start_time;
         var rate = diff / 1;
-
-        _animation_object.transform.position = Vector3.Lerp( _animation_start_position, endPosition, rate );
+        if ( diff > 1 ) {
+        Destroy( _animation_object );
+        _animation_id++;
+        Debug.Log(  "アニメーションするカードの最大値:" + card_max );
+        Debug.Log(  "アニメーションする現在のカード:" + _animation_id );
+        //今作ってるカードが最後のカードか
+        if( _animation_id < card_max ){ 
+            _animation_create = false;
+        } else {
+            _animation_id = 0;
+            _animation_end = true;
+        }
+        }
+        _animation_object.transform.position = Vector3.Lerp( _move_start_position, endPosition, rate );
     }
 
     /// <summary>
