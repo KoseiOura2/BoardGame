@@ -61,7 +61,7 @@ namespace Common {
 		PLAYER_ONE,
 		PLAYER_TWO,
 		MAX_PLAYER_NUM,
-		NO_PLAYER
+		NO_PLAYER = -1
 	}
 
 	/// <summary>
@@ -205,6 +205,7 @@ namespace Common {
 	/// プレイヤーのデータ
 	/// </summary>
 	public struct PLAYER_DATA {
+        public int id;
 		public GameObject obj;
 		public PLAYER_RANK rank;
 		public int advance_count;	//プレイヤーの進んでいる回数
@@ -212,9 +213,8 @@ namespace Common {
 		public int draw;
 		public int power;
         public EVENT_TYPE event_type;
-        public bool onMove;
+        public bool on_move;
         public GAME_STAGE stage;
-
     }
 
     /// <summary>

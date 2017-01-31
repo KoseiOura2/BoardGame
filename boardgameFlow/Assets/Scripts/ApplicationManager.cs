@@ -6,6 +6,18 @@ using Common;
 using UnityEngine.Events;
 
 public class ApplicationManager : Manager< ApplicationManager > {
+    
+    private const int CONNECT_WAIT_TIME        = 120;
+	private const int SECOND_CONNECT_WAIT_TIME = 180;
+	private const int MAX_DRAW_VALUE           = 4;
+
+    // パーティクル関係
+    private const float OCEAN_CURRENT_STOP_TIME    = 60.0f;
+    private const float OCEAN_CURRENT_DESTROY_TIME = 90.0f;
+    private const float SPIRAL_TIME_ONE            = 10.0f;
+    private const float SPIRAL_TIME_TWO            = 360.0f;
+    private const float SPIRAL_TIME_THREE          = 362.0f;
+    private const float SPIRAL_TIME_FOUR           = 480.0f;
 
 	[ SerializeField ]
 	private NetworkMNG _network_manager;
@@ -38,24 +50,22 @@ public class ApplicationManager : Manager< ApplicationManager > {
 	private int[ ] _event_count = new int[ ]{ 0, 0 };        //イベントを起こす回数 
     [ SerializeField ]
     private int[ ] _dice_value = new int[ ( int )PLAYER_ORDER.MAX_PLAYER_NUM ];
-    private bool _game_playing = false;
-    private bool _goal_flag         = false;
     private int _connect_wait_time  = 0;
+    private bool _game_playing      = false;
+    private bool _goal_flag         = false;
 	private bool _refresh_card_list = false;
     private bool _network_init      = false;
     [ SerializeField ]
     private bool _animation_running = false;
-    private bool _animation_end = false;
-    private const int CONNECT_WAIT_TIME = 120;
-	private const int SECOND_CONNECT_WAIT_TIME = 180;
-	private const int MAX_DRAW_VALUE = 4;
+    private bool _animation_end     = false;
 
     private bool _scene_init  = false;
     private bool _phase_init  = false;
     [ SerializeField ]
     private bool _send_status = false;
     private int _before_player_count;
-
+    
+	[ SerializeField ]
 	private GameObject _particle;
 	[ SerializeField ]
 	private float _particle_time = 0;
@@ -255,7 +265,8 @@ public class ApplicationManager : Manager< ApplicationManager > {
 			    _scene = SCENE.SCENE_GAME;
 			    _scene_text.text = "SCENE_GAME";
 
-			    _player_manager.init( _file_manager.getMassCoordinate( 0 ) );
+                Vector3 pos = _file_manager.getMassCoordinate( 0 );
+			    _player_manager.init( ref pos );
 
 			    //マスの生成
 			    for( int i = 0; i < _file_manager.getMassCount( ); i++ ) {
@@ -306,8 +317,9 @@ public class ApplicationManager : Manager< ApplicationManager > {
     private void connectTitleUpdate( ) {
         _scene = SCENE.SCENE_GAME;
 		_scene_text.text = "SCENE_GAME";
-
-		_player_manager.init( _file_manager.getMassCoordinate( 0 ) );
+        
+        Vector3 pos = _file_manager.getMassCoordinate( 0 );
+		_player_manager.init( ref pos );
 
 		//マスの生成
 		for( int i = 0; i < _file_manager.getMassCount( ); i++ ) {
@@ -491,6 +503,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
                 // キャラクター移動フェイズへの移行
                 _phase_manager.changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_MOVE_CHARACTER, "MovePhase" );
 				_phase_manager.deletePhaseImage( );
+                _phase_init = false;
             }
 		} else if ( _mode == PROGRAM_MODE.MODE_ONE_CONNECT ) {
             // 送られてきた賽の目の数
@@ -499,9 +512,11 @@ public class ApplicationManager : Manager< ApplicationManager > {
 		    // ダイスを振ったら(通信)
 		    if ( dice_value[ 0 ] > 0 ) {
                 _dice_value[ 0 ] = dice_value[ 0 ];
+                _dice_value[ 1 ] = ( int )Random.Range( 1.0f, 3.0f );
                 // キャラクター移動フェイズへの移行
 				_phase_manager.changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_MOVE_CHARACTER, "MovePhase" );
 				_phase_manager.deletePhaseImage( );
+                _phase_init = false;
             }
 		} else if ( _mode == PROGRAM_MODE.MODE_NO_CONNECT ) {
 			if ( Input.GetKeyDown( KeyCode.A ) ) {
@@ -514,6 +529,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
 				// キャラクター移動フェイズへの移行
 				_phase_manager.changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_MOVE_CHARACTER, "MovePhase" );
 				_phase_manager.deletePhaseImage( );
+                _phase_init = false;
 			}
 		}
 	}
@@ -522,53 +538,50 @@ public class ApplicationManager : Manager< ApplicationManager > {
 	/// MovePhaseの更新
 	/// </summary>
 	private void updateMovePhase( ) {
-		if ( _mode == PROGRAM_MODE.MODE_TWO_CONNECT || _mode == PROGRAM_MODE.MODE_NO_CONNECT ) {
-            if ( _player_manager.isPlayerMoveStart( 0 ) == false ) {
-                // 1Pを動かす
-				if ( _player_manager.getPlayerOnMove( 0 ) ) {
-					_player_manager.setPlayerID( 0 );
-					_player_manager.setLimitValue( _dice_value[ 0 ] );
+        if ( !_phase_init ) {
+            // 行動順1Pをに設定する
+            _player_manager.startPlayerOrder( );
+
+            _phase_init = true;
+        }
+
+		if ( ( _mode == PROGRAM_MODE.MODE_TWO_CONNECT || _mode == PROGRAM_MODE.MODE_NO_CONNECT ) &&
+             _player_manager.getPlayerOrder( ) != PLAYER_ORDER.NO_PLAYER ) {
+            if ( !_player_manager.isMoveStart( ) ) {
+                // プレイヤーを動かす
+				if ( _player_manager.getPlayerOnMove( ) ) {
+					_player_manager.setLimitValue( _dice_value[ ( int )_player_manager.getPlayerOrder( ) ] );
 					_player_manager.setAdvanceFlag( true );
 				} else {
-					_player_manager.setPlayerOnMove( 0, true );
+					_player_manager.setPlayerOnMove( true );
 				}
-				_event_count[ 0 ] = 0;
-			} else if ( _player_manager.isPlayerMoveStart( 1 ) == false && _player_manager.isPlayerMoveFinish( 0 ) == true ) {
-                // 2Pを動かす
-				if ( _player_manager.getPlayerOnMove( 1 ) ) {
-					_player_manager.setPlayerID( 1 );
-					_player_manager.setLimitValue( _dice_value[ 1 ] );
-					_player_manager.setAdvanceFlag( true );
-				} else {
-					_player_manager.setPlayerOnMove( 1, true );
-				}
-				_event_count[ 0 ] = 0;
+				_event_count[ ( int )_player_manager.getPlayerOrder( ) ] = 0;
+			} 
+            if ( _player_manager.isMoveFinish( ) ) {
+                // プレイヤーを変える
+				_player_manager.changePlayerOrder( );
             }
-		} else if ( _mode == PROGRAM_MODE.MODE_ONE_CONNECT ) {
-            if ( _player_manager.isPlayerMoveStart( 0 ) == false ) {
-                // 1Pを動かす
-				if ( _player_manager.getPlayerOnMove( 0 ) ) {
-					_player_manager.setPlayerID( 0 );
-					_player_manager.setLimitValue( _dice_value[ 0 ] );
+		} else if ( _mode == PROGRAM_MODE.MODE_ONE_CONNECT &&
+                    _player_manager.getPlayerOrder( ) != PLAYER_ORDER.NO_PLAYER ) {
+            if ( !_player_manager.isMoveStart( ) ) {
+                // プレイヤーを動かす
+				if ( _player_manager.getPlayerOnMove( ) ) {
+					_player_manager.setLimitValue( _dice_value[ ( int )_player_manager.getPlayerOrder( ) ] );
 					_player_manager.setAdvanceFlag( true );
 				} else {
-					_player_manager.setPlayerOnMove( 0, true );
+					_player_manager.setPlayerOnMove( true );
 				}
-				_event_count[ 1 ] = 0;
-			} else if ( _player_manager.isPlayerMoveStart( 1 ) == false && _player_manager.isPlayerMoveFinish( 0 ) == true ) {
-                // 2Pを動かす
-				if ( _player_manager.getPlayerOnMove( 1 ) ) {
-					_player_manager.setPlayerID( 1 );
-					_player_manager.setLimitValue( _dice_value[ 0 ] );
-					_player_manager.setAdvanceFlag( true );
-				} else {
-					_player_manager.setPlayerOnMove( 1, true );
-				}
-				_event_count[ 1 ] = 0;
+				_event_count[ ( int )_player_manager.getPlayerOrder( ) ] = 0;
+			} 
+            if ( _player_manager.isMoveFinish( ) ) {
+                // プレイヤーを変える
+				_player_manager.changePlayerOrder( );
             }
 		}
 
-		_player_manager.movePhaseUpdate( getResideCount( ),
+        // プレイヤーの移動
+        int[ ] reside_count = getResideCount( );
+		_player_manager.movePhaseUpdate( ref reside_count,
             _stage_manager.getTargetMass( _player_manager.getTargetMassID( _stage_manager.getMassCount( ) ) ) );
         
         // 現在のマスをクライアントに送信
@@ -590,13 +603,18 @@ public class ApplicationManager : Manager< ApplicationManager > {
             }
         }
        
+
+        // プレイヤーの順番を更新
+        _player_manager.updatePlayerOrder( );
+
         // ゴールまでの残りマスを表示
 		resideCount( );
 
         // 両方の移動が終わったら次のフェイズへ
-        if ( _player_manager.isPlayerMoveFinish( 0 ) && _player_manager.isPlayerMoveFinish( 1 ) ) {
+        if ( _player_manager.isAllPlayerMoveFinish( ) ) {
             _player_manager.movedRefresh( );
             _phase_manager.changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_DRAW_CARD, "DrawPhase" );
+            _phase_init = false;
         } 
 	}
 
@@ -644,6 +662,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
 				_connect_wait_time++;
 				if ( _connect_wait_time >= SECOND_CONNECT_WAIT_TIME ) {
 					_phase_manager.changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_BATTLE, "BattlePhase" );
+                    _phase_init = false;
 					_connect_wait_time = 0;
 					_refresh_card_list = false;
                     _send_status = true;
@@ -679,6 +698,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
 				if ( _connect_wait_time >= SECOND_CONNECT_WAIT_TIME ) {
                     try {
 					    _phase_manager.changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_BATTLE, "BattlePhase" );
+                        _phase_init = false;
 					    _connect_wait_time = 0;
 					    _refresh_card_list = false;
                         _send_status = true;
@@ -686,13 +706,13 @@ public class ApplicationManager : Manager< ApplicationManager > {
                     catch {
                         Debug.Log( "Failure ChangePhase" );
                     }
-					
 				}
             }
 		} else if ( _mode == PROGRAM_MODE.MODE_NO_CONNECT ) {
 			// 準備が終わったら次のフェイズへ
 			if ( Input.GetKeyDown( KeyCode.A ) ) {
 				_phase_manager.changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_BATTLE, "BattlePhase" );
+                _phase_init = false;
 			}
 		}
 	}
@@ -710,63 +730,62 @@ public class ApplicationManager : Manager< ApplicationManager > {
         }
 		if ( _mode == PROGRAM_MODE.MODE_TWO_CONNECT ) {
             if ( _client_data[ 0 ].getRecvData( ).battle_ready == true &&
-				_client_data[ 1 ].getRecvData( ).battle_ready == true )  {
+				 _client_data[ 1 ].getRecvData( ).battle_ready == true )  {
 				// 1Pのステータスを設定
-				_player_manager.setPlayerPower( 0, _client_data[ 0 ].getRecvData( ).player_power );
+				_player_manager.setPlayerPower( _client_data[ 0 ].getRecvData( ).player_power );
 				for ( int i = 0; i < _client_data[ 0 ].getRecvData( ).used_card_list.Length; i++ ) {
-					_player_manager.playCard( _card_manager.getCardData( _client_data[ 0 ].getRecvData( ).used_card_list[ i ] ) );
+					_player_manager.adaptaCard( _card_manager.getCardData( _client_data[ 0 ].getRecvData( ).used_card_list[ i ] ) );
 				}
 				_player_manager.endStatus( 0 );
 				Debug.Log( "1Pのpower:" + _player_manager.getPlayerPower( )[ 0 ].ToString( ) );
-				// プラスバリューの初期化
-				_player_manager.plusValueInit( );
 
 				// 2Pのステータスを設定
-				_player_manager.setPlayerPower( 1, _client_data[ 1 ].getRecvData( ).player_power );
+				_player_manager.setPlayerPower( _client_data[ 1 ].getRecvData( ).player_power );
 				for ( int i = 0; i < _client_data[ 1 ].getRecvData( ).used_card_list.Length; i++ ) {
-					_player_manager.playCard( _card_manager.getCardData( _client_data[ 1 ].getRecvData( ).used_card_list[ i ] ) );
+					_player_manager.adaptaCard( _card_manager.getCardData( _client_data[ 1 ].getRecvData( ).used_card_list[ i ] ) );
 				}
 				_player_manager.endStatus( 1 );
 				Debug.Log( "2Pのpower:" + _player_manager.getPlayerPower( )[ 1 ].ToString( ) );
 				// プラスバリューの初期化
-				_player_manager.plusValueInit( );
+				_player_manager.allPlusValueInit( );
 
                 // 攻撃力を比較
 				_player_manager.attackTopAndLowestPlayer( _player_manager.getPlayerPower( ) );
                 // 次のフェイズへ
                 _phase_manager.changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_RESULT, "ResultPhase" );
+                _phase_init = false;
             }
 		} else if ( _mode == PROGRAM_MODE.MODE_ONE_CONNECT ) {
 			if ( _client_data[ 0 ].getRecvData( ).battle_ready == true )  {
 				// 1Pのステータスを設定
-				_player_manager.setPlayerPower( 0, _client_data[ 0 ].getRecvData( ).player_power );
+				_player_manager.setPlayerPower( _client_data[ 0 ].getRecvData( ).player_power );
 				for ( int i = 0; i < _client_data[ 0 ].getRecvData( ).used_card_list.Length; i++ ) {
-					_player_manager.playCard( _card_manager.getCardData( _client_data[ 0 ].getRecvData( ).used_card_list[ i ] ) );
+					_player_manager.adaptaCard( _card_manager.getCardData( _client_data[ 0 ].getRecvData( ).used_card_list[ i ] ) );
 				}
 				_player_manager.endStatus( 0 );
 				Debug.Log( "1Pのpower:" + _player_manager.getPlayerPower( )[ 0 ].ToString( ) );
-				// プラスバリューの初期化
-				_player_manager.plusValueInit( );
 
 				// 2Pのステータスを設定
-				_player_manager.setPlayerPower( 1, _client_data[ 0 ].getRecvData( ).player_power );
+				_player_manager.setPlayerPower( _client_data[ 0 ].getRecvData( ).player_power );
 				for ( int i = 0; i < _client_data[ 0 ].getRecvData( ).used_card_list.Length; i++ ) {
-					_player_manager.playCard( _card_manager.getCardData( _client_data[ 0 ].getRecvData( ).used_card_list[ i ] ) );
+					_player_manager.adaptaCard( _card_manager.getCardData( _client_data[ 0 ].getRecvData( ).used_card_list[ i ] ) );
 				}
 				_player_manager.endStatus( 1 );
 				Debug.Log( "2Pのpower:" + _player_manager.getPlayerPower( )[ 1 ].ToString( ) );
 				// プラスバリューの初期化
-				_player_manager.plusValueInit( );
+				_player_manager.allPlusValueInit( );
 
                 // 攻撃力を比較
 				_player_manager.attackTopAndLowestPlayer( _player_manager.getPlayerPower( ) );
                 // 次のフェイズへ
                 _phase_manager.changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_RESULT, "ResultPhase" );
+                _phase_init = false;
             }
 		} else if ( _mode == PROGRAM_MODE.MODE_NO_CONNECT ) {
 			if ( Input.GetKeyDown( KeyCode.A ) )  {
 				// 次のフェイズへ
 				_phase_manager.changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_RESULT, "ResultPhase" );
+                _phase_init = false;
 			}
 		}
 	}
@@ -775,6 +794,14 @@ public class ApplicationManager : Manager< ApplicationManager > {
 	/// ResultPhaseの更新
 	/// </summary>
 	private void updateResultPhase( ) {
+        // 初期化
+        if ( !_phase_init ) {
+            // 行動順1Pをに設定する
+            _player_manager.startPlayerOrder( );
+
+            _phase_init = true;
+        }
+
         if ( _mode != PROGRAM_MODE.MODE_NO_CONNECT ) {
             // 戦闘結果を送信
             if ( _host_data.getRecvData( ).send_result == false ) {
@@ -790,86 +817,48 @@ public class ApplicationManager : Manager< ApplicationManager > {
 		if ( _mode == PROGRAM_MODE.MODE_TWO_CONNECT ) {
             if ( _client_data[ 0 ].getRecvData( ).ready == true &&
                  _client_data[ 1 ].getRecvData( ).ready == true )  {
-                if ( _client_data[ 0 ].getRecvData( ).mass_adjust == MASS_ADJUST.ADVANCE &&
-                     _player_manager.isPlayerMoveStart( 0 ) == false ) {
+                if ( _client_data[ ( int )_player_manager.getPlayerOrder( ) ].getRecvData( ).mass_adjust == MASS_ADJUST.ADVANCE &&
+                     !_player_manager.isMoveStart( ) ) {
                     // 1Pを前に動かす
-		            _player_manager.setPlayerID( 0 );
 		            _player_manager.setLimitValue( 1 );
 		            _player_manager.setAdvanceFlag( true );
-					_event_count[ 0 ] = 0;
-                } else if ( _client_data[ 0 ].getRecvData( ).mass_adjust == MASS_ADJUST.BACK &&
-                     _player_manager.isPlayerMoveStart( 0 ) == false ) {
+					_event_count[ ( int )_player_manager.getPlayerOrder( ) ] = 0;
+                } else if ( _client_data[ ( int )_player_manager.getPlayerOrder( ) ].getRecvData( ).mass_adjust == MASS_ADJUST.BACK &&
+                            !_player_manager.isMoveStart( ) ) {
                     // 1Pを後ろに動かす
-		            _player_manager.setPlayerID( 0 );
 		            _player_manager.setLimitValue( 1 );
 		            _player_manager.setAdvanceFlag( false );
-					_event_count[ 0 ] = 0;
-                } else if ( _client_data[ 0 ].getRecvData( ).mass_adjust == MASS_ADJUST.NO_ADJUST &&
-                     _player_manager.isPlayerMoveStart( 0 ) == false ) {
-                    // 1Pを動かさない
-		            _player_manager.setMoveFinish( 0, true );
-                    _player_manager.setMoveStart( 0, true );
-                } else if ( _client_data[ 1 ].getRecvData( ).mass_adjust == MASS_ADJUST.ADVANCE &&
-					_player_manager.isPlayerMoveStart( 1 ) == false && _player_manager.isPlayerMoveFinish( 0 ) == true ) {
-                    // 2Pを前に動かす
-		            _player_manager.setPlayerID( 1 );
-		            _player_manager.setLimitValue( 1 );
-		            _player_manager.setAdvanceFlag( true );
-					_event_count[ 1 ] = 0;
-                } else if ( _client_data[ 1 ].getRecvData( ).mass_adjust == MASS_ADJUST.BACK &&
-					_player_manager.isPlayerMoveStart( 1 ) == false && _player_manager.isPlayerMoveFinish( 0 ) == true ) {
-                    // 2Pを後ろに動かす
-		            _player_manager.setPlayerID( 1 );
-		            _player_manager.setLimitValue( 1 );
-		            _player_manager.setAdvanceFlag( false );
-					_event_count[ 1 ] = 0;
-                } else if ( _client_data[ 1 ].getRecvData( ).mass_adjust == MASS_ADJUST.NO_ADJUST &&
-					_player_manager.isPlayerMoveStart( 1 ) == false && _player_manager.isPlayerMoveFinish( 0 ) == true  ) {
-                    // 2Pを動かさない
-		            _player_manager.setMoveFinish( 1, true );
-                    _player_manager.setMoveStart( 1, true );
+					_event_count[ ( int )_player_manager.getPlayerOrder( ) ] = 0;
+                } else if ( _client_data[ ( int )_player_manager.getPlayerOrder( ) ].getRecvData( ).mass_adjust == MASS_ADJUST.NO_ADJUST &&
+                            !_player_manager.isMoveStart( ) ) {
+                    // プレイヤーを変える
+				    _player_manager.changePlayerOrder( );
+                } else if ( _player_manager.isMoveFinish( ) ) {
+                    // プレイヤーを変える
+				    _player_manager.changePlayerOrder( );
                 }
             }
 		} else if ( _mode == PROGRAM_MODE.MODE_ONE_CONNECT ) {
             if ( _client_data[ 0 ].getRecvData( ).ready == true )  {
                 if ( _client_data[ 0 ].getRecvData( ).mass_adjust == MASS_ADJUST.ADVANCE &&
-                     _player_manager.isPlayerMoveStart( 0 ) == false ) {
+                     !_player_manager.isMoveStart( ) ) {
                     // 1Pを前に動かす
-		            _player_manager.setPlayerID( 0 );
 		            _player_manager.setLimitValue( 1 );
 		            _player_manager.setAdvanceFlag( true );
-                    _event_count[ 0 ] = 0;
+					_event_count[ ( int )_player_manager.getPlayerOrder( ) ] = 0;
                 } else if ( _client_data[ 0 ].getRecvData( ).mass_adjust == MASS_ADJUST.BACK &&
-                     _player_manager.isPlayerMoveStart( 0 ) == false ) {
+                            !_player_manager.isMoveStart( ) ) {
                     // 1Pを後ろに動かす
-		            _player_manager.setPlayerID( 0 );
 		            _player_manager.setLimitValue( 1 );
 		            _player_manager.setAdvanceFlag( false );
-					_event_count[ 0 ] = 0;
+					_event_count[ ( int )_player_manager.getPlayerOrder( ) ] = 0;
                 } else if ( _client_data[ 0 ].getRecvData( ).mass_adjust == MASS_ADJUST.NO_ADJUST &&
-                     _player_manager.isPlayerMoveStart( 0 ) == false ) {
-                    // 1Pを動かさない
-                    _player_manager.setMoveStart( 0, true );
-                    _player_manager.setMoveFinish( 0, true );
-                } else if ( _client_data[ 0 ].getRecvData( ).mass_adjust == MASS_ADJUST.ADVANCE &&
-					_player_manager.isPlayerMoveStart( 1 ) == false && _player_manager.isPlayerMoveFinish( 0 ) == true ) {
-                    // 2Pを前に動かす
-		            _player_manager.setPlayerID( 1 );
-		            _player_manager.setLimitValue( 1 );
-		            _player_manager.setAdvanceFlag( true );
-					_event_count[ 1 ] = 0;
-                } else if ( _client_data[ 0 ].getRecvData( ).mass_adjust == MASS_ADJUST.BACK &&
-					_player_manager.isPlayerMoveStart( 1 ) == false && _player_manager.isPlayerMoveFinish( 0 ) == true ) {
-                    // 2Pを後ろに動かす
-		            _player_manager.setPlayerID( 1 );
-		            _player_manager.setLimitValue( 1 );
-		            _player_manager.setAdvanceFlag( false );
-					_event_count[ 1 ] = 0;
-                } else if ( _client_data[ 0 ].getRecvData( ).mass_adjust == MASS_ADJUST.NO_ADJUST &&
-					_player_manager.isPlayerMoveStart( 1 ) == false && _player_manager.isPlayerMoveFinish( 0 ) == true ) {
-                    // 2Pを動かさない
-                    _player_manager.setMoveStart( 1, true );
-                    _player_manager.setMoveFinish( 1, true );
+                            !_player_manager.isMoveStart( ) ) {
+                    // プレイヤーを変える
+				    _player_manager.changePlayerOrder( );
+                } else if ( _player_manager.isMoveFinish( ) ) {
+                    // プレイヤーを変える
+				    _player_manager.changePlayerOrder( );
                 }
             }
 		} else if ( _mode == PROGRAM_MODE.MODE_NO_CONNECT ) {
@@ -878,64 +867,51 @@ public class ApplicationManager : Manager< ApplicationManager > {
 				for ( int i = 0; i < ( int )PLAYER_ORDER.MAX_PLAYER_NUM; i++ ) {
 					adjust[ i ] = ( MASS_ADJUST )( ( int )Random.Range( 0.0f, 3.0f ) );
 				}
-
-				if ( adjust[ 0 ] == MASS_ADJUST.ADVANCE &&
-					_player_manager.isPlayerMoveStart( 0 ) == false ) {
-					// 1Pを前に動かす
-					_player_manager.setPlayerID( 0 );
-					_player_manager.setLimitValue( 1 );
-					_player_manager.setAdvanceFlag( true );
-					_event_count[ 0 ] = 0;
-				} else if ( adjust[ 0 ] == MASS_ADJUST.BACK &&
-					_player_manager.isPlayerMoveStart( 0 ) == false ) {
-					// 1Pを後ろに動かす
-					_player_manager.setPlayerID( 0 );
-					_player_manager.setLimitValue( 1 );
-					_player_manager.setAdvanceFlag( false );
-					_event_count[ 0 ] = 0;
-				} else if ( adjust[ 0 ] == MASS_ADJUST.NO_ADJUST &&
-					_player_manager.isPlayerMoveStart( 0 ) == false ) {
-					// 1Pを動かさない
-					_player_manager.setMoveFinish( 0, true );
-					_player_manager.setMoveStart( 0, true );
-				} else if ( adjust[ 1 ] == MASS_ADJUST.ADVANCE &&
-					_player_manager.isPlayerMoveStart( 1 ) == false && _player_manager.isPlayerMoveFinish( 0 ) == true ) {
-					// 2Pを前に動かす
-					_player_manager.setPlayerID( 1 );
-					_player_manager.setLimitValue( 1 );
-					_player_manager.setAdvanceFlag( true );
-					_event_count[ 1 ] = 0;
-				} else if ( adjust[ 1 ] == MASS_ADJUST.BACK &&
-					_player_manager.isPlayerMoveStart( 1 ) == false && _player_manager.isPlayerMoveFinish( 0 ) == true ) {
-					// 2Pを後ろに動かす
-					_player_manager.setPlayerID( 1 );
-					_player_manager.setLimitValue( 1 );
-					_player_manager.setAdvanceFlag( false );
-					_event_count[ 1 ] = 0;
-				} else if ( adjust[ 1 ] == MASS_ADJUST.NO_ADJUST &&
-					_player_manager.isPlayerMoveStart( 1 ) == false && _player_manager.isPlayerMoveFinish( 0 ) == true ) {
-					// 2Pを動かさない
-					_player_manager.setMoveFinish( 1, true );
-					_player_manager.setMoveStart( 1, true );
-				}
+                
+                if ( adjust[ ( int )_player_manager.getPlayerOrder( ) ] == MASS_ADJUST.ADVANCE &&
+                     !_player_manager.isMoveStart( ) ) {
+                    // 1Pを前に動かす
+		            _player_manager.setLimitValue( 1 );
+		            _player_manager.setAdvanceFlag( true );
+					_event_count[ ( int )_player_manager.getPlayerOrder( ) ] = 0;
+                } else if ( adjust[ ( int )_player_manager.getPlayerOrder( ) ] == MASS_ADJUST.BACK &&
+                            !_player_manager.isMoveStart( ) ) {
+                    // 1Pを後ろに動かす
+		            _player_manager.setLimitValue( 1 );
+		            _player_manager.setAdvanceFlag( false );
+					_event_count[ ( int )_player_manager.getPlayerOrder( ) ] = 0;
+                } else if ( adjust[ ( int )_player_manager.getPlayerOrder( ) ] == MASS_ADJUST.NO_ADJUST &&
+                            !_player_manager.isMoveStart( ) ) {
+                    // プレイヤーを変える
+				    _player_manager.changePlayerOrder( );
+                } else if ( _player_manager.isMoveFinish( ) ) {
+                    // プレイヤーを変える
+				    _player_manager.changePlayerOrder( );
+                }
 			}
 		}
-        if ( _player_manager.getPlayerID( ) > -1 ) {
-            _player_manager.movePhaseUpdate(getResideCount( ), _stage_manager.getTargetMass( _player_manager.getTargetMassID( _stage_manager.getMassCount( ) ) ) );
-        }
+
+        // プレイヤーの移動
+        int[ ] num = getResideCount( );
+        _player_manager.movePhaseUpdate( ref num, _stage_manager.getTargetMass( _player_manager.getTargetMassID( _stage_manager.getMassCount( ) ) ) );
+
         // ゴールまでの残りマスを表示
 		resideCount( );
+        
+        // プレイヤーの順番を更新
+        _player_manager.updatePlayerOrder( );
 
         _connect_wait_time++;
 
         // 両方の移動が終わったら次のフェイズへ
-        if ( _player_manager.isPlayerMoveFinish( 0 ) == true && _player_manager.isPlayerMoveFinish( 1 ) == true &&
-             _connect_wait_time >= CONNECT_WAIT_TIME ) {
+        if ( _player_manager.isAllPlayerMoveFinish( ) == true && _connect_wait_time >= CONNECT_WAIT_TIME ) {
             _connect_wait_time = 0;
+            _phase_init = false;
 			if ( _mode != PROGRAM_MODE.MODE_NO_CONNECT ) {
                 BATTLE_RESULT[ ] result = new BATTLE_RESULT[ ]{ BATTLE_RESULT.BATTLE_RESULT_NONE, BATTLE_RESULT.BATTLE_RESULT_NONE };
 				_host_data.setSendBattleResult( result, false );
 			}
+            _player_manager.refreshPlayerResult( );
             _phase_manager.changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_EVENT, "EventPhase" );
             _player_manager.movedRefresh( );
 
@@ -955,133 +931,173 @@ public class ApplicationManager : Manager< ApplicationManager > {
 	/// EventPhaseの更新
 	/// </summary>
 	private void updateEventPhase( ) {
+        if ( !_phase_init ) {
+            
+            // 行動順1Pをに設定する
+            _player_manager.startPlayerOrder( );
+
+            _phase_init = true;
+        }
+        // 通信待機時間の更新
         _connect_wait_time++;
-		if ( _player_manager.isEventStart( 0 ) == false  && _player_manager.isEventFinish( 0 ) == false ) {
-            Debug.Log( "P1" );
-            if ( _player_manager.getEventType( 0 ) != EVENT_TYPE.EVENT_WORP && 
-                 _player_manager.getEventType( 0 ) != EVENT_TYPE.EVENT_CHANGE )
-				massEvent( _player_manager.getPlayerCount( 0, _stage_manager.getMassCount( ) ), 0 );
-			else
-				massEvent( _before_player_count, 0 );
-		} else if ( _player_manager.isEventFinish( 0 ) == true && 
-                    _player_manager.isEventStart( 1 ) == false && 
-                    _player_manager.isEventFinish( 1 ) == false ) {
-            if ( _player_manager.getEventType( 0 ) != EVENT_TYPE.EVENT_WORP &&
-                    _player_manager.getEventType( 0 ) != EVENT_TYPE.EVENT_CHANGE ) {
-			    massEvent( _player_manager.getPlayerCount( 1, _stage_manager.getMassCount( ) ), 1 );
+
+        int player_one = ( int )PLAYER_ORDER.PLAYER_ONE;
+        int player_two = ( int )PLAYER_ORDER.PLAYER_TWO;
+
+		if ( !_player_manager.isEventStart( ) ) {
+            // 1Pのイベント処理
+            if ( _player_manager.getEventType( ) != EVENT_TYPE.EVENT_WORP && 
+                 _player_manager.getEventType( ) != EVENT_TYPE.EVENT_CHANGE ) {
+				massEvent( _player_manager.getPlayerCount( player_one, _stage_manager.getMassCount( ) ) );
+			} else {
+				massEvent( _before_player_count );
+            }
+		} else if ( _player_manager.isEventFinish( ) == true  && 
+                    _player_manager.isEventStart( )  == false && 
+                    _player_manager.isEventFinish( ) == false ) {
+            // 2Pのイベント処理
+            if ( _player_manager.getEventType( ) != EVENT_TYPE.EVENT_WORP &&
+                 _player_manager.getEventType( ) != EVENT_TYPE.EVENT_CHANGE ) {
+			    massEvent( _player_manager.getPlayerCount( player_two, _stage_manager.getMassCount( ) ) );
 		    } else {
-			    massEvent( _before_player_count, 1 );
+			    massEvent( _before_player_count );
             }
 		}
 
 		// マス移動終了時にイベントフラグをfalseにしてもう一度イベントが発生するようにする
 		for ( int i = 0; i < ( int )PLAYER_ORDER.MAX_PLAYER_NUM; i++ ) {
-            if ( _player_manager.getEventType( i ) == EVENT_TYPE.EVENT_MOVE ||
-                 _player_manager.getEventType( i ) == EVENT_TYPE.EVENT_TRAP_ONE ||
-                 _player_manager.getEventType( i ) == EVENT_TYPE.EVENT_TRAP_TWO ) {
-				if ( _player_manager.isPlayerMoveFinish( i ) == true ) {
+            if ( _player_manager.getEventType( ) == EVENT_TYPE.EVENT_MOVE     ||
+                 _player_manager.getEventType( ) == EVENT_TYPE.EVENT_TRAP_ONE ||
+                 _player_manager.getEventType( ) == EVENT_TYPE.EVENT_TRAP_TWO ) {
+				if ( _player_manager.isMoveFinish( ) ) {
                     // イベント開始＆移動状態を初期化
-					_player_manager.setEventStart( i, false );
+					_player_manager.setEventStart( false );
 					_player_manager.movedRefresh( );
 				}
             }
-			if( _player_manager.isEventFinish( i ) == true ) {
-				_player_manager.eventRefresh( i );
+            // イベント状態をリフレッシュ
+			if ( _player_manager.isEventFinish( ) ) {
+				_player_manager.changePlayerOrder( );
 			}
 		}
-        if ( _player_manager.getPlayerID( ) > -1 ) {
-            _player_manager.movePhaseUpdate( getResideCount( ), _stage_manager.getTargetMass( _player_manager.getTargetMassID( _stage_manager.getMassCount( ) ) ) );
-        }
+
+        int[ ] num = getResideCount( );
+        _player_manager.movePhaseUpdate( ref num, _stage_manager.getTargetMass( _player_manager.getTargetMassID( _stage_manager.getMassCount( ) ) ) );
+        
 
         // ゴールまでの残りマスを表示
-        resideCount ( );
+        resideCount( );
+
+        // パーティクルの更新
 		if( _particle != null ) {
 			if( _particle.gameObject.name == "OceanCurrent" ) {
 				_particle_time++;
-				if( _particle_time > 60 ) {
+				if( _particle_time > OCEAN_CURRENT_STOP_TIME ) {
+                    //　パーティクルの停止
 					_particle.GetComponent< ParticleEmitter >( ).emit = false;
 				}
-				if( _particle_time > 90 ) {
-					_particle_time = 0;
+				if( _particle_time > OCEAN_CURRENT_DESTROY_TIME ) {
+                    // パーティクルの削除
+					_particle_time = 0.0f;
 					_particle = null;
 				}
 			} else if( _particle.gameObject.name == "Spiral" ) {
 				_particle_time++;
+                if ( _particle_time > SPIRAL_TIME_FOUR ) {
+					_player_manager.setEventFinish( true );
+					_particle_time = 0.0f;
+					_particle = null;
+                }
 			}
 		}
 
-		if ( _player_manager.isEventFinish( 0 ) == true && _player_manager.isEventFinish( 1 ) == true && _goal_flag == false &&
-             _connect_wait_time >= CONNECT_WAIT_TIME &&  _particle == null ) {
+        // イベント終了時の処理
+		if ( _player_manager.isAllPlayerEventFinish( ) &&
+             _goal_flag == false && _connect_wait_time >= CONNECT_WAIT_TIME && _particle == null ) {
             // カードドロー完了したら
             if ( _mode == PROGRAM_MODE.MODE_ONE_CONNECT ) {
-                if ( !_client_data[ 0 ].getRecvData( ).ok_event &&
-                     _event_type[ 0 ] == EVENT_TYPE.EVENT_DRAW ) {
+                if ( !_client_data[ player_one ].getRecvData( ).ok_event &&
+                     _event_type[ player_one ] == EVENT_TYPE.EVENT_DRAW ) {
                     return;
                 }
-                if ( !_client_data[ 0 ].getRecvData( ).ok_event &&
-                     _event_type[ 0 ] == EVENT_TYPE.EVENT_DISCARD ) {
+                if ( !_client_data[ player_one ].getRecvData( ).ok_event &&
+                     _event_type[ player_one ] == EVENT_TYPE.EVENT_DISCARD ) {
                     return;
                 }
             } else if ( _mode == PROGRAM_MODE.MODE_TWO_CONNECT ) {
-                if ( ( !_client_data[ 0 ].getRecvData( ).ok_event && _event_type[ 0 ] == EVENT_TYPE.EVENT_DRAW ) ||
-                     ( !_client_data[ 1 ].getRecvData( ).ok_event && _event_type[ 1 ] == EVENT_TYPE.EVENT_DRAW ) ) {
+                if ( ( !_client_data[ player_one ].getRecvData( ).ok_event && _event_type[ player_one ] == EVENT_TYPE.EVENT_DRAW ) ||
+                     ( !_client_data[ player_two ].getRecvData( ).ok_event && _event_type[ player_two ] == EVENT_TYPE.EVENT_DRAW ) ) {
                     return;
                 }
-                if ( ( !_client_data[ 0 ].getRecvData( ).ok_event && _event_type[ 0 ] == EVENT_TYPE.EVENT_DISCARD ) ||
-                     ( !_client_data[ 1 ].getRecvData( ).ok_event && _event_type[ 1 ] == EVENT_TYPE.EVENT_DISCARD ) ) {
+                if ( ( !_client_data[ player_one ].getRecvData( ).ok_event && _event_type[ player_one ] == EVENT_TYPE.EVENT_DISCARD ) ||
+                     ( !_client_data[ player_two ].getRecvData( ).ok_event && _event_type[ player_two ] == EVENT_TYPE.EVENT_DISCARD ) ) {
                     return;
                 }
             }
+
+            // 各値を初期化
             _connect_wait_time = 0;
-
-			_player_manager.setEventStart( 0, false );
-			_player_manager.setEventStart( 1, false );
-			_player_manager.setEventFinish( 0, false );
-			_player_manager.setEventFinish( 1, false );
-
+			_player_manager.setEventStart( false );
+			_player_manager.setEventStart( false );
+			_player_manager.setEventFinish( false );
+			_player_manager.setEventFinish( false );
             if ( _mode != PROGRAM_MODE.MODE_NO_CONNECT ) {
-                if ( _client_data[ 0 ] != null && _client_data[ 0 ].getRecvData( ).ok_event ) {
-                    _event_type[ 0 ] = EVENT_TYPE.EVENT_NONE;
-                    _host_data.setSendEventType( PLAYER_ORDER.PLAYER_ONE, _event_type[ 0 ] );
-                    _host_data.refreshCardList( 0 );
+                if ( _client_data[ player_one ] != null && _client_data[ player_one ].getRecvData( ).ok_event ) {
+                    _event_type[ player_one ] = EVENT_TYPE.EVENT_NONE;
+                    _host_data.setSendEventType( PLAYER_ORDER.PLAYER_ONE, _event_type[ player_one ] );
+                    _host_data.refreshCardList( player_one );
                 }
-                if ( _client_data[ 1 ] != null && _client_data[ 1 ].getRecvData( ).ok_event ) {
-                    _event_type[ 1 ] = EVENT_TYPE.EVENT_NONE;
-                    _host_data.setSendEventType( PLAYER_ORDER.PLAYER_ONE, _event_type[ 1 ] );
-                    _host_data.refreshCardList( 1 );
+                if ( _client_data[ player_two ] != null && _client_data[ player_two ].getRecvData( ).ok_event ) {
+                    _event_type[ player_two ] = EVENT_TYPE.EVENT_NONE;
+                    _host_data.setSendEventType( PLAYER_ORDER.PLAYER_ONE, _event_type[ player_two ] );
+                    _host_data.refreshCardList( player_two );
                 }
             }
+
 			_phase_manager.changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_DICE, "DisePhase" );
 			_phase_manager.createPhaseText( MAIN_GAME_PHASE.GAME_PHASE_DICE );
 		}
 
         // ゴール処理
-        if ( _player_manager.isEventFinish( 0 ) == true && _player_manager.isEventFinish( 1 ) == true && 
+        if ( _player_manager.isAllPlayerEventFinish( ) && 
              _goal_flag && _connect_wait_time >= CONNECT_WAIT_TIME && _particle == null ) {
             _connect_wait_time = 0;
-			_player_manager.setEventStart( 0, false );
-			_player_manager.setEventStart( 1, false );
-			_player_manager.setEventFinish( 0, false );
-			_player_manager.setEventFinish( 1, false );
+			_player_manager.setEventStart( false );
+			_player_manager.setEventStart( false );
+			_player_manager.setEventFinish( false );
+			_player_manager.setEventFinish( false );
             _phase_manager.changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_FINISH, "FinishPhase" );
         }
+
+        
+        // プレイヤーの順番を更新
+        _player_manager.updatePlayerOrder( );
+
 	}
 
 	/// <summary>
 	/// マスイベントの処理
 	/// </summary>
-	/// <param name="i">The index.</param>
-	public void massEvent( int i, int id ) {
+	/// <param name="i" 何マス目か>The index.</param>
+	public void massEvent( int i ) {
 		//_player_manager.setEventStart( id, true );
 
         int value = 0;
         List< int > card_list = new List< int >( );
 
         switch ( _file_manager.getFileData( ).mass[ i ].event_type ) {
-            case EVENT_TYPE.EVENT_DRAW:
-                _event_type[ id ] = EVENT_TYPE.EVENT_DRAW;
+            case EVENT_TYPE.EVENT_START:
+                _event_type[ ( int )_player_manager.getPlayerOrder( ) ] = EVENT_TYPE.EVENT_START;
                 if ( _mode != PROGRAM_MODE.MODE_NO_CONNECT ) {
-                    _host_data.setSendEventType( ( PLAYER_ORDER )id, _event_type[ id ] );
+                    _host_data.setSendEventType( _player_manager.getPlayerOrder( ), _event_type[ ( int )_player_manager.getPlayerOrder( ) ] );
+                }
+                _player_manager.setEventFinish( true );
+                _player_manager.setEventType( ( int )_player_manager.getPlayerOrder( ), _event_type[ ( int )_player_manager.getPlayerOrder( ) ] );
+                break;
+            case EVENT_TYPE.EVENT_DRAW:
+                _event_type[ ( int )_player_manager.getPlayerOrder( ) ] = EVENT_TYPE.EVENT_DRAW;
+                if ( _mode != PROGRAM_MODE.MODE_NO_CONNECT ) {
+                    _host_data.setSendEventType( _player_manager.getPlayerOrder( ), _event_type[ ( int )_player_manager.getPlayerOrder( ) ] );
                 }
                 value = _file_manager.getMassValue( i )[ 0 ];
                 if ( !_animation_running ) {
@@ -1092,21 +1108,39 @@ public class ApplicationManager : Manager< ApplicationManager > {
                         }
                         int num = _card_manager.distributeCard( ).id;
                         card_list.Add( num );
-                        _player_manager.addDrawCard( card_list[ j ], id );
+                        _player_manager.addDrawCard( ( int )_player_manager.getPlayerOrder( ) );
                     }
 
-                    StartCoroutine( massAnimation( i, id, card_list ) );
+                    StartCoroutine( massAnimation( i, ( int )_player_manager.getPlayerOrder( ), card_list ) );
                     _animation_running = true;
                 }
                 // カードリストを初期化
                 if ( _animation_end ) {
                     card_list.Clear( );
-                    _player_manager.setEventFinish( id, true );
-                    _player_manager.setEventType( id, _event_type[ id ] );
+                    _player_manager.setEventFinish( true );
+                    _player_manager.setEventType( ( int )_player_manager.getPlayerOrder( ), _event_type[ ( int )_player_manager.getPlayerOrder( ) ] );
                     _animation_end = false;
                     _animation_running = false;
                 }
 			    break;
+            case EVENT_TYPE.EVENT_MOVE:
+                _event_type[ ( int )_player_manager.getPlayerOrder( ) ] = EVENT_TYPE.EVENT_MOVE;
+                if ( _mode != PROGRAM_MODE.MODE_NO_CONNECT ) {
+                    _host_data.setSendEventType( _player_manager.getPlayerOrder( ), _event_type[ ( int )_player_manager.getPlayerOrder( ) ] );
+                }
+                Debug.Log( _file_manager.getMassValue( i )[ 0 ] + "マス進む" );
+				if ( _particle == null ) {
+					_particle = GameObject.Find( "OceanCurrent" );
+				}
+                _particle.GetComponent< ParticleEmitter >( ).emit = true;
+				_player_manager.setLimitValue( _file_manager.getMassValue( i )[ 0 ] );
+				_player_manager.setCurrentFlag( true );
+				_player_manager.setAdvanceFlag( true );
+				_player_manager.setEventStart( true );
+                _before_player_count = _player_manager.getPlayerCount( ( int )_player_manager.getPlayerOrder( ), _stage_manager.getMassCount( ) );
+                _player_manager.setEventType( ( int )_player_manager.getPlayerOrder( ), EVENT_TYPE.EVENT_MOVE );
+                break;
+                // カード捨てマス進む
 		    case EVENT_TYPE.EVENT_TRAP_ONE:
                 _event_type[ id ] = EVENT_TYPE.EVENT_TRAP_ONE;
                 if ( _mode != PROGRAM_MODE.MODE_NO_CONNECT ) {
@@ -1123,8 +1157,8 @@ public class ApplicationManager : Manager< ApplicationManager > {
 				_player_manager.setPlayerID( id );
 				_player_manager.setAdvanceFlag( true );
 				_player_manager.setEventStart( id, true );
-                _before_player_count = _player_manager.getPlayerCount ( id, _stage_manager.getMassCount ( ) );
-                _player_manager.setEventType( id, EVENT_TYPE.EVENT_MOVE );
+                _before_player_count = _player_manager.getPlayerCount( id, _stage_manager.getMassCount ( ) );
+                _player_manager.setEventType( id, EVENT_TYPE.EVENT_TRAP_ONE );
                 break;
             case EVENT_TYPE.EVENT_TRAP_TWO:
                 // カードドロー
@@ -1151,49 +1185,35 @@ public class ApplicationManager : Manager< ApplicationManager > {
                     _animation_end = false;
                     _animation_running = false;
                 }
-				if(_particle == null){
-					_particle = GameObject.Find("OceanCurrent");
+				if ( _particle == null ) {
+					_particle = GameObject.Find( "OceanCurrent" );
 				}
-				_player_manager.setEventStart ( id, true );
+				_player_manager.setEventStart( id, true );
 				_particle.GetComponent< ParticleEmitter >( ).emit = true;
-				_player_manager.setLimitValue ( _file_manager.getMassValue ( i )[ 1 ] );
-				_player_manager.setCurrentFlag ( true );
-				_player_manager.setPlayerID ( id );
-				_player_manager.setAdvanceFlag ( false );
-				_player_manager.setEventStart ( id, true );
-                _before_player_count = _player_manager.getPlayerCount ( id, _stage_manager.getMassCount ( ) );
-                _player_manager.setEventType ( id, EVENT_TYPE.EVENT_MOVE );
-                break;
-            case EVENT_TYPE.EVENT_MOVE:
-                Debug.Log ( _file_manager.getMassValue ( i )[ 0 ] + "マス進む" );
-				if(_particle == null){
-					_particle = GameObject.Find("OceanCurrent");
-				}
-                _particle.GetComponent<ParticleEmitter>().emit = true;
-				_player_manager.setLimitValue ( _file_manager.getMassValue ( i )[ 0 ] );
-				_player_manager.setCurrentFlag ( true );
-				_player_manager.setPlayerID ( id );
-				_player_manager.setAdvanceFlag ( true );
-				_player_manager.setEventStart ( id, true );
-                _before_player_count = _player_manager.getPlayerCount ( id, _stage_manager.getMassCount ( ) );
-                _player_manager.setEventType ( id, EVENT_TYPE.EVENT_MOVE );
+				_player_manager.setLimitValue( _file_manager.getMassValue ( i )[ 1 ] );
+				_player_manager.setCurrentFlag( true );
+				_player_manager.setPlayerID( id );
+				_player_manager.setAdvanceFlag( false );
+				_player_manager.setEventStart( id, true );
+                _before_player_count = _player_manager.getPlayerCount( id, _stage_manager.getMassCount( ) );
+                _player_manager.setEventType( id, EVENT_TYPE.EVENT_TRAP_TWO );
                 break;
             case EVENT_TYPE.EVENT_GOAL:
-				_player_manager.setEventStart ( id, true );
-                if ( _player_manager.getPlayerResult ( id ) == BATTLE_RESULT.WIN ) {
+				_player_manager.setEventStart( id, true );
+                if ( _player_manager.getPlayerResult( id ) == BATTLE_RESULT.WIN ) {
                     _phase_manager.changeMainGamePhase ( MAIN_GAME_PHASE.GAME_PHASE_FINISH, "FinishPhase" );
                     Debug.Log ( "プレイヤー" + ( id + 1 ) + ":Goal!!" );
                     _goal_flag = true;
-                    _player_manager.setEventFinish ( id, true );
-                    _player_manager.setEventType ( id, EVENT_TYPE.EVENT_GOAL );
-                } else if ( _player_manager.getPlayerResult ( id ) == BATTLE_RESULT.LOSE || _player_manager.getPlayerResult ( id ) == BATTLE_RESULT.DRAW ) {
+                    _player_manager.setEventFinish( id, true );
+                    _player_manager.setEventType( id, EVENT_TYPE.EVENT_GOAL );
+                } else if ( _player_manager.getPlayerResult( id ) == BATTLE_RESULT.LOSE || _player_manager.getPlayerResult ( id ) == BATTLE_RESULT.DRAW ) {
                     if( _particle == null ) {
 						_particle = GameObject.Find( "OceanCurrent" );
 					}
 					_particle.GetComponent< ParticleEmitter >( ).emit = true;
 					_player_manager.setLimitValue ( 1 );
 					_player_manager.setCurrentFlag ( true );
-					_player_manager.setPlayerID ( id );
+					_player_manager.setPlayerID( id );
 					_player_manager.setAdvanceFlag ( false );
 					_before_player_count = _player_manager.getPlayerCount ( id, _stage_manager.getMassCount ( ) );
 					_player_manager.setEventType( id, EVENT_TYPE.EVENT_MOVE );
@@ -1226,25 +1246,32 @@ public class ApplicationManager : Manager< ApplicationManager > {
             case EVENT_TYPE.EVENT_CHANGE:
                 Debug.Log ( "チェンジ" );
 					
-                int count_tmp;
-                Vector3 vector_tmp;
-				count_tmp = _player_manager.getPlayerCount ( id, _stage_manager.getMassCount ( ) );
-				vector_tmp = _stage_manager.getTargetMass ( count_tmp ).transform.localPosition;
-				if(_particle == null){
-					_particle = GameObject.Find("Spiral");
+				int count_tmp      = _player_manager.getPlayerCount( id, _stage_manager.getMassCount( ) );
+				Vector3 vector_tmp = _stage_manager.getTargetMass( count_tmp ).transform.localPosition;
+                // パーティクルを検索
+				if( _particle == null ) {
+					_particle = GameObject.Find( "Spiral" );
 				}
-				if(_particle_time == 0){
-					_before_player_count = _player_manager.getPlayerCount ( id, _stage_manager.getMassCount ( ) );
-						
-					_particle.GetComponent<ParticleEmitter>().emit = true;
-				} else if(_particle_time < 360 && _particle_time > 10){
-					_particle.GetComponent<ParticleEmitter>().emit = false;
-				} else if(_particle_time < 362 && _particle_time > 360){
+				if( _particle_time == 0 ) {
+                    // プレイヤーの位置を保持
+					_before_player_count = _player_manager.getPlayerCount( id, _stage_manager.getMassCount( ) );
+					// パーティクルの開始
+					_particle.GetComponent< ParticleEmitter >( ).emit = true;
+
+				} else if ( SPIRAL_TIME_ONE < _particle_time && _particle_time < SPIRAL_TIME_TWO ) {
+                    // パーティクルを停止
+					_particle.GetComponent< ParticleEmitter >( ).emit = false;
+				} else if (  SPIRAL_TIME_TWO < _particle_time && _particle_time< SPIRAL_TIME_THREE ) {
 					if ( id == 0 ) {
-						_player_manager.setPlayerPosition ( 0, _stage_manager.getTargetMass ( _player_manager.getPlayerCount ( 1, _stage_manager.getMassCount ( ) ) ).transform.localPosition );
-						_player_manager.setPlayerPosition ( 1, vector_tmp );
-						_player_manager.setPlayerCount ( 0, _player_manager.getPlayerCount ( 1, _stage_manager.getMassCount ( ) ) );
-						_player_manager.setPlayerCount ( 1, count_tmp );_player_manager.setEventStart ( id, true );
+						_player_manager.setPlayerPosition( ( int )PLAYER_ORDER.PLAYER_ONE,
+                            _stage_manager.getTargetMass( _player_manager.getPlayerCount( ( int )PLAYER_ORDER.PLAYER_TWO,
+                                _stage_manager.getMassCount( ) ) ).transform.localPosition );
+						_player_manager.setPlayerPosition( ( int )PLAYER_ORDER.PLAYER_TWO, vector_tmp );
+						_player_manager.setPlayerCount( ( int )PLAYER_ORDER.PLAYER_ONE,
+                                                        _player_manager.getPlayerCount( ( int )PLAYER_ORDER.PLAYER_TWO,
+                                                                                        _stage_manager.getMassCount( ) ) );
+						_player_manager.setPlayerCount( ( int )PLAYER_ORDER.PLAYER_TWO, count_tmp );
+                        _player_manager.setEventStart( id, true );
 					} else if ( id == 1 ) {
 						_player_manager.setPlayerPosition ( 1, _stage_manager.getTargetMass ( _player_manager.getPlayerCount ( 0, _stage_manager.getMassCount ( ) ) ).transform.localPosition );
 						_player_manager.setPlayerPosition ( 0, vector_tmp );
@@ -1253,35 +1280,31 @@ public class ApplicationManager : Manager< ApplicationManager > {
 					}
 					int[ ] count = getResideCount( );
 					_player_manager.dicisionTopAndLowestPlayer( ref count );
-				} else if( _particle_time > 480 ) {
-					for ( int j = 0; j < ( int )PLAYER_ORDER.MAX_PLAYER_NUM; j++ ) {
-						_player_manager.setEventFinish( j, true );
-					}
-					_particle_time = 0;
-					_particle = null;
 				}
                 _player_manager.setEventType ( id, EVENT_TYPE.EVENT_CHANGE );
                 break;
             case EVENT_TYPE.EVENT_WORP:
-                int worp_position = 15;
-				if ( _particle == null ) {
+                // ワープする場所を決定
+                int worp_position = _file_manager.getNomalValue( _player_manager.getPlayerCount( id, _stage_manager.getMassCount( ) ) );
+				// パーティクルを検索
+                if ( _particle == null ) {
 					_particle = GameObject.Find( "Spiral" );
 				}
 				if ( _particle_time == 0 ) {
+                    // プレイヤーの位置を保持
 					_before_player_count = _player_manager.getPlayerCount( id, _stage_manager.getMassCount( ) );
+                    // パーティクルの開始
 					_particle.GetComponent< ParticleEmitter >( ).emit = true;
-				} else if( _particle_time < 360 && _particle_time > 10 ) {
-					_particle.GetComponent< ParticleEmitter>( ).emit = false;
-				} else if( _particle_time < 480 && _particle_time > 360 ) {
+                    _player_manager.setEventStart( id, true );
+				} else if( SPIRAL_TIME_ONE < _particle_time && _particle_time < SPIRAL_TIME_TWO ) {
+                    // パーティクルを停止
+					_particle.GetComponent< ParticleEmitter >( ).emit = false;
+
+				} else if( _particle_time < SPIRAL_TIME_FOUR && _particle_time > SPIRAL_TIME_TWO ) {
 					_player_manager.setPlayerCount( id, worp_position );
 					_player_manager.setPlayerPosition( id, _stage_manager.getTargetMass( worp_position ).transform.localPosition );
 					int[ ] count = getResideCount( );
 					_player_manager.dicisionTopAndLowestPlayer( ref count );
-				} else if ( _particle_time > 480 ) {
-					_player_manager.setEventStart( id, true );
-					_player_manager.setEventFinish( id, true );
-					_particle_time = 0;
-					_particle = null;
 				}
                 _player_manager.setEventType ( id, EVENT_TYPE.EVENT_WORP );
                 break;
@@ -1292,8 +1315,8 @@ public class ApplicationManager : Manager< ApplicationManager > {
                 }
                 Debug.Log( "カード" + "捨てる" );
 				//if ( _player_manager.getAnimationEnd( id ) == true ) {
-					_player_manager.setEventStart ( id, true );
-					_player_manager.setEventFinish ( id, true );
+					_player_manager.setEventStart( id, true );
+					_player_manager.setEventFinish( id, true );
 				//}
 				_player_manager.setEventType( id, EVENT_TYPE.EVENT_DISCARD );
 				break;

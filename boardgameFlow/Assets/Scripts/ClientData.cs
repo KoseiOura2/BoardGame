@@ -11,7 +11,7 @@ public class ClientData : NetworkBehaviour {
 	[ SerializeField ]
 	private NETWORK_PLAYER_DATA _player_data;
     
-    public int MAX_CARD_NUM = 6;
+    public int MAX_USE_CARD_NUM = 6;
 
     private bool _change_satatus = false;
 
@@ -20,8 +20,8 @@ public class ClientData : NetworkBehaviour {
         _player_data.changed_phase    = false;
         _player_data.dice_value       = -1;
         _player_data.ready            = false;
-		_player_data.used_card_list   = new int[ MAX_CARD_NUM ];
-		_player_data.turned_card_list = new int[ MAX_CARD_NUM ];
+		_player_data.used_card_list   = new int[ MAX_USE_CARD_NUM ];
+		_player_data.turned_card_list = new int[ MAX_USE_CARD_NUM ];
         _player_data.player_power     = 0;
         _player_data.hand_num         = 0;
         _player_data.battle_ready     = false;
