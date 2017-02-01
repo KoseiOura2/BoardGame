@@ -1395,8 +1395,8 @@ public class ApplicationManager : Manager< ApplicationManager > {
             }
         } else {
             _go_result_ui = (GameObject)Resources.Load("Prefabs/ResultUI");
-            Instantiate(_go_result_ui, new Vector3(0,0,0),Quaternion.identity);
-            ResultUIManeger result_ui_manager = _go_result_ui.GetComponent<ResultUIManeger>();
+            GameObject go = (GameObject)Instantiate(_go_result_ui, new Vector3(0,0,0),Quaternion.identity);
+            ResultUIManeger result_ui_manager = go.GetComponent<ResultUIManeger>();
             List<int> use_card_id = new List<int>();
             for (var i = 0; i < (int)PLAYER_ORDER.MAX_PLAYER_NUM; i++) {
                 int player_id = i;
