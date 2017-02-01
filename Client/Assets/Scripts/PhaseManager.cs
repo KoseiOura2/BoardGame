@@ -9,12 +9,9 @@ public class PhaseManager : MonoBehaviour {
     private MAIN_GAME_PHASE _main_game_phase;   // メインゲームのフロー
 	private bool _phase_changed = false;
 
-	public Text _phase_text;
-
 	// Use this for initialization
 	void Start( ) {
         _main_game_phase = MAIN_GAME_PHASE.GAME_PHASE_NO_PLAY;
-		_phase_text.text = "NoPlay";
 	}
 	
 	// Update is called once per frame
@@ -30,7 +27,6 @@ public class PhaseManager : MonoBehaviour {
     public void changeMainGamePhase( MAIN_GAME_PHASE phase, string log_text ) {
         try {
             _main_game_phase = phase;
-			_phase_text.text = log_text;
 			_phase_changed = true;
         }
         catch {
@@ -63,6 +59,5 @@ public class PhaseManager : MonoBehaviour {
 
 	public void setPhase( MAIN_GAME_PHASE phase ) {
 		_main_game_phase = phase;
-        _phase_text.text = phase.ToString( );
 	}
 }

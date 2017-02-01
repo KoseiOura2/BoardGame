@@ -103,8 +103,6 @@ public class ApplicationManager : Manager< ApplicationManager > {
     private bool _debug_player_move = false;
     BATTLE_RESULT _debug_result;
 
-	public Text _scene_text;
-
 	// Awake関数の代わり
 	protected override void initialize( ) {
 		init( );
@@ -275,7 +273,6 @@ public class ApplicationManager : Manager< ApplicationManager > {
 		if ( _host_data.getRecvData( ).change_scene && _change_scene_count == 0 ) {
             _client_data.CmdSetSendConnectReady( false );
 			_scene = _host_data.getRecvData( ).scene;
-			_scene_text.text = _scene.ToString( );
 			_client_data.CmdSetSendChangedScene( true );
 			_client_data.setChangedScene( true );
             _scene_init = false;
@@ -294,7 +291,6 @@ public class ApplicationManager : Manager< ApplicationManager > {
         if ( _mode == PROGRAM_MODE.MODE_NO_CONNECT ) {
             if ( Input.GetKeyDown( KeyCode.A ) ) {
 			    _scene = SCENE.SCENE_TITLE;
-			    _scene_text.text = _scene.ToString( );
 			    _player_num = PLAYER_ORDER.PLAYER_ONE;
                 _network_gui_controll.setShowGUI( false );
             }
@@ -305,10 +301,13 @@ public class ApplicationManager : Manager< ApplicationManager > {
 	/// TitleSceneの更新
 	/// </summary>
 	private void updateTitleScene( ) {
+        if ( !_scene_init ) {
+            _back_ground_obj.GetComponent< Image >( ).enabled = false;
+            _scene_init = true;
+        }
         if ( _mode == PROGRAM_MODE.MODE_NO_CONNECT ) {
             if ( Input.GetKeyDown( KeyCode.A ) ) {
 			    _scene = SCENE.SCENE_GAME;
-			    _scene_text.text = _scene.ToString( );
 			    //マスの生成
 			    for( int i = 0; i < _file_manager.getMassCount( ); i++ ) {
 				    int num = _map_manager.getMassCount( );
@@ -350,12 +349,12 @@ public class ApplicationManager : Manager< ApplicationManager > {
             destroyMassText( );
             destroyOpponentStatus( );
             destroySelectArea( );
+            _map_manager.destroyObj( );
             _scene_init = true;
         }
         if ( _mode == PROGRAM_MODE.MODE_NO_CONNECT ) {
             if ( Input.GetKeyDown( KeyCode.A ) ) {
 			    _scene = SCENE.SCENE_TITLE;
-			    _scene_text.text = _scene.ToString( );
                 _scene_init = false;
             } 
         }
@@ -504,7 +503,15 @@ public class ApplicationManager : Manager< ApplicationManager > {
             destroyLightOffObj( );
             _player_manager.destroyExpantionCard( );
         }
+        
+	#if UNITY_EDITOR
+        // デバッグ機能
+        if ( Input.GetKeyDown( KeyCode.F ) ) {
+            _phase_manager.changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_FINISH, "finish_phase" );
+            _scene_init = false;
+        }
 	}
+	#endif 
 
 	/// <summary>
 	/// フェイズの切り替え
@@ -531,6 +538,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
 	private void updateNoPlayPhase( ) {
         // 初期化処理
         if ( !_phase_init ) {
+            _back_ground_obj.GetComponent< Image >( ).enabled = true;
             switch ( _player_num ) {
                 case PLAYER_ORDER.PLAYER_ONE:
                     _game_scene_back_ground = Resources.Load< Sprite >( "Graphics/Background/bg_P1" );
@@ -1298,6 +1306,9 @@ public class ApplicationManager : Manager< ApplicationManager > {
 	/// FinishPhaseの更新
 	/// </summary>
 	private void updateFinishPhase( ) {
+        if ( Input.GetMouseButtonDown( 0 ) ) {
+
+        }
 	}
 
     /// <summary>

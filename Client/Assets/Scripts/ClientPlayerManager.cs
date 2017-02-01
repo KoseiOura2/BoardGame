@@ -915,6 +915,5 @@ public class ClientPlayerManager : MonoBehaviour {
         _player_card.hand_list.Clear( );
         _player_card.select_list.Clear( );
         _player_card.select_position.Clear( );
-
     }
 }

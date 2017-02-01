@@ -302,6 +302,10 @@ public class MapManager : MonoBehaviour {
         _player_point.transform.GetChild( 0 ).gameObject.GetComponent< Image >( ).color = new Color( 1, 1, 1, 1 );
     }
 
+    public void freeSprite( ) {
+        _player_point.transform.GetChild( 0 ).gameObject.GetComponent< Image >( ).sprite = null;
+    }
+
 	public void changeGoalImageNum( GameObject ten_digit, GameObject digit ) {
 		// ゴールまでの残りマス
 		int num = _create_mass_count - _player_pos_num;
@@ -377,5 +381,20 @@ public class MapManager : MonoBehaviour {
         } 
 
         return num;
+    }
+
+    public void destroyObj( ) {
+        for ( int i = 0; i < _mass_obj.Count; i++ ) {
+            Destroy( _mass_obj[ i ] );
+        }
+        freeSprite( );
+
+        _mass_list.Clear( );
+        _mass_obj.Clear( );
+        _mass_pos.Clear( );
+        _target_mass_id = 0;
+        _create_mass_count = 0;
+        _player_pos_num = 0;
+        _sea_deep = 0;
     }
 }
