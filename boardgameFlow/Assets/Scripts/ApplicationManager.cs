@@ -66,7 +66,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
 	public Text[ ] _environment = new Text[ ( int )PLAYER_ORDER.MAX_PLAYER_NUM ];    //環境情報用テキスト
 
     private GameObject _go_result_ui;
-
+    private ResultUIManeger _result_UI_maneger;
     private bool _battle = true;
 	// Awake関数の代わり
 	protected override void initialize( ) {
@@ -103,7 +103,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
 		referManager( );
 
 		_card_manager.init( );
-#if true        //デバッグでリザルトUIを即表示したいときTrueに
+#if false        //デバッグでリザルトUIを即表示したいときTrueに
         createResultUI();
 #endif
 	}
@@ -690,9 +690,14 @@ public class ApplicationManager : Manager< ApplicationManager > {
             }
             _phase_init = true;
         }
+
 		if ( _mode == PROGRAM_MODE.MODE_TWO_CONNECT ) {
             if ( _client_data[ 0 ].getRecvData( ).battle_ready == true &&
 				_client_data[ 1 ].getRecvData( ).battle_ready == true )  {
+                //バトルUIを作成する
+                if (_go_result_ui == null) { 
+                    createResultUI();
+                }
 				// 1Pのステータスを設定
 				_player_manager.setPlayerPower( 0, _client_data[ 0 ].getRecvData( ).player_power );
 				for ( int i = 0; i < _client_data[ 0 ].getRecvData( ).used_card_list.Length; i++ ) {
@@ -715,11 +720,20 @@ public class ApplicationManager : Manager< ApplicationManager > {
 
                 // 攻撃力を比較
 				_player_manager.attackTopAndLowestPlayer( _player_manager.getPlayerPower( ) );
+                //リザルトUIにリザルトデータを送る
+                _result_UI_maneger.setBattle( _player_manager.getPlayerResult( 0 ), _player_manager.getPlayerResult( 1 ));
+                while(_result_UI_maneger.getCurrentBattle( )){
+                    _result_UI_maneger.atherUpdate();
+                }
                 // 次のフェイズへ
                 _phase_manager.changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_RESULT, "ResultPhase" );
             }
 		} else if ( _mode == PROGRAM_MODE.MODE_ONE_CONNECT ) {
 			if ( _client_data[ 0 ].getRecvData( ).battle_ready == true )  {
+                 //バトルUIを作成する
+                if (_go_result_ui == null) { 
+                    createResultUI();
+                }
 				// 1Pのステータスを設定
 				_player_manager.setPlayerPower( 0, _client_data[ 0 ].getRecvData( ).player_power );
 				for ( int i = 0; i < _client_data[ 0 ].getRecvData( ).used_card_list.Length; i++ ) {
@@ -742,11 +756,30 @@ public class ApplicationManager : Manager< ApplicationManager > {
 
                 // 攻撃力を比較
 				_player_manager.attackTopAndLowestPlayer( _player_manager.getPlayerPower( ) );
+                //リザルトUIにリザルトデータを送る
+                _result_UI_maneger.setBattle( _player_manager.getPlayerResult( 0 ), _player_manager.getPlayerResult( 1 ));
+                while(_result_UI_maneger.getCurrentBattle( )){
+                    _result_UI_maneger.atherUpdate();
+                }
                 // 次のフェイズへ
                 _phase_manager.changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_RESULT, "ResultPhase" );
             }
 		} else if ( _mode == PROGRAM_MODE.MODE_NO_CONNECT ) {
 			if ( Input.GetKeyDown( KeyCode.A ) )  {
+                 //バトルUIを作成する
+                if (_go_result_ui == null) { 
+                    createResultUI();
+                }
+                while(_result_UI_maneger.getCurrentBattle( )){
+                    _result_UI_maneger.atherUpdate();
+                }
+                _result_UI_maneger.setCurrentBattle(false);
+                _result_UI_maneger.timeReset();
+                //リザルトUIにリザルトデータを送る
+                _result_UI_maneger.setBattle( BATTLE_RESULT.WIN, BATTLE_RESULT.LOSE);
+                while(_result_UI_maneger.getCurrentBattle( )){
+                    _result_UI_maneger.atherUpdate();
+                }
 				// 次のフェイズへ
 				_phase_manager.changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_RESULT, "ResultPhase" );
 			}
@@ -760,14 +793,6 @@ public class ApplicationManager : Manager< ApplicationManager > {
 	/// ResultPhaseの更新
 	/// </summary>
 	private void updateResultPhase( ) {
-        //バトルUIを作成する
-        if (_go_result_ui == null && _battle) { 
-                createResultUI();
-            }
-        //バトル中だったらリターンする
-        if (_battle){
-            return;
-        }
         if ( _mode != PROGRAM_MODE.MODE_NO_CONNECT ) {
             // 戦闘結果を送信
             if ( _host_data.getRecvData( ).send_result == false ) {
@@ -1381,14 +1406,14 @@ public class ApplicationManager : Manager< ApplicationManager > {
         if (_mode == PROGRAM_MODE.MODE_TWO_CONNECT) {
             _go_result_ui = (GameObject)Resources.Load("Prefabs/ResultUI");
             Instantiate(_go_result_ui, new Vector3(0,0,0),Quaternion.identity);
-            ResultUIManeger result_ui_manager = _go_result_ui.GetComponent<ResultUIManeger>();
+            _result_UI_maneger = _go_result_ui.GetComponent<ResultUIManeger>();
             List<int> use_card_id = new List<int>();
             for (var i = 0; i <= (int)PLAYER_ORDER.PLAYER_TWO; i++) {
                 int player_id = i;
                 for ( int j = 0; j < _client_data[ player_id ].getRecvData( ).used_card_list.Length; j++ ) {
 			        use_card_id.Add(_client_data[ player_id ].getRecvData( ).used_card_list[ j ]);
 		        }
-                result_ui_manager.Init(use_card_id , player_id);
+                _result_UI_maneger.Init(use_card_id , player_id);
                 if (use_card_id.Count > 0){
                     use_card_id.Clear();
                 }
@@ -1396,7 +1421,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
         } else {
             _go_result_ui = (GameObject)Resources.Load("Prefabs/ResultUI");
             GameObject go = (GameObject)Instantiate(_go_result_ui, new Vector3(0,0,0),Quaternion.identity);
-            ResultUIManeger result_ui_manager = go.GetComponent<ResultUIManeger>();
+            _result_UI_maneger = go.GetComponent<ResultUIManeger>();
             List<int> use_card_id = new List<int>();
             for (var i = 0; i < (int)PLAYER_ORDER.MAX_PLAYER_NUM; i++) {
                 int player_id = i;
@@ -1404,7 +1429,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
                 for ( int j = 1; j < 4; j++ ) {
 			        use_card_id.Add(j);
 		        }
-                result_ui_manager.Init(use_card_id , player_id);
+                _result_UI_maneger.Init(use_card_id , player_id);
                 if (use_card_id.Count > 0){
                     use_card_id.Clear();
                 }
