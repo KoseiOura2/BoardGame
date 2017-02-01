@@ -103,7 +103,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
 		referManager( );
 
 		_card_manager.init( );
-#if false        //デバッグでリザルトUIを即表示したいときTrueに
+#if true        //デバッグでリザルトUIを即表示したいときTrueに
         createResultUI();
 #endif
 	}
@@ -1401,7 +1401,7 @@ public class ApplicationManager : Manager< ApplicationManager > {
             for (var i = 0; i < (int)PLAYER_ORDER.MAX_PLAYER_NUM; i++) {
                 int player_id = i;
                 // debug用
-                for ( int j = 0; j < 3; j++ ) {
+                for ( int j = 1; j < 4; j++ ) {
 			        use_card_id.Add(j);
 		        }
                 result_ui_manager.Init(use_card_id , player_id);

@@ -21,46 +21,60 @@ public class ResultUIManeger : MonoBehaviour {
 	private CardManager _card_manager;		//サーバーが取得したデータがとれればおそらく不要　デバック用
 	// Use this for initialization
 	void Start () {
-		if (_card_manager == null){
-			_card_manager = GameObject.Find("CardManager").GetComponent<CardManager>();
-		}
-		for (int i = 0; i < _player_data.Length; i++){
-			_player_data [i].card_list = new List<CARD_DATA> ();
-		}
 	}
 	
 	// Update is called once per frame
 	void Update () {
 	
 	}
-    public void Init(List<int> player_id, int use_card_id){
-        for (var i = 0; i < player_id.Count; i++){
-            Debug.Log(player_id[i] + "  "+ (use_card_id + 1) + "PのしようしたカードID");
-        }
-    }
-	private void addCardData(int id){
-		CARD_DATA card;		
-		//_player_data [id].card_list.Add();		//サーバーが持っている使用したカードを入れる
-		//デバッグ用
-		for (int i = 1; i < 5; i++){
-			card = _card_manager.getCardData(i);
-			Debug.Log (card.name);
-			_player_data[id].card_list.Add(card);
+    /// <summary>
+    /// ResultUIの初期設定を行う
+    /// </summary>
+    /// <param name="player_id"></param>
+    /// <param name="use_card_id"></param>
+    public void Init(List<int> use_card_id, int player_id){
+        //CardManagerが存在していなかったら設定する
+        if (_card_manager == null){
+			_card_manager = GameObject.Find("CardManager").GetComponent<CardManager>();
 		}
+		_player_data[player_id].card_list = new List<CARD_DATA> ();
+        _player_data[player_id].player_id = player_id;
+        /*for (var i = 0; i < use_card_id.Count; i++){
+            Debug.Log(use_card_id[i] + "  "+ (player_id + 1) + "PのしようしたカードID");
+        }*/
+        //受け取ったカードIDに対応するカードを表示
+        for( var i = 0; i < use_card_id.Count; i++){
+            //1P
+            if(player_id == (int)PLAYER_ORDER.PLAYER_ONE){
+                _card_object[i].SetActive(true);
+            }
+            //2P
+            else if(player_id == (int)PLAYER_ORDER.PLAYER_TWO){
+                _card_object2[i].SetActive(true);
+            }
+        }
+        addCardData(use_card_id, player_id);
+        setCardImage(player_id);
+    }
+	private void addCardData(List<int> use_card_id, int player_id){
+		CARD_DATA card;
+        for (int i = 0; i < use_card_id.Count; i++){
+            card = _card_manager.getCardData(use_card_id[i]);
+            _player_data[player_id].card_list.Add(card);
+        }
 	}
-	private void setCardImage(int id){
-		for (int i = 0; i < _player_data[id].card_list.Count; i++){
-			if (id == 1) {
+	private void setCardImage(int player_id){
+		for (int i = 0; i < _player_data[player_id].card_list.Count; i++) {
+			if (player_id == (int)PLAYER_ORDER.PLAYER_ONE) {
 				// _player_data[id].card_listのカードデータをもとに　_card_pbjectのRawImageを変える
 				//_card_object[i].texture = TexTure2Dリソースロード.(_player_data[id].card_list.name);
-                Debug.Log(_player_data[id].card_list[i].name);
-				Image image = _card_object[i].GetComponent<Image>();
-
-                image.material.mainTexture = Resources.Load("Textures/"+ _player_data[id].card_list[i].name) as Texture;
-			} else if (id == 2) {
-				
-			} else {
-				return;
+                Debug.Log(_player_data[player_id].card_list[i].name);
+				Material material = Resources.Load<Material>( "Materials/Cards/" +  _player_data[player_id].card_list[i].name );
+                _card_object[i].GetComponent<Image>().material = material;
+            } 
+            else if (player_id == (int)PLAYER_ORDER.PLAYER_TWO) {
+                Material material = Resources.Load<Material>( "Materials/Cards/" +  _player_data[player_id].card_list[i].name );
+                _card_object2[i].GetComponent<Image>().material = material;
 			}
 		}
 	}
