@@ -707,7 +707,6 @@ public class ApplicationManager : Manager< ApplicationManager > {
 				Debug.Log( "1Pのpower:" + _player_manager.getPlayerPower( )[ 0 ].ToString( ) );
 				// プラスバリューの初期化
 				_player_manager.plusValueInit( );
-
 				// 2Pのステータスを設定
 				_player_manager.setPlayerPower( 1, _client_data[ 1 ].getRecvData( ).player_power );
 				for ( int i = 0; i < _client_data[ 1 ].getRecvData( ).used_card_list.Length; i++ ) {
@@ -721,12 +720,11 @@ public class ApplicationManager : Manager< ApplicationManager > {
                 // 攻撃力を比較
 				_player_manager.attackTopAndLowestPlayer( _player_manager.getPlayerPower( ) );
                 //リザルトUIにリザルトデータを送る
-                _result_UI_maneger.setBattle( _player_manager.getPlayerResult( 0 ), _player_manager.getPlayerResult( 1 ));
-                while(_result_UI_maneger.getCurrentBattle( )){
-                    _result_UI_maneger.atherUpdate();
-                }
+
+                //UIの削除
+                _result_UI_maneger.setCoroutine(1, _player_manager.getPlayerResult(0), _player_manager.getPlayerResult(1));
                 // 次のフェイズへ
-                _phase_manager.changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_RESULT, "ResultPhase" );
+                //_phase_manager.changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_RESULT, "ResultPhase" );
             }
 		} else if ( _mode == PROGRAM_MODE.MODE_ONE_CONNECT ) {
 			if ( _client_data[ 0 ].getRecvData( ).battle_ready == true )  {
@@ -757,12 +755,9 @@ public class ApplicationManager : Manager< ApplicationManager > {
                 // 攻撃力を比較
 				_player_manager.attackTopAndLowestPlayer( _player_manager.getPlayerPower( ) );
                 //リザルトUIにリザルトデータを送る
-                _result_UI_maneger.setBattle( _player_manager.getPlayerResult( 0 ), _player_manager.getPlayerResult( 1 ));
-                while(_result_UI_maneger.getCurrentBattle( )){
-                    _result_UI_maneger.atherUpdate();
-                }
+                _result_UI_maneger.setCoroutine(1, _player_manager.getPlayerResult(0), _player_manager.getPlayerResult(1));
                 // 次のフェイズへ
-                _phase_manager.changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_RESULT, "ResultPhase" );
+                //_phase_manager.changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_RESULT, "ResultPhase" );
             }
 		} else if ( _mode == PROGRAM_MODE.MODE_NO_CONNECT ) {
 			if ( Input.GetKeyDown( KeyCode.A ) )  {
@@ -770,22 +765,15 @@ public class ApplicationManager : Manager< ApplicationManager > {
                 if (_go_result_ui == null) { 
                     createResultUI();
                 }
-                while(_result_UI_maneger.getCurrentBattle( )){
-                    _result_UI_maneger.atherUpdate();
-                }
-                _result_UI_maneger.setCurrentBattle(false);
-                _result_UI_maneger.timeReset();
-                //リザルトUIにリザルトデータを送る
-                _result_UI_maneger.setBattle( BATTLE_RESULT.WIN, BATTLE_RESULT.LOSE);
-                while(_result_UI_maneger.getCurrentBattle( )){
-                    _result_UI_maneger.atherUpdate();
-                }
+                _result_UI_maneger.setCoroutine(1, BATTLE_RESULT.WIN, BATTLE_RESULT.LOSE);
 				// 次のフェイズへ
-				_phase_manager.changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_RESULT, "ResultPhase" );
+				//_phase_manager.changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_RESULT, "ResultPhase" );
 			}
 		}
 	}
-
+    public void setChangeMainGamePhase() {
+        _phase_manager.changeMainGamePhase( MAIN_GAME_PHASE.GAME_PHASE_RESULT, "ResultPhase" );
+    }
     public void setbattleFlag(bool battle){
         _battle = battle;
     }

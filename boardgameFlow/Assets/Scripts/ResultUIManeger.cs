@@ -11,6 +11,7 @@ public class ResultUIManeger : MonoBehaviour {
         public int use_card_id;
         public int attak_point;
 		public List< CARD_DATA >  card_list;	//使ったカードのリスト
+        public BATTLE_RESULT result;
 	}
 	[SerializeField]
 	//やりかた忘れたからてきとうに１P用と２Pようのカードデータの配置を用意
@@ -29,9 +30,13 @@ public class ResultUIManeger : MonoBehaviour {
 	private GameObject _vs_ui;
 	[SerializeField]
 	private GameObject _win_ui;
-    private float _current_time = 0f;
-    private float _end_time = 180f;
+    [SerializeField]
+    private GameObject _drow_ui;
     private bool _card_rend = false;
+    private bool _result_rend = false;
+    private float _wait_time = 3.0f;
+    private float _wait_time2 = 3.0f;
+    private ApplicationManager _app_manager;
 	// Use this for initialization
 	void Start () {
 	}
@@ -84,7 +89,6 @@ public class ResultUIManeger : MonoBehaviour {
     /// </summary>
     /// <param name="player_id"></param>
 	private void setCardImage(int player_id){
-        setCurrentBattle(true);
         _card_rend = true;
 		for (int i = 0; i < _player_data[player_id].card_list.Count; i++) {
 			if (player_id == (int)PLAYER_ORDER.PLAYER_ONE) {
@@ -97,16 +101,17 @@ public class ResultUIManeger : MonoBehaviour {
 			}
 		}
 	}
-    public void setBattle(BATTLE_RESULT player_one, BATTLE_RESULT player_two){
-        setCurrentBattle(true);
-        if (player_one == BATTLE_RESULT.WIN){
+    public void setResult(BATTLE_RESULT player_one, BATTLE_RESULT player_two){
+        _player_data[0].result = player_one;
+        _player_data[1].result = player_two;
+        /*if (player_one == BATTLE_RESULT.WIN){
             _player_two.SetActive(false);
         } else if(player_two == BATTLE_RESULT.WIN){
             _player_one.SetActive(false);
         } else if(player_one == BATTLE_RESULT.DRAW){
              _player_one.SetActive(false);
             _player_two.SetActive(false);
-        }
+        }*/
     }
     public bool getCurrentBattle( ){
         return _current_battle;
@@ -114,11 +119,22 @@ public class ResultUIManeger : MonoBehaviour {
     public void setCurrentBattle( bool current_battle ){
          _current_battle = current_battle;
     }
-	public void setCoroutine(int id){
-		//StartCoroutine ();
+    /// <summary>
+    /// id 呼び出すコルーチン（なくすかも）　player_one_result　１Pのリザルトデータ　player_two_result　２Pのリザルトデータ
+    /// </summary>
+    /// <param name="id"></param>
+    /// <param name="player_one_result"></param>
+    /// <param name="player_two_result"></param>
+	public void setCoroutine(int id, BATTLE_RESULT player_one_result, BATTLE_RESULT player_two_result){
+        if (!_card_rend) {
+             return;
+        }
+        _player_data[0].result = player_one_result;
+        _player_data[1].result = player_two_result;
+        StartCoroutine(battleUIUpdate());
 	}
     public void atherUpdate(){
-         if (_card_rend){
+         /*if (_card_rend){
             _current_time += Time.deltaTime;
              Debug.Log(_current_time);
             if(_current_time > _end_time){
@@ -138,9 +154,52 @@ public class ResultUIManeger : MonoBehaviour {
         _current_time += Time.deltaTime;
         if(_current_time > _end_time){
             setCurrentBattle(false);
-        }
+        }*/
     }
-    public void timeReset(){
-        _current_time = 0.0f;
+    private IEnumerator battleUIUpdate() {
+        Debug.Log("hugo");
+        _card_rend = false;
+        yield return new WaitForSeconds(_wait_time);
+        for (int i = 0; i < _card_object.Length; i++){
+            _card_object[i].GetComponent<Image>().enabled = false;
+        }
+        for (int i = 0; i < _card_object2.Length; i++){
+            _card_object2[i].GetComponent<Image>().enabled = false;
+        }
+        //_result_rend = true;
+        StartCoroutine(resultUIUpdate()); 
+    }
+    private IEnumerator resultUIUpdate() {
+        Debug.Log("hugo2");
+        //yield return new WaitForSeconds(_wait_time);          //カードアニメーションがないのでコメントアウト　同時に消す
+        //_result_rend = false;
+        //プレイヤーアイコンを消す　勝利ロゴを出す
+        Debug.Log(_player_data[0].result + "プレイヤー１リザルト");
+        if (_player_data[0].result == BATTLE_RESULT.WIN){
+            Debug.Log("hugo2hugo2hugo2");
+            _player_two.SetActive(false);
+            _vs_ui.SetActive(false);
+            _win_ui.GetComponent<Image>().enabled = true;
+        } else if(_player_data[1].result == BATTLE_RESULT.WIN){
+            Debug.Log("hugo2hugo2hugo222");
+            _player_one.SetActive(false);
+            _vs_ui.SetActive(false);
+            _win_ui.GetComponent<Image>().enabled = true;
+        } else if(_player_data[0].result == BATTLE_RESULT.DRAW){
+            Debug.Log("hugo2hugo2hugo222hugo2hugo2hugo222");
+             _player_one.SetActive(false);
+            _player_two.SetActive(false);
+            _vs_ui.SetActive(false);
+            _drow_ui.GetComponent<Image>().enabled = true;
+        }
+        
+        if (_app_manager == null){
+            _app_manager = GameObject.Find("ApplicationManager").GetComponent<ApplicationManager>();
+        }
+        yield return new WaitForSeconds(_wait_time);
+        //UIを変更したらフェイズ切り替え
+        _app_manager.setChangeMainGamePhase();
+        //自身を削除
+        Destroy(gameObject);
     }
 }
