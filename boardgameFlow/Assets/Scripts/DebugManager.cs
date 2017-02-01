@@ -24,17 +24,6 @@ public class DebugManager : MonoBehaviour {
  
         InitInputField( );
     }
- 
-    /// <summary>
-    /// Log出力用メソッド
-    /// 入力値を取得してLogに出力し、初期化
-    /// </summary>
-    public void SetPlayerID( ) {
-        if( _input_field.text != "" ) {
-			_player_manager.setPlayerID( int.Parse( _input_field.text ) );
-            InitInputField( );
-        }
-    }
 
     public void SetLimitValue( ) {
         if( _input_field.text != "" ) {

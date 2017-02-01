@@ -54,9 +54,10 @@ public class Player : MonoBehaviour {
     /// 初期化
     /// </summary>
     /// <param name="id" "プレイヤーのＩＤ"></param>
-    /// <param name="first_pos" "初期配置位置"></param>
     /// <param name="pref" "オブジェクトのプレハブ"></param>
-    public void init( int id, ref Vector3 first_pos, ref GameObject pref ) {
+    /// <param name="first_pos" "初期配置位置"></param>
+    /// <param name="trans" "親オブジェクトのトランスフォーム"></param>
+    public void init( int id, ref GameObject pref, ref Vector3 first_pos, ref Transform trans ) {
         // 初期化
         _data.id          = id;
         _data.event_type  = EVENT_TYPE.EVENT_NONE;
@@ -64,7 +65,7 @@ public class Player : MonoBehaviour {
 
 		_player_pref = pref;
 
-        createObj( ref first_pos );
+        createObj( ref first_pos, ref trans );
 
 		// ステータス値の初期化
 		setDefalutStatus( );
@@ -76,10 +77,10 @@ public class Player : MonoBehaviour {
     /// ゲーム開始時プレイヤーを生成
     /// </summary>
     /// <param name="first_pos" "初期配置位置"></param>
-    public void createObj( ref Vector3 first_pos ) {
+    public void createObj( ref Vector3 first_pos, ref Transform trans ) {
         // オブジェクト生成
 		_data.obj = ( GameObject )Instantiate( _player_pref, adjustPos( ref first_pos ), _player_pref.transform.rotation );
-        _data.obj.transform.parent = transform;
+        _data.obj.transform.parent = trans;
         _data.obj.name   = "Player" + _data.id;
     }
     
@@ -94,7 +95,7 @@ public class Player : MonoBehaviour {
         adjust_pos.x += ( _data.id % 2 == 0 ) ? -ADJUST_PLAYER_POS : ADJUST_PLAYER_POS;
         adjust_pos.z += ( _data.id % 2 == 0 ) ? ADJUST_PLAYER_POS : -ADJUST_PLAYER_POS;
 
-        return pos;
+        return adjust_pos;
     }
 
 	/// <summary>
@@ -111,16 +112,6 @@ public class Player : MonoBehaviour {
 	public void plusValueInit( ) {
 		_plus_power = 0;
 		_plus_draw  = 0;
-	}
-
-	// Use this for initialization
-	void Start( ) {
-	
-	}
-	
-	// Update is called once per frame
-	void Update( ) {
-	
 	}
 
     /// <summary>

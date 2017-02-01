@@ -78,6 +78,7 @@ public class StageManager : MonoBehaviour {
             case EVENT_TYPE.EVENT_DRAW:
                 _arrangement_prefab = ( GameObject )Resources.Load( "Prefabs/BackGroundObj/object_chest" );
                 GameObject obj_arrangement = ( GameObject )Instantiate( _arrangement_prefab, new Vector3(obj.transform.localPosition.x,obj.transform.localPosition.y,obj.transform.localPosition.z + 2), _arrangement_prefab.transform.rotation );
+                obj_arrangement.name = "TreasureChest:" + num;
                 break; 
         }
 

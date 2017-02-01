@@ -41,8 +41,10 @@ public class PlayerManager : MonoBehaviour {
         for ( int i = 0; i < ( int )PLAYER_ORDER.MAX_PLAYER_NUM; i++ ) {
             // プレイヤープレハブのロード
             _player_pref[ i ] = ( GameObject )Resources.Load( "Prefabs/Player/Player" + i );
+            _players[ i ] = new Player( );
             // 出力したデータを元にプレイヤーを初期化
-            _players[ i ].init( i, ref first_pos, ref _player_pref[ i ] );
+            Transform trans = this.gameObject.transform;
+            _players[ i ].init( i, ref _player_pref[ i ], ref first_pos, ref trans );
         }
     }
 
@@ -95,13 +97,13 @@ public class PlayerManager : MonoBehaviour {
         dicisionTopAndLowestPlayer( ref count );
 
         if ( _player_order != PLAYER_ORDER.NO_PLAYER ) {
-            _players[ ( int )_player_order ].startMove( );
             if ( _limit_value > 0 ) {
+                _players[ ( int )_player_order ].startMove( );
                 if ( !_move_flag ) {
                     if ( _current_flag ) {
-                        _time = 1.0f;
-                    } else { 
                         _time = 0.5f;
+                    } else { 
+                        _time = 0.3f;
                     }
                     // ターゲットのマスを設定
                     _players[ ( int )_player_order ].setTargetPos( _time, ref target_pos );
@@ -117,7 +119,9 @@ public class PlayerManager : MonoBehaviour {
                 _limit_value--;
             }
         } else {
-			_players[ ( int )_player_order ].deleteTargetMass( );
+            for ( int i = 0; i < _players.Length; i++ ) {
+			    _players[ i ].deleteTargetMass( );
+            }
 		}
 	}
 
@@ -414,10 +418,14 @@ public class PlayerManager : MonoBehaviour {
     /// <summary>
     /// プレイヤーの移動をリセット
     /// </summary>
-    public void movedRefresh( ) {
+    public void allMovedRefresh( ) {
         for ( int i = 0; i < _players.Length; i++ ) {
             _players[ i ].refreshMoveFlag( );
         }
+    }
+    
+    public void movedRefresh( ) {
+        _players[ ( int )_player_order ].refreshMoveFlag( );
     }
 
     public void allPlusValueInit( ) {
@@ -507,6 +515,7 @@ public class PlayerManager : MonoBehaviour {
     }
     public void addDrawCard( int num ) {
         _players[ ( int )_player_order ].addDrawCard( num );
+        Debug.Log( "中継cardID:" + num );
     }
 
     public List< int > getDrawCard( ) {
@@ -537,7 +546,7 @@ public class PlayerManager : MonoBehaviour {
 	}
 
     public void setEventType( int id, EVENT_TYPE event_type ) {
-        _players[ ( int )_player_order ].setEventType( event_type );
+        _players[ id ].setEventType( event_type );
     }
 
     /*
@@ -563,12 +572,12 @@ public class PlayerManager : MonoBehaviour {
      }
     */
 
-    public void eventRefresh( ) {
+    public void eventTypeRefresh( ) {
         _players[ ( int )_player_order ].setEventType( EVENT_TYPE.EVENT_NONE );
 	 }
 
-     public void setPlayerCount( int count ) {
-        _players[ ( int )_player_order ].setAdvanceCount( count );
+     public void setPlayerCount( int id, int count ) {
+        _players[ id ].setAdvanceCount( count );
     }
 
     public void setPlayerPosition( int id, Vector3 position ) {
