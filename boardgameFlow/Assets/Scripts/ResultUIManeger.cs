@@ -7,7 +7,8 @@ using UnityEngine.UI;
 public class ResultUIManeger : MonoBehaviour {
 	private const int _person_number = 2;		//プレイ人数
 	private struct PLAYER_DATA {
-		public int id;				//自分は何Ｐなのか？
+		public int player_id;				//自分は何Ｐなのか？
+        public int use_card_id;
 		public List< CARD_DATA >  card_list;	//使ったカードのリスト
 	}
 	[SerializeField]
@@ -25,9 +26,6 @@ public class ResultUIManeger : MonoBehaviour {
 		}
 		for (int i = 0; i < _player_data.Length; i++){
 			_player_data [i].card_list = new List<CARD_DATA> ();
-			_player_data [i].id = i;
-			addCardData(i);
-			setCardImage(i);
 		}
 	}
 	
@@ -35,7 +33,11 @@ public class ResultUIManeger : MonoBehaviour {
 	void Update () {
 	
 	}
-	//なんかここがバグる
+    public void Init(List<int> player_id, int use_card_id){
+        for (var i = 0; i < player_id.Count; i++){
+            Debug.Log(player_id[i] + "  "+ (use_card_id + 1) + "PのしようしたカードID");
+        }
+    }
 	private void addCardData(int id){
 		CARD_DATA card;		
 		//_player_data [id].card_list.Add();		//サーバーが持っている使用したカードを入れる

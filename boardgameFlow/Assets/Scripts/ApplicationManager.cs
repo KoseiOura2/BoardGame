@@ -65,6 +65,9 @@ public class ApplicationManager : Manager< ApplicationManager > {
 	public Text[ ] _reside_text = new Text[ ( int )PLAYER_ORDER.MAX_PLAYER_NUM ];    //残りマス用テキスト
 	public Text[ ] _environment = new Text[ ( int )PLAYER_ORDER.MAX_PLAYER_NUM ];    //環境情報用テキスト
 
+    private GameObject _go_result_ui;
+
+    private bool _battle = true;
 	// Awake関数の代わり
 	protected override void initialize( ) {
 		init( );
@@ -100,9 +103,8 @@ public class ApplicationManager : Manager< ApplicationManager > {
 		referManager( );
 
 		_card_manager.init( );
-#if true        //デバッグでリザルトUIを即表示したいときTrueに
-        GameObject go = (GameObject)Resources.Load("Prefabs/ResultUI");
-        Instantiate(go, new Vector3(0,0,0),Quaternion.identity);
+#if false        //デバッグでリザルトUIを即表示したいときTrueに
+        createResultUI();
 #endif
 	}
 
@@ -751,10 +753,21 @@ public class ApplicationManager : Manager< ApplicationManager > {
 		}
 	}
 
+    public void setbattleFlag(bool battle){
+        _battle = battle;
+    }
 	/// <summary>
 	/// ResultPhaseの更新
 	/// </summary>
 	private void updateResultPhase( ) {
+        //バトルUIを作成する
+        if (_go_result_ui == null && _battle) { 
+                createResultUI();
+            }
+        //バトル中だったらリターンする
+        if (_battle){
+            return;
+        }
         if ( _mode != PROGRAM_MODE.MODE_NO_CONNECT ) {
             // 戦闘結果を送信
             if ( _host_data.getRecvData( ).send_result == false ) {
@@ -1364,4 +1377,38 @@ public class ApplicationManager : Manager< ApplicationManager > {
 		_event_count[ id ] = count;
 	}
 
+    private void createResultUI() { 
+        if (_mode == PROGRAM_MODE.MODE_TWO_CONNECT) {
+            _go_result_ui = (GameObject)Resources.Load("Prefabs/ResultUI");
+            Instantiate(_go_result_ui, new Vector3(0,0,0),Quaternion.identity);
+            ResultUIManeger result_ui_manager = _go_result_ui.GetComponent<ResultUIManeger>();
+            List<int> use_card_id = new List<int>();
+            for (var i = 0; i <= (int)PLAYER_ORDER.PLAYER_TWO; i++) {
+                int player_id = i;
+                for ( int j = 0; j < _client_data[ player_id ].getRecvData( ).used_card_list.Length; j++ ) {
+			        use_card_id.Add(_client_data[ player_id ].getRecvData( ).used_card_list[ j ]);
+		        }
+                result_ui_manager.Init(use_card_id , player_id);
+                if (use_card_id.Count > 0){
+                    use_card_id.Clear();
+                }
+            }
+        } else {
+            _go_result_ui = (GameObject)Resources.Load("Prefabs/ResultUI");
+            Instantiate(_go_result_ui, new Vector3(0,0,0),Quaternion.identity);
+            ResultUIManeger result_ui_manager = _go_result_ui.GetComponent<ResultUIManeger>();
+            List<int> use_card_id = new List<int>();
+            for (var i = 0; i < (int)PLAYER_ORDER.MAX_PLAYER_NUM; i++) {
+                int player_id = i;
+                // debug用
+                for ( int j = 0; j < 3; j++ ) {
+			        use_card_id.Add(j);
+		        }
+                result_ui_manager.Init(use_card_id , player_id);
+                if (use_card_id.Count > 0){
+                    use_card_id.Clear();
+                }
+            }
+        }
+    }
 }
