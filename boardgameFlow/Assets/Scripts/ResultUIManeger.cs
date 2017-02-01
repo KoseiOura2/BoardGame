@@ -25,8 +25,12 @@ public class ResultUIManeger : MonoBehaviour {
     private GameObject _player_one;
     [SerializeField]
     private GameObject _player_two;
+	[SerializeField]
+	private GameObject _vs_ui;
+	[SerializeField]
+	private GameObject _win_ui;
     private float _current_time = 0f;
-    private float _end_time = 4f;
+    private float _end_time = 180f;
     private bool _card_rend = false;
 	// Use this for initialization
 	void Start () {
@@ -110,8 +114,10 @@ public class ResultUIManeger : MonoBehaviour {
     public void setCurrentBattle( bool current_battle ){
          _current_battle = current_battle;
     }
+	public void setCoroutine(int id){
+		//StartCoroutine ();
+	}
     public void atherUpdate(){
-
          if (_card_rend){
             _current_time += Time.deltaTime;
              Debug.Log(_current_time);
@@ -122,6 +128,8 @@ public class ResultUIManeger : MonoBehaviour {
                 for (int i = 0; i < _card_object2.Length; i++){
                     _card_object2[i].GetComponent<Image>().enabled = false;
                 }
+				_card_rend = false;
+				_current_time = 0.0f;
                 setCurrentBattle(false);
             }
             return;
